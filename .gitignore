@@ -242,6 +242,7 @@ fabric.properties
 .DS_Store
 *.pth
 input/*
+!input/.gitkeep
 
 # Ignore all files in .idea directory
 .idea/*
