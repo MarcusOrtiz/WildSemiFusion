@@ -5,7 +5,7 @@ import torch
 import numpy as np
 from torch.utils.data import DataLoader
 from src.models import MultiModalNetwork
-from src.data_loader import CustomDataset, custom_collate_fn
+from src.original.data_loader import CustomDataset, custom_collate_fn
 from skimage import color
 import time
 import pandas as pd

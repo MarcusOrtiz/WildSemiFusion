@@ -2,11 +2,10 @@ import os
 import time
 import argparse 
 from src.models import MultiModalNetwork
-from src.data_loader import CustomDataset, custom_collate_fn
-from src.losses import EikonalLoss, ConfidenceLoss
+from src.original.data_loader import CustomDataset, custom_collate_fn
+from src.original.losses import EikonalLoss, ConfidenceLoss
 import torch
 import torch.nn as nn
-import torch.nn.functional as F
 from torch.utils.data import DataLoader
 import numpy as np
 import matplotlib.pyplot as plt
