@@ -43,8 +43,8 @@ if __name__ == "__main__":
     # Check if default input is used
     if args.input_dir == DEFAULT_INPUT_PATH:
         for sequence_dir in os.listdir(args.input_dir):
-            annotated_image_to_array(os.path.join(args.input_dir, sequence_dir, "pylon_camera_node_label_id"),
+            image_to_array(os.path.join(args.input_dir, sequence_dir, "pylon_camera_node_label_id"),
                                      os.path.join(args.output_dir, sequence_dir, "pylon_camera_node_label"))
     else:
-        annotated_image_to_array(args.input_dir, args.output_dir)
+        image_to_array(args.input_dir, args.output_dir)
 

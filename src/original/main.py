@@ -135,7 +135,7 @@ def train_val(model, dataloader, val_dataloader, epochs, lr, checkpoint_path, be
     start_time = time.time()
 
     criterion_mse = nn.MSELoss()
-    criterion_ce_semantics = nn.CrossEntropyLoss(ignore_index=0)
+    criterion_ce_semantics = nn.CrossEntropyLoss(ignore_index=0) #TODO: Make sure to include for custom masks
     criterion_ce_color = nn.CrossEntropyLoss(ignore_index=312)
     criterion_huber = nn.SmoothL1Loss()
     eikonal_loss = EikonalLoss()

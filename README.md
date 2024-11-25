@@ -34,3 +34,8 @@ parameters are available at config.py.
 ## Training
 
 ## Testing
+
+
+
+## Not sorted
+You must apt-get install libglvnd-dev

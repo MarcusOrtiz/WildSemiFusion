@@ -5,7 +5,7 @@ from shutil import rmtree
 from cv2 import imwrite
 from src.data.utils.data_processing import resize_rgb_and_annotation
 
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+BASE_DIR = os.getcwd()
 DEFAULT_ONTOLOGY_PATH = os.path.join(BASE_DIR, "../../input/ontology.yaml")
 DEFAULT_INPUT_PATH = os.path.join(BASE_DIR, "../../input/rellis_2d")
 DEFAULT_OUTPUT_PATH = os.path.join(BASE_DIR, "../../input/rellis_2d_preprocessed")
