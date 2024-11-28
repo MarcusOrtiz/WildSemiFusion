@@ -4,48 +4,77 @@ import torch.nn.functional as F
 
 
 class FourierFeatureLayer(nn.Module):
-    def __init__(self, in_dim, out_dim):
+    def __init__(self, in_dim=2, out_dim=128):
         super(FourierFeatureLayer, self).__init__()
         self.weights = nn.Parameter(torch.randn(in_dim, out_dim) * 2 * torch.pi)
 
     def forward(self, x):
         return torch.cat([torch.sin(x @ self.weights), torch.cos(x @ self.weights)], dim=-1)
 
-class BlackAndWhiteCNN(nn.Module):
-    """
-    Acts as black and white image input encoder for the compression layer
 
-    CNNs are better with batch normalization, use it for BW
-    """
+class GrayscaleCNN(nn.Module):
+    def __init__(self, image_size=(224, 224), out_dim=256):
+        super(GrayscaleCNN, self).__init__()
+        self.conv1 = nn.Conv2d(1, 16, kernel_size=3, padding=1)
+        self.bn1 = nn.BatchNorm2d(16)
+        self.max_pool = nn.MaxPool2d(2, 2)  # used at every layer
 
-    def __init__(self):
-        super(BlackAndWhiteCNN, self).__init__()
-        pass
+        self.conv2 = nn.Conv2d(16, 32, kernel_size=3, padding=1)
+        self.bn2 = nn.BatchNorm2d(32)
+
+        self.fc = nn.Linear(32 * (image_size[0] // 4) * (image_size[1] // 4), out_dim)
+
+    def forward(self, x):
+        x = self.max_pool(F.relu(self.bn1(self.conv1(x))))  # [batch, 16, H/2, W/2]
+        x = self.max_pool(F.relu(self.bn2(self.conv2(x))))  # [batch, 16, H/4, W/4]
+        x = x.view(x.size(0), -1)  # Flatten
+        x = F.relu(self.fc(x))
+        return x
 
 
-class ColorCNN(nn.Module):
-    """
-    Acts as color image input encoder for the compression layer
-    - Use LAB
-    - Deeper than BlackAndWhiteCNN
-    - CNNs are better with batch normalization, however, first have to understand why colornet uses LayerNorm
-    """
+class LABCNN(nn.Module):
+    def __init__(self, image_size=(224, 224), out_dim=256):
+        super(LABCNN, self).__init__()
+        self.conv1 = nn.Conv2d(3, 32, kernel_size=3, padding=1)
+        self.bn1 = nn.BatchNorm2d(32)
+        self.max_pool = nn.MaxPool2d(2, 2)  # used at every layer
 
-    def __init__(self):
-        super(ColorCNN, self).__init__()
-        pass
+        self.conv2 = nn.Conv2d(16, 64, kernel_size=3, padding=1)
+        self.bn2 = nn.BatchNorm2d(64)
+
+        self.conv3 = nn.Conv2d(32, 128, kernel_size=3, padding=1)
+        self.bn3 = nn.BatchNorm2d(128)
+
+        self.fc = nn.Linear(128 * (image_size[0] // (2 ^ 3)) * (image_size[1] // (2 ^ 3)), out_dim)
+
+    def forward(self, x):
+        x = self.max_pool(F.relu(self.bn1(self.conv1(x))))
+        x = self.max_pool(F.relu(self.bn2(self.conv2(x))))
+        x = self.max_pool(F.relu(self.bn3(self.conv3(x))))
+
+        x = x.view(x.size(0), -1)  # Flatten
+        x = self.relu(self.fc(x))
+        return x
+
+
+class CompressionLayer(nn.Module):
+    def __init__(self, in_dim=768, out_dim=256):
+        super(CompressionLayer, self).__init__()
+        self.fc1 = nn.Linear(in_dim, out_dim)
 
 
 class ColorNet(nn.Module):
     """
     Labnet is used to quantize the RGB
 
+    Why does this use layernorm instead of batchnorm? Batchnorm is better on CNNs
+
     Design Question: Should the expert be trained on logits or softmax? If logits then we can produce a bigger weight
     which may make more sense. It can also be trained on softmax and then in the end to end it will not be connected
     with the softmax layer
     """
 
-    def __init__(self, in_features=512, hidden_dim=256, num_bins=313):
+    def __init__(self, in_features=256, hidden_dim=128, num_bins=313):
         super(ColorNet, self).__init__()
         self.fc1 = nn.Linear(in_features, hidden_dim)
         self.bn1 = nn.LayerNorm(hidden_dim)  # Use LayerNorm
@@ -68,6 +97,36 @@ class ColorNet(nn.Module):
         x = x.view(-1, 3, 313)
         x = F.softmax(x, dim=-1)  # Apply Softmax to color bins
         return x
+
+
+class SemanticNet(nn.Module):
+    def __init__(self, input_dim=256, hidden_dim=128, num_classes=11):
+        super(SemanticNet, self).__init__()
+
+        self.fc1 = nn.Linear(input_dim, hidden_dim)
+        self.bn1 = nn.BatchNorm1d(hidden_dim)
+        self.fc2 = nn.Linear(hidden_dim, hidden_dim)
+        self.bn2 = nn.BatchNorm1d(hidden_dim)
+        self.fc3 = nn.Linear(hidden_dim, num_classes)
+
+        self.dropout = nn.Dropout(0.3)
+        self.relu = nn.ReLU()
+
+    def forward(self, x):
+        # Reshape the input for BatchNorm1d if necessary
+        if x.dim() == 3:
+            x = x.view(-1, x.size(-1))  # Flatten batch and locations if needed
+
+        x = self.relu(self.bn1(self.fc1(x)))
+        x = self.dropout(x)
+
+        x = self.relu(self.bn2(self.fc2(x)))
+        x = self.dropout(x)
+
+        x = self.fc3(x)
+
+        return x
+
 
 
 class ResidualBlock(nn.Module):
@@ -98,34 +157,5 @@ class ResidualBlock(nn.Module):
 
         if self.output_activation:
             x = self.output_activation(x)
-
-        return x
-
-
-class SemanticNet(nn.Module):
-    def __init__(self, input_dim=512, hidden_dim=256, num_classes=11):
-        super(SemanticNet, self).__init__()
-
-        self.fc1 = nn.Linear(input_dim, hidden_dim)
-        self.bn1 = nn.BatchNorm1d(hidden_dim)
-        self.fc2 = nn.Linear(hidden_dim, hidden_dim)
-        self.bn2 = nn.BatchNorm1d(hidden_dim)
-        self.fc3 = nn.Linear(hidden_dim, num_classes)
-
-        self.dropout = nn.Dropout(0.3)
-        self.relu = nn.ReLU()
-
-    def forward(self, x):
-        # Reshape the input for BatchNorm1d if necessary
-        if x.dim() == 3:
-            x = x.view(-1, x.size(-1))  # Flatten batch and locations if needed
-
-        x = self.relu(self.bn1(self.fc1(x)))
-        x = self.dropout(x)
-
-        x = self.relu(self.bn2(self.fc2(x)))
-        x = self.dropout(x)
-
-        x = self.fc3(x)
 
         return x
