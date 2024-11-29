@@ -1,7 +1,7 @@
 import os
 import time
 import argparse 
-from src.models import MultiModalNetwork
+from src.original.models import MultiModalNetwork
 from src.original.data_loader import CustomDataset, custom_collate_fn
 from src.original.losses import EikonalLoss, ConfidenceLoss
 import torch
@@ -323,13 +323,11 @@ if torch.cuda.device_count() > 1:
 model = model.to(device)
 print("Model moved to device")
 
-model = model.to(device)
-print("Model moved to device")
-
 # Show memory reserved and allocated
 print(f"Memory reserved: {torch.cuda.memory_reserved()} bytes")
 print(f"Memory allocated: {torch.cuda.memory_allocated()} bytes")
 
+# Adapt for new data loading
 train_file = np.load(cfg.TRAIN_FILE_PATH, allow_pickle=True)
 val_file = np.load(cfg.VAL_FILE_PATH, allow_pickle=True)
 
