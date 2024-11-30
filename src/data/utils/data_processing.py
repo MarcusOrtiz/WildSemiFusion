@@ -1,12 +1,12 @@
 import os
 
-import cv2
 import math as m
 import numpy as np
 import random
-from imageio.v3 import imread, imwrite
 from typing import Tuple
 from cv2 import imread, resize, cvtColor, COLOR_RGB2GRAY, INTER_NEAREST
+
+
 from skimage import color
 
 GRAY_CHANNEL = (0, 1)
@@ -70,15 +70,19 @@ def gray_continuous_to_gray_discretized(gray_colors: np.array, num_bins):
 
 def lab_discretized_to_rgb(lab_colors: np.array, num_bins):
     lab_colors = lab_colors.copy()
+    print(f"lab_colors shape {lab_colors.shape}")
 
     lab_colors_normalized = (lab_colors.astype(float) / (num_bins-1))
-    # print(f"lab_colors_normalized clipped: {lab_colors_normalized}")
 
 
     lab_colors_continuous = lab_colors_normalized * [channel_size(L_CHANNEL),
                                                      channel_size(A_CHANNEL),
                                                      channel_size(B_CHANNEL)] + \
                             [L_CHANNEL[0], A_CHANNEL[0], B_CHANNEL[0]]
+
+    print("L channel range:", lab_colors_continuous[:, :, 0].min(), lab_colors_continuous[:, :, 0].max())
+    print("A channel range:", lab_colors_continuous[:, :, 1].min(), lab_colors_continuous[:, :, 1].max())
+    print("B channel range:", lab_colors_continuous[:, :, 2].min(), lab_colors_continuous[:, :, 2].max())
 
     rgb_image = color.lab2rgb(lab_colors_continuous)
 

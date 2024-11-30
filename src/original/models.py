@@ -232,7 +232,7 @@ class MultiModalNetwork(nn.Module):
         location_features = self.fourier_layer(locations.view(-1, 3))
 
         num_queries = location_features.shape[0]
-        pc_features = pc_features.repeat_interleave(num_locations // pc_features.shape[0], dim=0)
+        pc_features = pc_features.repeat_interleave(num_locations // pc_features.shape[0], dim=0) # Repeating the global feature along a locations dimension
         audio_features = audio_features.repeat_interleave(num_locations // audio_features.shape[0], dim=0)
         distance_weights = self.compute_distance_weight(locations)
         weighted_pc_features = pc_features * distance_weights

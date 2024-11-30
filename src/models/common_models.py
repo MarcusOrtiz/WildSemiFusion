@@ -4,9 +4,9 @@ import torch.nn.functional as F
 
 
 class FourierFeatureLayer(nn.Module):
-    def __init__(self, in_dim=2, out_dim=128):
+    def __init__(self, in_dim=2, out_dim=256):
         super(FourierFeatureLayer, self).__init__()
-        self.weights = nn.Parameter(torch.randn(in_dim, out_dim) * 2 * torch.pi)
+        self.weights = nn.Parameter(torch.randn(in_dim, out_dim // 2) * 2 * torch.pi)
 
     def forward(self, x):
         return torch.cat([torch.sin(x @ self.weights), torch.cos(x @ self.weights)], dim=-1)
@@ -22,7 +22,7 @@ class GrayscaleCNN(nn.Module):
         self.conv2 = nn.Conv2d(16, 32, kernel_size=3, padding=1)
         self.bn2 = nn.BatchNorm2d(32)
 
-        self.fc = nn.Linear(32 * (image_size[0] // 4) * (image_size[1] // 4), out_dim)
+        self.fc = nn.Linear(32 * (image_size[0] // (2 ** 2)) * (image_size[1] // (2 ** 2)), out_dim)
 
     def forward(self, x):
         x = self.max_pool(F.relu(self.bn1(self.conv1(x))))  # [batch, 16, H/2, W/2]
@@ -39,13 +39,13 @@ class LABCNN(nn.Module):
         self.bn1 = nn.BatchNorm2d(32)
         self.max_pool = nn.MaxPool2d(2, 2)  # used at every layer
 
-        self.conv2 = nn.Conv2d(16, 64, kernel_size=3, padding=1)
+        self.conv2 = nn.Conv2d(32, 64, kernel_size=3, padding=1)
         self.bn2 = nn.BatchNorm2d(64)
 
-        self.conv3 = nn.Conv2d(32, 128, kernel_size=3, padding=1)
+        self.conv3 = nn.Conv2d(64, 128, kernel_size=3, padding=1)
         self.bn3 = nn.BatchNorm2d(128)
 
-        self.fc = nn.Linear(128 * (image_size[0] // (2 ^ 3)) * (image_size[1] // (2 ^ 3)), out_dim)
+        self.fc = nn.Linear(128 * (image_size[0] // (2 ** 3)) * (image_size[1] // (2 ** 3)), out_dim)
 
     def forward(self, x):
         x = self.max_pool(F.relu(self.bn1(self.conv1(x))))
@@ -53,7 +53,7 @@ class LABCNN(nn.Module):
         x = self.max_pool(F.relu(self.bn3(self.conv3(x))))
 
         x = x.view(x.size(0), -1)  # Flatten
-        x = self.relu(self.fc(x))
+        x = F.relu(self.fc(x))
         return x
 
 
@@ -61,6 +61,9 @@ class CompressionLayer(nn.Module):
     def __init__(self, in_dim=768, out_dim=256):
         super(CompressionLayer, self).__init__()
         self.fc1 = nn.Linear(in_dim, out_dim)
+
+    def forward(self, x):
+        return self.fc1(x)
 
 
 class ColorNet(nn.Module):
@@ -126,7 +129,6 @@ class SemanticNet(nn.Module):
         x = self.fc3(x)
 
         return x
-
 
 
 class ResidualBlock(nn.Module):

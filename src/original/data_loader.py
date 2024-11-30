@@ -74,10 +74,7 @@ class CustomDataset(Dataset):
     def __len__(self):
         return len(self.locations) // self.points_per_batch
 
-    """
-    Memory Bug
-        - likely occuring here with the number of available scans
-    """
+
     def __getitem__(self, idx):
         print(f"Getting item {idx}", flush=True)
         num_available_scans = len(self.all_points_indices)

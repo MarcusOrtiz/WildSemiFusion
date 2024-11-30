@@ -36,6 +36,18 @@ training_losses_color = []
 validation_losses_semantics = []
 validation_losses_color = []
 
+"""
+Generate Locations (currently all pixels TODO: always consistent on number of locations between indexes)
+Locations is somewhat misleading, it's actually the indices of the non-void pixels whereas WildFusion uses actual
+Locations are normalized to [0, 1]
+"""
+y_coords, x_coords = np.meshgrid(np.arange(cfg.IMAGE_SIZE[0]), np.arange(cfg.IMAGE_SIZE[1]),
+                                 indexing='ij')
+locations_grid = np.stack([y_coords, x_coords], axis=-1).reshape(-1, 2)  # (IMAGE_SIZE[0]*IMAGE_SIZE[1], 2)
+normalized_locations = locations_grid.astype(np.float32)
+normalized_locations[:, 0] /= cfg.IMAGE_SIZE[0]
+normalized_locations[:, 1] /= cfg.IMAGE_SIZE[1]
+
 
 def train_val(model, dataloader, val_dataloader, epochs, lr, checkpoint_path, best_model_path):
     model.to(device)
@@ -77,30 +89,26 @@ def train_val(model, dataloader, val_dataloader, epochs, lr, checkpoint_path, be
 
             optimizer.zero_grad()
 
-            # TODO: Not sure what this is doing, verify with GPT
-            if len(point_clouds.shape) == 4:
-                batch_size, scans_per_batch, channels, num_points = point_clouds.shape
-                point_clouds = point_clouds.view(batch_size * scans_per_batch, channels, num_points)
-
-            batch_size, scans_per_batch, channels, height, width = audio_data.shape
-            audio_data = audio_data.view(batch_size * scans_per_batch, channels, height, width)
-
-            if len(locations.shape) == 2:
-                num_locations = locations.shape[0] // batch_size
-                locations = locations.view(batch_size, num_locations, 3)
+            # Repeat locations along batch dimension
+            batch_size = gt_semantics.shape[0]
+            locations = torch.from_numpy(normalized_locations).to(device).repeat(batch_size, 1, 1)
 
             # Predictions from model
             preds_semantics, preds_color_logits = model(locations, gray_images, lab_images)
 
-            # Loss calculations
+            # Semantic loss
             loss_semantics = cfg.WEIGHT_SEMANTICS * criterion_ce_semantics(preds_semantics.view(-1, cfg.CLASSES),
                                                                            gt_semantics.long().view(-1))
+
+            # Color loss
             preds_color_logits = preds_color_logits.view(-1, cfg.NUM_BINS)
             gt_color = gt_color.view(-1)
             loss_color = cfg.WEIGHT_COLOR * criterion_ce_color(preds_color_logits, gt_color)
 
             # Total loss
             total_loss = loss_semantics + loss_color
+
+            # Optimization
             total_loss.backward()
             optimizer.step()
             epoch_loss += total_loss.item()
@@ -117,35 +125,28 @@ def train_val(model, dataloader, val_dataloader, epochs, lr, checkpoint_path, be
         val_loss = 0.0
         with torch.no_grad():
             for batch in val_dataloader:
-                locations = batch['locations'].to(device)
                 gt_semantics = batch['gt_semantics'].to(device)  # TODO: change dataset to follow format
                 gt_color = batch['gt_color'].to(device)  # TODO: change dataset to follow format
                 gray_images = batch['gray_images'].to(device)
                 lab_images = batch['lab_images'].to(device)
 
-
-                # TODO: Not sure what to do before model estimates
-                if len(point_clouds.shape) == 4:
-                    batch_size, scans_per_batch, channels, num_points = point_clouds.shape
-                    point_clouds = point_clouds.view(batch_size * scans_per_batch, channels, num_points)
-
-                batch_size, scans_per_batch, channels, height, width = audio_data.shape
-                audio_data = audio_data.view(batch_size * scans_per_batch, channels, height, width)
-
-                # Reshape locations if necessary
-                if len(locations.shape) == 2:
-                    num_locations = locations.shape[0] // batch_size
-                    locations = locations.view(batch_size, num_locations, 3)
+                # Repeat locations along batch dimension
+                batch_size = gt_semantics.shape[0]
+                locations = torch.from_numpy(normalized_locations).to(device).repeat(batch_size, 1, 1)
 
                 # Predicting with model
                 preds_semantics, preds_color_logits = model(locations, gray_images, lab_images)
 
-                # Loss calculations
+                # Semantic Loss | Assuming the semantic net is producing hot ones for classes
                 loss_semantics_val = cfg.WEIGHT_SEMANTICS * criterion_ce_semantics(
                     preds_semantics.view(-1, cfg.CLASSES), gt_semantics.long().view(-1))
+
+                # Color loss
                 preds_color_logits = preds_color_logits.view(-1, cfg.NUM_BINS)
+                gt_color = gt_color.view(-1)
                 loss_color_val = cfg.WEIGHT_COLOR * criterion_ce_color(preds_color_logits, gt_color)
 
+                # Total loss
                 val_loss += loss_semantics_val + loss_color_val
 
         average_val_loss = val_loss / len(val_dataloader)
@@ -198,7 +199,7 @@ device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print(f"Using device: {device}")
 
 # Initialize model
-model = MultiModalNetwork()
+model = MultiModalNetwork(cfg.NUM_BINS, cfg.CLASSES)
 print("Model initialized successfully")
 
 if torch.cuda.device_count() > 1:

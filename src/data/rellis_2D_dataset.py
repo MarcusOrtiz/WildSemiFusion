@@ -51,58 +51,17 @@ class Rellis2DDataset(Dataset):
         noisy_gray_image = image_gaussian_noise(gt_gray_image, self.image_noise, space='gray')
         masked_noisy_gray_image = image_mask(noisy_gray_image)
 
-        """
-        Generate Locations (currently all pixels TODO: always consistent on number of locations between indexes)
-        Locations is somewhat misleading, it's actually the indices of the non-void pixels whereas WildFusion uses actual
-        Locations are normalized to [0, 1]
-        """
-        y_coords, x_coords = np.meshgrid(np.arange(self.image_size[0]), np.arange(self.image_size[1]), indexing='ij')
-        locations = np.stack([y_coords, x_coords], axis=-1).reshape(-1, 2)  # Shape: (H*W, 2)
-        normalized_locations = locations.astype(np.float32)
-        normalized_locations[:, 0] /=  self.image_size[0]
-        normalized_locations[:, 1] /= self.image_size[1]
-
-
         # Convert images to tensors and adjust dimensions
-        lab_image_tensor = torch.from_numpy(
-            masked_noisy_lab_image_discretized.transpose(2, 0, 1)).float()  # Shape: (3, H, W)
-        gray_image_tensor = torch.from_numpy(masked_noisy_gray_image[np.newaxis, ...]).float()  # Shape: (1, H, W)
+        gt_semantics_tensor = torch.tensor(gt_semantics, dtype=torch.long)
+        gt_color_tensor = torch.tensor(gt_lab_image, dtype=torch.long)
+        lab_image_tensor = torch.tensor(masked_noisy_lab_image_discretized.transpose(2, 0, 1), dtype=torch.float32)  # Shape: (3, H, W)
+        gray_image_tensor = torch.tensor(masked_noisy_gray_image[np.newaxis, ...], dtype=torch.float32)  # Shape: (1, H, W)
 
         return {
-            'locations': locations,
-            'gt_semantics': gt_labels,
-            'gt_lab_image': gt_lab_image,
-            'lab_image': masked_noisy_lab_image_discretized,
-            'gray_image': masked_noisy_gray_image_discretized,
-            'gt_color': ...
+            'gt_semantics': gt_semantics_tensor,
+            'gt_color': gt_color_tensor,
+            'lab_image': lab_image_tensor,
+            'gray_image': gray_image_tensor,
         }
 
-
-def custom_collate_fn(batch):
-    keys = batch[0].keys()
-    collated = {key: [] for key in keys}
-
-    for item in batch:
-        for key in keys:
-            collated[key].append(item[key])
-
-
-# TODO: remove later, this is only to confirm that new ways are working
-from skimage import color
-def rgb_to_lab_discretized(rgb_colors: np.array, num_bins):
-    """
-    Taken from WildFusion/src/data_loader
-    """
-    colorless_mask = (rgb_colors == [-1, -1, -1]).all(axis=-1)
-    lab_colors = color.rgb2lab(rgb_colors)  # Convert normalized RGB to LAB
-
-    lab_colors_normalized = (lab_colors + [0, 128, 128]) / [100, 255, 255]
-    lab_colors_normalized = np.clip(lab_colors_normalized, 0, 1)
-
-    lab_colors_discretized = (lab_colors_normalized * (num_bins - 1)).astype(int)
-    lab_colors_discretized[colorless_mask] = num_bins - 1
-
-    assert np.all(lab_colors_discretized >= 0) and np.all(
-        lab_colors_discretized < num_bins), "Discretized LAB values out of range"
-    return lab_colors_discretized
 

@@ -8,8 +8,8 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 # Paths
 SAVE_DIR = os.path.join(BASE_DIR, "saved_model_test_full")
-TRAIN_FILE_PATH = os.path.join(BASE_DIR, "input/train_data.npz")
-VAL_FILE_PATH = os.path.join(BASE_DIR, "input/val_data.npz")
+TRAIN_DIR = os.path.join(BASE_DIR, "../input/rellis_2d_preprocessed/train/00000")
+VAL_DIR = os.path.join(BASE_DIR, "../input/rellis_2d_preprocessed/val/00000")
 CHECKPOINT_PATH = os.path.join(SAVE_DIR, "checkpoint.pth")
 BEST_MODEL_PATH = os.path.join(SAVE_DIR, "best_model.pth")
 
@@ -23,8 +23,8 @@ EARLY_STOP_EPOCHS = 25
 WEIGHT_SEMANTICS = 1.0
 WEIGHT_COLOR = 1.0
 
-# Data processing parameters
-NUM_WORKERS = 3
+# Data processing parameters (for now to avoid error)
+NUM_WORKERS = 0
 
 # Model and Dataset parameters
 NUM_BINS = 313 # including void
