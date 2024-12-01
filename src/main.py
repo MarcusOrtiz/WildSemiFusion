@@ -87,22 +87,31 @@ def train_val(model, dataloader, val_dataloader, epochs, lr, checkpoint_path, be
         for batch in dataloader:
             count += 1
             print(f"Loading batch {count}", flush=True)
-            print(torch.cuda.memory_summary())
             gt_semantics = batch['gt_semantics'].to(device)  # TODO: change dataset to follow format
             gt_color = batch['gt_color'].to(device)  # TODO: change dataset to follow format
             gray_images = batch['gray_image'].to(device)
             lab_images = batch['lab_image'].to(device)
+            if torch.cuda.is_available():
+                print(f"Allocated memory after batch load: {torch.cuda.memory_allocated()} bytes")
+                print(f"Reserved memory after batch load: {torch.cuda.memory_reserved()} bytes")
 
             # Repeat locations along batch dimension
             batch_size = gt_semantics.shape[0]
-            locations = torch.from_numpy(normalized_locations).to(device).repeat(batch_size, 1, 1)
-            locations.requires_grad_(True)
+            locations = normalized_locations_tensor.unsqueeze(0).expand(batch_size, -1, -1)
+            if torch.cuda.is_available():
+                print(f"Allocated memory after locations: {torch.cuda.memory_allocated()} bytes")
+                print(f"Reserved memory after locations: {torch.cuda.memory_reserved()} bytes")
+            # locations.requires_grad_(True)
 
             optimizer.zero_grad()
 
             # Predictions from model
             preds_semantics, preds_color_logits = model(locations, gray_images, lab_images)
-            del gray_images, lab_images
+            if torch.cuda.is_available():
+                print(f"Allocated memory after model: {torch.cuda.memory_allocated()} bytes")
+                print(f"Reserved memory after model: {torch.cuda.memory_reserved()} bytes")
+            del locations, gray_images, lab_images
+
 
             # Semantic loss
             # print(f"Preds Semantics Shape: {preds_semantics.shape}")

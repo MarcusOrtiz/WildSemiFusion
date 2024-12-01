@@ -58,6 +58,9 @@ class Rellis2DDataset(Dataset):
         lab_image_tensor = torch.tensor(masked_noisy_lab_image_discretized.transpose(2, 0, 1), dtype=torch.float32)  # Shape: (3, H, W)
         gray_image_tensor = torch.tensor(masked_noisy_gray_image[np.newaxis, ...], dtype=torch.float32)  # Shape: (1, H, W)
 
+        # free memory
+
+
         return {
             'gt_semantics': gt_semantics_tensor,
             'gt_color': gt_color_tensor,
