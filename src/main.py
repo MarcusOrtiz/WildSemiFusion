@@ -3,11 +3,12 @@ import time
 import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
+from src.data.utils.data_processing import image_to_array
 import numpy as np
 import random
 import src.config as cfg
 from src.models.model_1 import MultiModalNetwork
-from src.data.rellis_2D_dataset import Rellis2DDataset, custom_collate_fn
+from src.data.rellis_2D_dataset import Rellis2DDataset
 
 """
 TODO: Set up argument parser for command-line flags for plotting and using previous weights
@@ -48,14 +49,19 @@ normalized_locations = locations_grid.astype(np.float32)
 normalized_locations[:, 0] /= cfg.IMAGE_SIZE[0]
 normalized_locations[:, 1] /= cfg.IMAGE_SIZE[1]
 
-
 def train_val(model, dataloader, val_dataloader, epochs, lr, checkpoint_path, best_model_path):
     model.to(device)
 
-    optimizer = torch.optim.Adam([
-        {'params': model.module.semantic_fcn.parameters(), 'lr': 5e-6, 'weight_decay': 1e-5},
-        {'params': model.module.color_fcn.parameters(), 'weight_decay': 1e-4},
-    ], lr=lr)
+    if torch.cuda.device_count() > 1:
+        optimizer = torch.optim.Adam([
+            {'params': model.module.semantic_fcn.parameters(), 'lr': 5e-6, 'weight_decay': 1e-5},
+            {'params': model.module.color_fcn.parameters(), 'weight_decay': 1e-4},
+        ], lr=lr)
+    else:
+        optimizer = torch.optim.Adam([
+            {'params': model.semantic_fcn.parameters(), 'lr': 5e-6, 'weight_decay': 1e-5},
+            {'params': model.color_fcn.parameters(), 'weight_decay': 1e-4},
+        ], lr=lr)
 
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'min', factor=cfg.LR_DECAY_FACTOR,
                                                            patience=cfg.PATIENCE)
@@ -66,44 +72,52 @@ def train_val(model, dataloader, val_dataloader, epochs, lr, checkpoint_path, be
     # Start timing
     start_time = time.time()
 
-    criterion_mse = nn.MSELoss()
     criterion_ce_semantics = nn.CrossEntropyLoss(ignore_index=0)  # TODO: Make sure to account for void class
     criterion_ce_color = nn.CrossEntropyLoss(ignore_index=312)  # TODO: Make sure to account for masking
 
     best_color_val_loss = float('inf')
     epochs_no_improve_color = 0
 
+    normalized_locations_tensor = torch.from_numpy(normalized_locations).to(device)
     for epoch in range(start_epoch, epochs):
         model.train()
         epoch_loss = 0.0
 
+        count = 0
         for batch in dataloader:
-            # TODO: Consider the dimensions later in the loss functions and see if they match the dataset loading
-            locations = batch['locations'].to(device)
+            count += 1
+            print(f"Loading batch {count}", flush=True)
+            print(torch.cuda.memory_summary())
             gt_semantics = batch['gt_semantics'].to(device)  # TODO: change dataset to follow format
             gt_color = batch['gt_color'].to(device)  # TODO: change dataset to follow format
-            gray_images = batch['gray_images'].to(device)
-            lab_images = batch['lab_images'].to(device)
-
-            locations.requires_grad_(True)
-
-            optimizer.zero_grad()
+            gray_images = batch['gray_image'].to(device)
+            lab_images = batch['lab_image'].to(device)
 
             # Repeat locations along batch dimension
             batch_size = gt_semantics.shape[0]
             locations = torch.from_numpy(normalized_locations).to(device).repeat(batch_size, 1, 1)
+            locations.requires_grad_(True)
+
+            optimizer.zero_grad()
 
             # Predictions from model
             preds_semantics, preds_color_logits = model(locations, gray_images, lab_images)
+            del gray_images, lab_images
 
             # Semantic loss
-            loss_semantics = cfg.WEIGHT_SEMANTICS * criterion_ce_semantics(preds_semantics.view(-1, cfg.CLASSES),
+            # print(f"Preds Semantics Shape: {preds_semantics.shape}")
+            # print(f"GT Semantics Shape: {gt_semantics.long().view(-1).shape}")
+            loss_semantics = cfg.WEIGHT_SEMANTICS * criterion_ce_semantics(preds_semantics,
                                                                            gt_semantics.long().view(-1))
+            del preds_semantics, gt_semantics
 
             # Color loss
+            # print(f"Preds Color Shape: {preds_color_logits.view(-1, cfg.NUM_BINS).shape}")
+            # print(f"GT Color Shape: {gt_color.view(-1).shape}")
             preds_color_logits = preds_color_logits.view(-1, cfg.NUM_BINS)
             gt_color = gt_color.view(-1)
             loss_color = cfg.WEIGHT_COLOR * criterion_ce_color(preds_color_logits, gt_color)
+            del preds_color_logits, gt_color
 
             # Total loss
             total_loss = loss_semantics + loss_color
@@ -137,15 +151,18 @@ def train_val(model, dataloader, val_dataloader, epochs, lr, checkpoint_path, be
                 # Predicting with model
                 preds_semantics, preds_color_logits = model(locations, gray_images, lab_images)
 
-                # Semantic Loss | Assuming the semantic net is producing hot ones for classes
-                loss_semantics_val = cfg.WEIGHT_SEMANTICS * criterion_ce_semantics(
-                    preds_semantics.view(-1, cfg.CLASSES), gt_semantics.long().view(-1))
+                # Semantic loss
+                # print(f"Preds Semantics Shape: {preds_semantics.shape}")
+                # print(f"GT Semantics Shape: {gt_semantics.long().view(-1).shape}")
+                loss_semantics_val = cfg.WEIGHT_SEMANTICS * criterion_ce_semantics(preds_semantics,
+                                                                               gt_semantics.long().view(-1))
 
                 # Color loss
+                # print(f"Preds Color Shape: {preds_color_logits.view(-1, cfg.NUM_BINS).shape}")
+                # print(f"GT Color Shape: {gt_color.view(-1).shape}")
                 preds_color_logits = preds_color_logits.view(-1, cfg.NUM_BINS)
                 gt_color = gt_color.view(-1)
                 loss_color_val = cfg.WEIGHT_COLOR * criterion_ce_color(preds_color_logits, gt_color)
-
                 # Total loss
                 val_loss += loss_semantics_val + loss_color_val
 
@@ -195,8 +212,14 @@ def train_val(model, dataloader, val_dataloader, epochs, lr, checkpoint_path, be
     return model
 
 
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-print(f"Using device: {device}")
+if torch.cuda.is_available():
+    torch.cuda.empty_cache()
+    device = torch.device("cuda")
+
+else:
+    device = torch.device("cpu")
+
+print(f"Using device with cleared cache: {device}")
 
 # Initialize model
 model = MultiModalNetwork(cfg.NUM_BINS, cfg.CLASSES)
@@ -209,31 +232,46 @@ if torch.cuda.device_count() > 1:
 model = model.to(device)
 print("Model moved to device")
 
-model = model.to(device)
-print("Model moved to device")
-
 # Show memory reserved and allocated
-print(f"Memory reserved: {torch.cuda.memory_reserved()} bytes")
-print(f"Memory allocated: {torch.cuda.memory_allocated()} bytes")
+# print(f"Memory reserved: {torch.cuda.memory_reserved()} bytes")
+# print(f"Memory allocated: {torch.cuda.memory_allocated()} bytes")
 
 # TODO: Go through files correctly, maybe start preprocessing?
-train_preprocessed_data = ...
-val_preprocessed_data = ...
+# Load preprocessed data
+train_image_files = os.listdir(f"{cfg.TRAIN_DIR}/pylon_camera_node")
+train_semantic_images = os.listdir(f"{cfg.TRAIN_DIR}/pylon_camera_node_label_id")
+train_rgb_images = [image_to_array(f"{cfg.TRAIN_DIR}/pylon_camera_node/{image_file}") for image_file in
+                    train_image_files]
+train_semantics = [image_to_array(f"{cfg.TRAIN_DIR}/pylon_camera_node_label_id/{label_file}", 1) for label_file in
+                   train_semantic_images]
+print(f"Train_semantics shape: {train_semantics[0].shape}")
+train_preloaded_data = {'rgb_images': train_rgb_images, 'gt_semantics': train_semantics}
+print("Loaded training preprocessed data")
+val_image_files = os.listdir(f"{cfg.VAL_DIR}/pylon_camera_node")
+val_semantic_images = os.listdir(f"{cfg.VAL_DIR}/pylon_camera_node_label_id")
+val_rgb_images = [image_to_array(f"{cfg.VAL_DIR}/pylon_camera_node/{image_file}") for image_file in val_image_files]
+val_semantics = [image_to_array(f"{cfg.VAL_DIR}/pylon_camera_node_label_id/{label_file}", 1) for label_file in
+                 val_semantic_images]
+val_preloaded_data = {'rgb_images': val_rgb_images, 'gt_semantics': train_semantics}
+print("Loaded validation preprocessed data")
 
-print("Data loaded successfully")
+# Create datasets
+train_dataset = Rellis2DDataset(preloaded_data=train_preloaded_data, num_bins=cfg.NUM_BINS, image_size=cfg.IMAGE_SIZE,
+                                image_noise=cfg.IMAGE_NOISE, image_mask_rate=cfg.IMAGE_MASK_RATE)
+print("Created training dataset")
+val_dataset = Rellis2DDataset(preloaded_data=val_preloaded_data, num_bins=cfg.NUM_BINS, image_size=cfg.IMAGE_SIZE,
+                              image_noise=cfg.IMAGE_NOISE, image_mask_rate=cfg.IMAGE_MASK_RATE)
+print("Created validation dataset")
 
-# TODO Change to new dataset
-# Turns out that the bug isn't the batches in the later step its here where I am loading all the data
-train_dataset = Rellis2DDataset(preloaded_data=train_preprocessed_data, num_bins=cfg.NUM_BINS, image_size=cfg.IMAGE_SIZE, image_noise=cfg.IMAGE_NOISE, image_mask_rate=cfg.IMAGE_MASK_RATE)
-val_dataset = Rellis2DDataset(preloaded_data=val_preprocessed_data, num_bins=cfg.NUM_BINS, points_per_scan=cfg.POINTS_PER_SCAN)
-print("Datasets created successfully")
+# Load the datasets
+train_dataloader = DataLoader(train_dataset, batch_size=cfg.BATCH_SIZE, shuffle=True, num_workers=cfg.NUM_WORKERS,
+                              pin_memory=False, drop_last=True)
+print("Created training dataloader")
+val_dataloader = DataLoader(val_dataset, batch_size=cfg.BATCH_SIZE, shuffle=False, num_workers=cfg.NUM_WORKERS,
+                            pin_memory=False, drop_last=True)
+print("Created validation dataloader")
 
-# Pass the datasets to the dataloaders
-train_dataloader = DataLoader(train_dataset, batch_size=cfg.BATCH_SIZE, shuffle=True, num_workers=cfg.NUM_WORKERS, pin_memory=True,
-                              collate_fn=custom_collate_fn, drop_last=True)
-val_dataloader = DataLoader(val_dataset, batch_size=cfg.BATCH_SIZE, shuffle=False, num_workers=cfg.NUM_WORKERS, pin_memory=True,
-                            collate_fn=custom_collate_fn, drop_last=True)
-print("DataLoaders created successfully")
+
 
 # Train and validate the model
 trained_model = train_val(
@@ -243,5 +281,6 @@ trained_model = train_val(
     epochs=cfg.EPOCHS,
     lr=cfg.LR,
     checkpoint_path=cfg.CHECKPOINT_PATH,
+    best_model_path=cfg.BEST_MODEL_PATH
 )
 print("Training complete")

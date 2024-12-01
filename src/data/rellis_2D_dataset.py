@@ -38,6 +38,7 @@ class Rellis2DDataset(Dataset):
         rgb_image = self.rgb_images[idx]
         lab_image = rgb_to_lab_continuous(rgb_image)
         gt_semantics = self.gt_semantics_lst[idx]
+        # print(f"GT Semantics Shape In Dataset: {gt_semantics.shape}")
 
         # Convert RGB to discretized Lab and continuous Gray ground truth images
         gt_gray_image = rgb_to_gray(rgb_image)

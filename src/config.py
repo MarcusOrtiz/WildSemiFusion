@@ -14,7 +14,7 @@ CHECKPOINT_PATH = os.path.join(SAVE_DIR, "checkpoint.pth")
 BEST_MODEL_PATH = os.path.join(SAVE_DIR, "best_model.pth")
 
 # Training parameters
-BATCH_SIZE = 16
+BATCH_SIZE = 4
 EPOCHS = 300
 LR = 0.00002
 EARLY_STOP_EPOCHS = 25
@@ -28,7 +28,7 @@ NUM_WORKERS = 0
 
 # Model and Dataset parameters
 NUM_BINS = 313 # including void
-CLASSES = 34  # including void
+CLASSES = 35  # including void
 IMAGE_SIZE = (224, 224)
 IMAGE_NOISE = 0.02
 IMAGE_MASK_RATE = (.1, .3)

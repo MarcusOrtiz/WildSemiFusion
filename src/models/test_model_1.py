@@ -11,38 +11,7 @@ from src.models.model_1 import MultiModalNetwork
 
 import src.config as cfg
 
-# Load preprocessed data
-train_image_files = os.listdir(f"{cfg.TRAIN_DIR}/pylon_camera_node")
-train_semantic_images = os.listdir(f"{cfg.TRAIN_DIR}/pylon_camera_node_label_id")
-train_rgb_images = [image_to_array(f"{cfg.TRAIN_DIR}/pylon_camera_node/{image_file}") for image_file in
-                    train_image_files]
-train_semantics = [image_to_array(f"{cfg.TRAIN_DIR}/pylon_camera_node_label_id/{label_file}") for label_file in
-                   train_semantic_images]
-train_preloaded_data = {'rgb_images': train_rgb_images, 'gt_semantics': train_semantics}
-print("Loaded training preprocessed data")
-val_image_files = os.listdir(f"{cfg.VAL_DIR}/pylon_camera_node")
-val_semantic_images = os.listdir(f"{cfg.VAL_DIR}/pylon_camera_node_label_id")
-val_rgb_images = [image_to_array(f"{cfg.VAL_DIR}/pylon_camera_node/{image_file}") for image_file in val_image_files]
-val_semantics = [image_to_array(f"{cfg.VAL_DIR}/pylon_camera_node_label_id/{label_file}") for label_file in
-                 val_semantic_images]
-val_preloaded_data = {'rgb_images': val_rgb_images, 'gt_semantics': train_semantics}
-print("Loaded validation preprocessed data")
 
-# Create datasets
-train_dataset = Rellis2DDataset(preloaded_data=train_preloaded_data, num_bins=cfg.NUM_BINS, image_size=cfg.IMAGE_SIZE,
-                                image_noise=cfg.IMAGE_NOISE, image_mask_rate=cfg.IMAGE_MASK_RATE)
-print("Created training dataset")
-val_dataset = Rellis2DDataset(preloaded_data=val_preloaded_data, num_bins=cfg.NUM_BINS, image_size=cfg.IMAGE_SIZE,
-                              image_noise=cfg.IMAGE_NOISE, image_mask_rate=cfg.IMAGE_MASK_RATE)
-print("Created validation dataset")
-
-# Load the datasets
-train_dataloader = DataLoader(train_dataset, batch_size=cfg.BATCH_SIZE, shuffle=True, num_workers=cfg.NUM_WORKERS,
-                              pin_memory=False, drop_last=True)
-print("Created training dataloader")
-val_dataloader = DataLoader(val_dataset, batch_size=cfg.BATCH_SIZE, shuffle=False, num_workers=cfg.NUM_WORKERS,
-                            pin_memory=False, drop_last=True)
-print("Created validation dataloader")
 
 # Verify dataset
 # for idx in range(len(train_dataset)):
@@ -123,6 +92,12 @@ print("Model initialized successfully")
 
 model = model.to(device)
 print("Model moved to device")
+
+
+# Train Model
+
+
+
 
 # Test model
 y_coords, x_coords = np.meshgrid(np.arange(cfg.IMAGE_SIZE[0]), np.arange(cfg.IMAGE_SIZE[1]),

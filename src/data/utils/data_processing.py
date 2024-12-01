@@ -4,7 +4,7 @@ import math as m
 import numpy as np
 import random
 from typing import Tuple
-from cv2 import imread, resize, cvtColor, COLOR_RGB2GRAY, INTER_NEAREST
+from cv2 import imread, resize, cvtColor, COLOR_RGB2GRAY, INTER_NEAREST, IMREAD_GRAYSCALE
 
 
 from skimage import color
@@ -15,8 +15,10 @@ A_CHANNEL = (-128, 127)
 B_CHANNEL = (-128, 127)
 
 
-def image_to_array(label_path: str):
-    return np.array(imread(label_path))
+def image_to_array(image_path: str, c: int = 3) -> np.array:
+    if c == 1:
+        return np.array(imread(image_path, IMREAD_GRAYSCALE))
+    return np.array(imread(image_path))
 
 
 def resize_rgb_and_annotation(rgb_path: str, label_path: str, size: Tuple[int, int] = (224, 224)) \
