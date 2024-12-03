@@ -86,7 +86,7 @@ def train_val(model, dataloader, val_dataloader, epochs, lr, checkpoint_path, be
         count = 0
         for batch in dataloader:
             count += 1
-            print(f"Loading batch {count}", flush=True)
+            print(f"Loading training batch {count}", flush=True)
             gt_semantics = batch['gt_semantics'].to(device)  # TODO: change dataset to follow format
             gt_color = batch['gt_color'].to(device)  # TODO: change dataset to follow format
             gray_images = batch['gray_image'].to(device)
@@ -146,45 +146,63 @@ def train_val(model, dataloader, val_dataloader, epochs, lr, checkpoint_path, be
 
         model.eval()
         val_loss = 0.0
+        count = 0
         with torch.no_grad():
             for batch in val_dataloader:
+                count += 1
+                print(f"Loading validation batch {count}", flush=True)
                 gt_semantics = batch['gt_semantics'].to(device)  # TODO: change dataset to follow format
                 gt_color = batch['gt_color'].to(device)  # TODO: change dataset to follow format
-                gray_images = batch['gray_images'].to(device)
-                lab_images = batch['lab_images'].to(device)
+                gray_images = batch['gray_image'].to(device)
+                lab_images = batch['lab_image'].to(device)
+
+                if torch.cuda.is_available():
+                    print(f"Allocated memory after batch load: {torch.cuda.memory_allocated()} bytes")
+                    print(f"Reserved memory after batch load: {torch.cuda.memory_reserved()} bytes")
 
                 # Repeat locations along batch dimension
                 batch_size = gt_semantics.shape[0]
-                locations = torch.from_numpy(normalized_locations).to(device).repeat(batch_size, 1, 1)
+                locations = normalized_locations_tensor.unsqueeze(0).expand(batch_size, -1, -1)
+                if torch.cuda.is_available():
+                    print(f"Allocated memory after locations: {torch.cuda.memory_allocated()} bytes")
+                    print(f"Reserved memory after locations: {torch.cuda.memory_reserved()} bytes")
+
 
                 # Predicting with model
                 preds_semantics, preds_color_logits = model(locations, gray_images, lab_images)
+                if torch.cuda.is_available():
+                    print(f"Allocated memory after model: {torch.cuda.memory_allocated()} bytes")
+                    print(f"Reserved memory after model: {torch.cuda.memory_reserved()} bytes")
+                del locations, gray_images, lab_images
 
                 # Semantic loss
                 # print(f"Preds Semantics Shape: {preds_semantics.shape}")
                 # print(f"GT Semantics Shape: {gt_semantics.long().view(-1).shape}")
-                loss_semantics_val = cfg.WEIGHT_SEMANTICS * criterion_ce_semantics(preds_semantics,
+                loss_semantics = cfg.WEIGHT_SEMANTICS * criterion_ce_semantics(preds_semantics,
                                                                                gt_semantics.long().view(-1))
+                del preds_semantics, gt_semantics
 
                 # Color loss
                 # print(f"Preds Color Shape: {preds_color_logits.view(-1, cfg.NUM_BINS).shape}")
                 # print(f"GT Color Shape: {gt_color.view(-1).shape}")
                 preds_color_logits = preds_color_logits.view(-1, cfg.NUM_BINS)
                 gt_color = gt_color.view(-1)
-                loss_color_val = cfg.WEIGHT_COLOR * criterion_ce_color(preds_color_logits, gt_color)
-                # Total loss
-                val_loss += loss_semantics_val + loss_color_val
+                loss_color = cfg.WEIGHT_COLOR * criterion_ce_color(preds_color_logits, gt_color)
+                del preds_color_logits, gt_color
+
+
+                val_loss += loss_semantics + loss_color
 
         average_val_loss = val_loss / len(val_dataloader)
 
         validation_losses.append(average_val_loss.item())
-        validation_losses_semantics.append(loss_semantics_val.item())
-        validation_losses_color.append(loss_color_val.item())
+        validation_losses_semantics.append(loss_semantics.item())
+        validation_losses_color.append(loss_color.item())
 
         print(f"Validation Loss: {average_val_loss.item()}")
 
-        if loss_color_val < best_color_val_loss:
-            best_color_val_loss = loss_color_val
+        if loss_color < best_color_val_loss:
+            best_color_val_loss = loss_color
             epochs_no_improve_color = 0
         else:
             epochs_no_improve_color += 1
@@ -246,22 +264,38 @@ print("Model moved to device")
 # print(f"Memory allocated: {torch.cuda.memory_allocated()} bytes")
 
 # TODO: Go through files correctly, maybe start preprocessing?
-# Load preprocessed data
-train_image_files = os.listdir(f"{cfg.TRAIN_DIR}/pylon_camera_node")
-train_semantic_images = os.listdir(f"{cfg.TRAIN_DIR}/pylon_camera_node_label_id")
+# # Load preprocessed data
+# train_sequences = sorted(os.listdir(cfg.TRAIN_DIR))
+# train_image_files = []
+# train_semantics = []
+# for sequence in train_sequences:
+#     train_image_files.extend(sorted(os.listdir(f"{cfg.TRAIN_DIR}/{sequence}/pylon_camera_node")))
+#     train_semantics.extend(sorted(os.listdir(f"{cfg.TRAIN_DIR}/{sequence}/pylon_camera_node_label_id")))
+# print("Loaded training preprocessed data")
+# val_sequences = sorted(os.listdir(cfg.VAL_DIR))
+# val_image_files = []
+# val_semantics = []
+# for sequence in val_sequences:
+#     val_image_files.extend(sorted(os.listdir(f"{cfg.VAL_DIR}/{sequence}/pylon_camera_node")))
+#     val_semantics.extend(sorted(os.listdir(f"{cfg.VAL_DIR}/{sequence}/pylon_camera_node_label_id")))
+# print("Loaded validation preprocessed data")
+
+
+
+
+# train_image_files = sorted(os.listdir(f"{cfg.TRAIN_DIR}/pylon_camera_node"))
+train_semantic_images = sorted(os.listdir(f"{cfg.TRAIN_DIR}/pylon_camera_node_label_id"))
 train_rgb_images = [image_to_array(f"{cfg.TRAIN_DIR}/pylon_camera_node/{image_file}") for image_file in
                     train_image_files]
 train_semantics = [image_to_array(f"{cfg.TRAIN_DIR}/pylon_camera_node_label_id/{label_file}", 1) for label_file in
                    train_semantic_images]
-print(f"Train_semantics shape: {train_semantics[0].shape}")
 train_preloaded_data = {'rgb_images': train_rgb_images, 'gt_semantics': train_semantics}
-print("Loaded training preprocessed data")
-val_image_files = os.listdir(f"{cfg.VAL_DIR}/pylon_camera_node")
-val_semantic_images = os.listdir(f"{cfg.VAL_DIR}/pylon_camera_node_label_id")
+val_image_files = sorted(os.listdir(f"{cfg.VAL_DIR}/pylon_camera_node"))
+val_semantic_images = sorted(os.listdir(f"{cfg.VAL_DIR}/pylon_camera_node_label_id"))
 val_rgb_images = [image_to_array(f"{cfg.VAL_DIR}/pylon_camera_node/{image_file}") for image_file in val_image_files]
 val_semantics = [image_to_array(f"{cfg.VAL_DIR}/pylon_camera_node_label_id/{label_file}", 1) for label_file in
                  val_semantic_images]
-val_preloaded_data = {'rgb_images': val_rgb_images, 'gt_semantics': train_semantics}
+val_preloaded_data = {'rgb_images': val_rgb_images, 'gt_semantics': val_semantics}
 print("Loaded validation preprocessed data")
 
 # Create datasets

@@ -10,6 +10,7 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 SAVE_DIR = os.path.join(BASE_DIR, "saved_model_test_full")
 TRAIN_DIR = os.path.join(BASE_DIR, "../input/rellis_2d_preprocessed/train/00000")
 VAL_DIR = os.path.join(BASE_DIR, "../input/rellis_2d_preprocessed/val/00000")
+TEST_DIR = os.path.join(BASE_DIR, "../input/rellis_2d_preprocessed/test/00000")
 CHECKPOINT_PATH = os.path.join(SAVE_DIR, "checkpoint.pth")
 BEST_MODEL_PATH = os.path.join(SAVE_DIR, "best_model.pth")
 
