@@ -283,7 +283,7 @@ print("Model moved to device")
 
 
 
-# train_image_files = sorted(os.listdir(f"{cfg.TRAIN_DIR}/pylon_camera_node"))
+train_image_files = sorted(os.listdir(f"{cfg.TRAIN_DIR}/pylon_camera_node"))
 train_semantic_images = sorted(os.listdir(f"{cfg.TRAIN_DIR}/pylon_camera_node_label_id"))
 train_rgb_images = [image_to_array(f"{cfg.TRAIN_DIR}/pylon_camera_node/{image_file}") for image_file in
                     train_image_files]
