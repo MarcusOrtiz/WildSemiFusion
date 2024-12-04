@@ -165,7 +165,7 @@ def train_val(model, dataloader, val_dataloader, epochs, lr, checkpoint_path, be
             # plt.show()
 
 
-            if (count % 1 == 0): print(f"Loading training batch {count}", flush=True)
+            if (count < 10 or count % 10 == 0): print(f"Loading training batch {count}", flush=True)
             gt_semantics = batch['gt_semantics'].to(device)  # TODO: change dataset to follow format
             gt_color = batch['gt_color'].to(device)  # TODO: change dataset to follow format
             gray_images = batch['gray_image'].to(device)

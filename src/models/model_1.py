@@ -16,7 +16,7 @@ class MultiModalNetwork(nn.Module):
         self.compression_layer = CompressionLayer(in_dim=384, out_dim=128)
 
         self.semantic_fcn = SemanticNet(input_dim=128, hidden_dim=64, num_classes=num_classes)
-        self.color_fcn = ColorNet(in_features=128, hidden_dim=64, num_bins=num_bins)
+        self.color_fcn = ColorNet(in_features=128, hidden_dim=32, num_bins=num_bins)
 
     def forward(self, locations, gray_images, lab_images):
         '''

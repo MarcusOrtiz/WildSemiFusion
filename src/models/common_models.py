@@ -79,6 +79,7 @@ class ColorNet(nn.Module):
 
     def __init__(self, in_features=256, hidden_dim=128, num_bins=313):
         super(ColorNet, self).__init__()
+        self.num_bins = num_bins
         self.fc1 = nn.Linear(in_features, hidden_dim)
         self.bn1 = nn.LayerNorm(hidden_dim)  # Use LayerNorm
         self.dropout1 = nn.Dropout(0.1)
@@ -97,7 +98,7 @@ class ColorNet(nn.Module):
         x = F.leaky_relu(self.bn2(self.fc2(x)), negative_slope=0.01)
         x = self.dropout2(x)
         x = self.fc3(x)
-        x = x.view(-1, 3, 313)
+        x = x.view(-1, 3, self.num_bins)
         # x = F.softmax(x, dim=-1)  # Apply Softmax to color bins
         return x
 
