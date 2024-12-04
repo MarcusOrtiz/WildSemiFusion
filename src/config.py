@@ -7,12 +7,15 @@ SEED = 7
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 # Paths
-SAVE_DIR = os.path.join(BASE_DIR, "saved_model_test_full")
+SAVE_DIR_BASE_1 = os.path.join(BASE_DIR, "saved_model_base_1")
+SAVE_DIR_BASE_2 = os.path.join(BASE_DIR, "saved_model_base_2")
+SAVE_DIR_COLOR_1 = os.path.join(BASE_DIR, "saved_expert_color_1")
+SAVE_DIR_BASE_COLOR_1 = os.path.join(BASE_DIR, "saved_model_base_expert_color_1")
 TRAIN_DIR = os.path.join(BASE_DIR, "../input/rellis_2d_preprocessed/train")
 VAL_DIR = os.path.join(BASE_DIR, "../input/rellis_2d_preprocessed/val")
 TEST_DIR = os.path.join(BASE_DIR, "../input/rellis_2d_preprocessed/test")
-CHECKPOINT_PATH = os.path.join(SAVE_DIR, "checkpoint.pth")
-BEST_MODEL_PATH = os.path.join(SAVE_DIR, "best_model.pth")
+CHECKPOINT_PATH_BASE_1 = os.path.join(SAVE_DIR_BASE_1, "checkpoint.pth")
+BEST_MODEL_PATH_BASE_1 = os.path.join(SAVE_DIR_BASE_1, "best_model.pth")
 
 # Training parameters
 BATCH_SIZE = 4
