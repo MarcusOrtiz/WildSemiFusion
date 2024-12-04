@@ -79,14 +79,25 @@ import src.config as cfg
 #     # Break after verifying the first batch for simplicity
 #     break
 # Load preprocessed data
-test_image_files = sorted(os.listdir(f"{cfg.TEST_DIR}/pylon_camera_node"))
-test_semantic_images = sorted(os.listdir(f"{cfg.TEST_DIR}/pylon_camera_node_label_id"))
-test_rgb_images = [image_to_array(f"{cfg.TEST_DIR}/pylon_camera_node/{image_file}") for image_file in
-                   test_image_files]
-test_semantics = [image_to_array(f"{cfg.TEST_DIR}/pylon_camera_node_label_id/{label_file}", 1) for label_file in
-                  test_semantic_images]
-test_preloaded_data = {'rgb_images': test_rgb_images, 'gt_semantics': test_semantics}
-print("Loaded training preprocessed data")
+test_sequences = sorted([seq for seq in os.listdir(cfg.TEST_DIR) if not seq.startswith('.')])
+test_rgb_images = []
+test_semantics = []
+for sequence in test_sequences:
+    test_image_files = sorted(os.listdir(f"{cfg.TEST_DIR}/{sequence}/pylon_camera_node"))
+    test_semantics_images = sorted(os.listdir(f"{cfg.TEST_DIR}/{sequence}/pylon_camera_node_label_id"))
+    assert len(test_image_files) == len(test_semantics_images)
+    for rgb_file, label_file in zip(test_image_files, test_semantics_images):
+        assert rgb_file.split('.')[0] == label_file.split('.')[0]
+    test_rgb_images.extend(
+        [image_to_array(f"{cfg.TEST_DIR}/{sequence}/pylon_camera_node/{image_file}") for image_file in
+         test_image_files])
+    test_semantics.extend([image_to_array(f"{cfg.TEST_DIR}/{sequence}/pylon_camera_node_label_id/{label_file}", 1) for
+                            label_file in test_semantics_images])
+test_preloaded_data = {
+    'rgb_images': test_rgb_images,
+    'gt_semantics': test_semantics
+}
+
 
 # Create datasets
 test_dataset = Rellis2DDataset(preloaded_data=test_preloaded_data, num_bins=cfg.NUM_BINS, image_size=cfg.IMAGE_SIZE,
@@ -148,7 +159,7 @@ with torch.no_grad():
         print(f"Predicted Semantics Shape: {preds_semantics.shape}")
         print(f"Predicted Color Logits Shape: {preds_color_logits.shape}")
 
-        preds_colors = torch.argmax(preds_color_logits, dim=-1)  # Shape: (H, W, 3)
+        preds_colors = torch.argmax(preds_color_logits, dim=-1)  # Shape: (batchsize, H, W, 3)
 
         # Convert to NumPy array and translate to rgb
         preds_colors_np = preds_colors.cpu().numpy()

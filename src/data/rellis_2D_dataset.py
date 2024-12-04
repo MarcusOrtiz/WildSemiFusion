@@ -8,6 +8,7 @@ from src.data.utils.data_processing import (rgb_to_gray, rgb_to_lab_continuous, 
                                             gray_continuous_to_gray_discretized, image_gaussian_noise, image_mask)
 from src.data.utils.data_processing import image_to_array
 from src.config import IMAGE_SIZE
+import src.config as cfg
 
 ONTOLOGY_VOID = 0
 
@@ -32,7 +33,7 @@ class Rellis2DDataset(Dataset):
         self.gt_semantics_lst = data['gt_semantics']
 
     def __len__(self):
-        return len(self.gt_semantics_lst)
+        return len(self.rgb_images)
 
     def __getitem__(self, idx):
         rgb_image = self.rgb_images[idx]

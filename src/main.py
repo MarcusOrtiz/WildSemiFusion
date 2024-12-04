@@ -9,10 +9,10 @@ import random
 import src.config as cfg
 from src.models.model_1 import MultiModalNetwork
 from src.data.rellis_2D_dataset import Rellis2DDataset
+from matplotlib import pyplot as plt
 
 """
 TODO: Set up argument parser for command-line flags for plotting and using previous weights
-TODO: Plot losses
 TODO: Consider adding confidence as output, this would also have an associated loss
 TODO: Verify seed does not affect randomization used in the model and processing
 """
@@ -26,6 +26,48 @@ torch.cuda.manual_seed(cfg.SEED)
 # Ensure the save directory exists
 if not os.path.exists(cfg.SAVE_DIR):
     os.makedirs(cfg.SAVE_DIR)
+
+def plot_losses(epoch):
+    # Subplot for individual losses
+    plt.figure(figsize=(12, 6))  # Set figure size
+    plt.subplot(1, 2, 1)
+    plt.plot(training_losses_semantics, label="Training Loss Semantics")
+    plt.plot(validation_losses_semantics, label="Validation Loss Semantics")
+    plt.xlabel("Epochs")
+    plt.ylabel("Loss")
+    plt.legend(loc="upper right")
+    plt.title("Loss for Semantics")
+
+    plt.subplot(1, 2, 2)
+    plt.plot(training_losses_color, label="Training Loss Color")
+    plt.plot(validation_losses_color, label="Validation Loss Color")
+    plt.xlabel("Epochs")
+    plt.ylabel("Loss")
+    plt.legend(loc="upper right")
+    plt.title("Loss for Color")
+
+    plt.tight_layout()  # Ensure no overlap
+    plt.savefig(cfg.INDIVIDUAL_LOSS_PLOT_PATH)
+    plt.close()
+    print(f"Individual loss plot saved to: {cfg.INDIVIDUAL_LOSS_PLOT_PATH}")
+
+    # Combined loss plot
+    plt.figure(figsize=(10, 5))  # Adjust figure size
+    plt.plot(training_losses, label="Training Loss")
+    plt.plot(validation_losses, label="Validation Loss")
+    plt.xlabel("Epochs")
+    plt.ylabel("Loss")
+    plt.legend(loc="upper right")
+    plt.title("Training and Validation Losses")
+
+    plt.savefig(cfg.LOSS_PLOT_PATH)
+    plt.close()
+    print(f"Plot saved to: {cfg.LOSS_PLOT_PATH}")
+
+# Ensure the save directory exists
+if not os.path.exists(cfg.SAVE_DIR):
+    os.makedirs(cfg.SAVE_DIR)
+
 
 # Initialize loss trackers
 training_losses = []
@@ -48,6 +90,7 @@ locations_grid = np.stack([y_coords, x_coords], axis=-1).reshape(-1, 2)  # (IMAG
 normalized_locations = locations_grid.astype(np.float32)
 normalized_locations[:, 0] /= cfg.IMAGE_SIZE[0]
 normalized_locations[:, 1] /= cfg.IMAGE_SIZE[1]
+
 
 def train_val(model, dataloader, val_dataloader, epochs, lr, checkpoint_path, best_model_path):
     model.to(device)
@@ -83,10 +126,46 @@ def train_val(model, dataloader, val_dataloader, epochs, lr, checkpoint_path, be
         model.train()
         epoch_loss = 0.0
 
+
+        if (epoch + 1) % cfg.PLOT_INTERVAL == 0:
+            plot_losses(epoch + 1)
+
         count = 0
         for batch in dataloader:
             count += 1
-            print(f"Loading training batch {count}", flush=True)
+
+            # from src.data.utils.data_processing import lab_discretized_to_rgb
+            # gt_semantics = batch['gt_semantics']
+            # gt_color = batch['gt_color']
+            # lab_image = batch['lab_image']
+            # gray_image = batch['gray_image']
+            #
+            # # Assuming `train_rgb_images` corresponds to a part of the dataset,
+            # # visualize the first image in the batch for clarity
+            # fig, axs = plt.subplots(2, 2, figsize=(15, 15))
+            #
+            # print(f"GT Semantics Shape: {gt_semantics.shape}")
+            # print(f"GT Color Shape: {gt_color.shape}")
+            # print(f"LAB Image Shape: {lab_image.shape}")
+            # print(f"Gray Image Shape: {gray_image.shape}")
+            #
+            # axs[0, 0].imshow(lab_discretized_to_rgb(gt_color[0].numpy(), cfg.NUM_BINS))
+            # axs[0, 0].set_title('GT LAB Image to RGB')
+            # axs[0, 1].imshow(gt_semantics[0].to(torch.uint8).numpy(), cmap='gray')
+            # axs[0, 1].set_title('GT Semantics')
+            #
+            # axs[1, 0].imshow(lab_discretized_to_rgb(lab_image[0].numpy().transpose(1, 2, 0), cfg.NUM_BINS))
+            # axs[1, 0].set_title('LAB Image to RGB')
+            # axs[1, 1].imshow(gray_image[0].numpy().transpose(1, 2, 0), cmap='gray')
+            # axs[1, 1].set_title('Gray Image')
+            #
+            #
+            #
+            # plt.tight_layout()
+            # plt.show()
+
+
+            if (count % 1 == 0): print(f"Loading training batch {count}", flush=True)
             gt_semantics = batch['gt_semantics'].to(device)  # TODO: change dataset to follow format
             gt_color = batch['gt_color'].to(device)  # TODO: change dataset to follow format
             gray_images = batch['gray_image'].to(device)
@@ -111,7 +190,6 @@ def train_val(model, dataloader, val_dataloader, epochs, lr, checkpoint_path, be
                 print(f"Allocated memory after model: {torch.cuda.memory_allocated()} bytes")
                 print(f"Reserved memory after model: {torch.cuda.memory_reserved()} bytes")
             del locations, gray_images, lab_images
-
 
             # Semantic loss
             # print(f"Preds Semantics Shape: {preds_semantics.shape}")
@@ -167,7 +245,6 @@ def train_val(model, dataloader, val_dataloader, epochs, lr, checkpoint_path, be
                     print(f"Allocated memory after locations: {torch.cuda.memory_allocated()} bytes")
                     print(f"Reserved memory after locations: {torch.cuda.memory_reserved()} bytes")
 
-
                 # Predicting with model
                 preds_semantics, preds_color_logits = model(locations, gray_images, lab_images)
                 if torch.cuda.is_available():
@@ -189,7 +266,6 @@ def train_val(model, dataloader, val_dataloader, epochs, lr, checkpoint_path, be
                 gt_color = gt_color.view(-1)
                 loss_color = cfg.WEIGHT_COLOR * criterion_ce_color(preds_color_logits, gt_color)
                 del preds_color_logits, gt_color
-
 
                 val_loss += loss_semantics + loss_color
 
@@ -263,38 +339,39 @@ print("Model moved to device")
 # print(f"Memory reserved: {torch.cuda.memory_reserved()} bytes")
 # print(f"Memory allocated: {torch.cuda.memory_allocated()} bytes")
 
-# TODO: Go through files correctly, maybe start preprocessing?
-# # Load preprocessed data
-# train_sequences = sorted(os.listdir(cfg.TRAIN_DIR))
-# train_image_files = []
-# train_semantics = []
-# for sequence in train_sequences:
-#     train_image_files.extend(sorted(os.listdir(f"{cfg.TRAIN_DIR}/{sequence}/pylon_camera_node")))
-#     train_semantics.extend(sorted(os.listdir(f"{cfg.TRAIN_DIR}/{sequence}/pylon_camera_node_label_id")))
-# print("Loaded training preprocessed data")
-# val_sequences = sorted(os.listdir(cfg.VAL_DIR))
-# val_image_files = []
-# val_semantics = []
-# for sequence in val_sequences:
-#     val_image_files.extend(sorted(os.listdir(f"{cfg.VAL_DIR}/{sequence}/pylon_camera_node")))
-#     val_semantics.extend(sorted(os.listdir(f"{cfg.VAL_DIR}/{sequence}/pylon_camera_node_label_id")))
-# print("Loaded validation preprocessed data")
-
-
-
-
-train_image_files = sorted(os.listdir(f"{cfg.TRAIN_DIR}/pylon_camera_node"))
-train_semantic_images = sorted(os.listdir(f"{cfg.TRAIN_DIR}/pylon_camera_node_label_id"))
-train_rgb_images = [image_to_array(f"{cfg.TRAIN_DIR}/pylon_camera_node/{image_file}") for image_file in
-                    train_image_files]
-train_semantics = [image_to_array(f"{cfg.TRAIN_DIR}/pylon_camera_node_label_id/{label_file}", 1) for label_file in
-                   train_semantic_images]
+# Load preprocessed data
+# TODO: Consider loading the paths into dataloader instead, to prevent cpu memory
+train_sequences = sorted([seq for seq in os.listdir(cfg.TRAIN_DIR) if not seq.startswith('.')])
+train_sequences = train_sequences[:1]
+train_rgb_images = []
+train_semantics = []
+for sequence in train_sequences:
+    train_image_files = sorted(os.listdir(f"{cfg.TRAIN_DIR}/{sequence}/pylon_camera_node"))
+    train_semantics_images = sorted(os.listdir(f"{cfg.TRAIN_DIR}/{sequence}/pylon_camera_node_label_id"))
+    assert len(train_image_files) == len(train_semantics_images)
+    for rgb_file, label_file in zip(train_image_files, train_semantics_images):
+        assert rgb_file.split('.')[0] == label_file.split('.')[0]
+    train_rgb_images.extend(
+        [image_to_array(f"{cfg.TRAIN_DIR}/{sequence}/pylon_camera_node/{image_file}") for image_file in
+         train_image_files])
+    train_semantics.extend([image_to_array(f"{cfg.TRAIN_DIR}/{sequence}/pylon_camera_node_label_id/{label_file}", 1) for
+                            label_file in train_semantics_images])
 train_preloaded_data = {'rgb_images': train_rgb_images, 'gt_semantics': train_semantics}
-val_image_files = sorted(os.listdir(f"{cfg.VAL_DIR}/pylon_camera_node"))
-val_semantic_images = sorted(os.listdir(f"{cfg.VAL_DIR}/pylon_camera_node_label_id"))
-val_rgb_images = [image_to_array(f"{cfg.VAL_DIR}/pylon_camera_node/{image_file}") for image_file in val_image_files]
-val_semantics = [image_to_array(f"{cfg.VAL_DIR}/pylon_camera_node_label_id/{label_file}", 1) for label_file in
-                 val_semantic_images]
+print("Loaded training preprocessed data")
+val_sequences = sorted([seq for seq in os.listdir(cfg.VAL_DIR) if not seq.startswith('.')])
+val_sequences = val_sequences[:1]
+val_rgb_images = []
+val_semantics = []
+for sequence in val_sequences:
+    val_image_files = sorted(os.listdir(f"{cfg.VAL_DIR}/{sequence}/pylon_camera_node"))
+    val_semantics_images = sorted(os.listdir(f"{cfg.VAL_DIR}/{sequence}/pylon_camera_node_label_id"))
+    assert len(val_image_files) == len(val_semantics_images)
+    for rgb_file, label_file in zip(val_image_files, val_semantics_images):
+        assert rgb_file.split('.')[0] == label_file.split('.')[0]
+    val_rgb_images.extend([image_to_array(f"{cfg.VAL_DIR}/{sequence}/pylon_camera_node/{image_file}") for image_file in
+                           val_image_files])
+    val_semantics.extend([image_to_array(f"{cfg.VAL_DIR}/{sequence}/pylon_camera_node_label_id/{label_file}", 1) for
+                          label_file in val_semantics_images])
 val_preloaded_data = {'rgb_images': val_rgb_images, 'gt_semantics': val_semantics}
 print("Loaded validation preprocessed data")
 
@@ -313,8 +390,6 @@ print("Created training dataloader")
 val_dataloader = DataLoader(val_dataset, batch_size=cfg.BATCH_SIZE, shuffle=False, num_workers=cfg.NUM_WORKERS,
                             pin_memory=False, drop_last=True)
 print("Created validation dataloader")
-
-
 
 # Train and validate the model
 trained_model = train_val(
