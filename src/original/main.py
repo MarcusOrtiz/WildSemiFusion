@@ -364,5 +364,5 @@ trained_model = train_val(
     lr=cfg.LR,
     checkpoint_path=cfg.CHECKPOINT_PATH,
     best_model_path=cfg.BEST_MODEL_PATH,
-    use_pretrained=not args.scratch )
+    use_pretrained=not args.scratch)
 print("Training complete")

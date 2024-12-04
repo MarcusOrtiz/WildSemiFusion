@@ -33,7 +33,7 @@ class Rellis2DDataset(Dataset):
         self.gt_semantics_lst = data['gt_semantics']
 
     def __len__(self):
-        return len(self.rgb_images)
+        return len(self.gt_semantics_lst)
 
     def __getitem__(self, idx):
         rgb_image = self.rgb_images[idx]

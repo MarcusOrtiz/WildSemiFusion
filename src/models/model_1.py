@@ -3,6 +3,7 @@ import torch.nn as nn
 from src.models.common_models import FourierFeatureLayer, ResidualBlock, SemanticNet, ColorNet, LABCNN, GrayscaleCNN, \
     CompressionLayer
 
+
 class MultiModalNetwork(nn.Module):
     # TODO: Change masking to be a value outside of the color space
     # TOOD: Make sure not to count the void class against the model
@@ -28,7 +29,8 @@ class MultiModalNetwork(nn.Module):
         batch_size, num_locations, _ = locations.shape
 
         locations = locations.reshape(-1, 2)
-        location_features = self.fourier_layer(locations) # (batch_size, num_locations, locations_dim) -> (batch_size * num_locations, 2) -> (batch_size * num_locations, 256)
+        location_features = self.fourier_layer(
+            locations)  # (batch_size, num_locations, locations_dim) -> (batch_size * num_locations, 2) -> (batch_size * num_locations, 256)
         del locations
         gray_features = self.gray_cnn(gray_images)  # (batch_size, 1, image_size[0], image_size[1]) -> (batch_size, 256)
         del gray_images
@@ -48,13 +50,14 @@ class MultiModalNetwork(nn.Module):
             print(f"Reserved memory encoding expansion: {torch.cuda.memory_reserved()} bytes")
 
         # Concatenation and compression of encoding features
-        combining_features = torch.cat([location_features, gray_features, lab_features], dim=-1) # (batch_size * num_locations, 768)
+        combining_features = torch.cat([location_features, gray_features, lab_features],
+                                       dim=-1)  # (batch_size * num_locations, 768)
         del location_features, gray_features, lab_features
         compressed_features = self.compression_layer(combining_features)  # (batch_size * num_locations, 256)
         del combining_features
 
         # Generate predictions
         semantics = self.semantic_fcn(compressed_features)  # (batch_size * num_locations, num_classes)
-        color_logits = self.color_fcn(compressed_features)  # (batch_size * num_locations, 3, num_bins)
+        raw_color_logits = self.color_fcn(compressed_features)  # (batch_size * num_locations, 3, num_bins) of type
 
-        return semantics, color_logits
+        return semantics, raw_color_logits

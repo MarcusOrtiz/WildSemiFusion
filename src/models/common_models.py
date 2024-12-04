@@ -98,7 +98,7 @@ class ColorNet(nn.Module):
         x = self.dropout2(x)
         x = self.fc3(x)
         x = x.view(-1, 3, 313)
-        x = F.softmax(x, dim=-1)  # Apply Softmax to color bins
+        # x = F.softmax(x, dim=-1)  # Apply Softmax to color bins
         return x
 
 
