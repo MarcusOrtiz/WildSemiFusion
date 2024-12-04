@@ -33,7 +33,7 @@ class GrayscaleCNN(nn.Module):
 
 
 class LABCNN(nn.Module):
-    def __init__(self, image_size=(224, 224), out_dim=256):
+    def __init__(self, image_size, out_dim):
         super(LABCNN, self).__init__()
         self.conv1 = nn.Conv2d(3, 32, kernel_size=3, padding=1)
         self.bn1 = nn.BatchNorm2d(32)

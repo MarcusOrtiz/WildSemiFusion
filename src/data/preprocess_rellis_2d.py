@@ -13,7 +13,6 @@ DEFAULT_OUTPUT_PATH = os.path.join(BASE_DIR, "../../input/rellis_2d_preprocessed
 log.basicConfig(level=log.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 
-# TODO: Consider sequential processing, right now it is broken at set and common file matching to prevent missing data. Possible there is no missing data
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Preprocess rellis images")
     parser.add_argument("--input_dir", type=str, default=DEFAULT_INPUT_PATH,

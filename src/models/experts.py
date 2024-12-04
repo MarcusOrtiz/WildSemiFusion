@@ -4,17 +4,17 @@ from src.models.common_models import FourierFeatureLayer, ResidualBlock, Semanti
     CompressionLayer
 
 
-class MultiModalNetwork(nn.Module):
+class ColorExpert(nn.Module):
     # TODO: Change masking to be a value outside of the color space
     # TOOD: Make sure not to count the void class against the model
-    def __init__(self, num_bins, num_classes):
-        super(MultiModalNetwork, self).__init__()
+    def __init__(self, num_bins):
+        super(ColorExpert, self).__init__()
         self.fourier_layer = FourierFeatureLayer(in_dim=2, out_dim=128)
         self.lab_cnn = LABCNN(image_size=(224, 224), out_dim=128)
 
         self.compression_layer = CompressionLayer(in_dim=256, out_dim=128)
 
-        self.color_fcn = ColorNet(in_features=128, hidden_dim=32, num_bins=num_bins)
+        self.color_fcn = ColorNet(in_features=128, hidden_dim=64, num_bins=num_bins)
 
     def forward(self, locations, gray_images, lab_images):
         '''

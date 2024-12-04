@@ -5,7 +5,7 @@ import torch.nn.functional as F
 from torch.utils.data import Dataset, DataLoader
 import numpy as np
 from src.data.utils.data_processing import (rgb_to_gray, rgb_to_lab_continuous, lab_continuous_to_lab_discretized,
-                                            gray_continuous_to_gray_discretized, image_gaussian_noise, image_mask)
+                                            gray_continuous_to_gray_discretized, image_gaussian_noise, create_mask)
 from src.data.utils.data_processing import image_to_array
 from src.config import IMAGE_SIZE
 import src.config as cfg
@@ -38,29 +38,29 @@ class Rellis2DDataset(Dataset):
     def __getitem__(self, idx):
         rgb_image = self.rgb_images[idx]
         lab_image = rgb_to_lab_continuous(rgb_image)
+        gray_image = rgb_to_gray(rgb_image)
         gt_semantics = self.gt_semantics_lst[idx]
         # print(f"GT Semantics Shape In Dataset: {gt_semantics.shape}")
 
-        # Convert RGB to discretized Lab and continuous Gray ground truth images
-        gt_gray_image = rgb_to_gray(rgb_image)
-        gt_lab_image = lab_continuous_to_lab_discretized(lab_image, self.num_bins)
+        # Discretize lab image for gt and add mask
+        gt_lab_image = lab_continuous_to_lab_discretized(lab_image, self.num_bins, void_bin=True)
+        mask = create_mask(self.image_size[0], self.image_size[1], self.image_mask_rate)
+        gt_lab_image[mask] = [self.num_bins-1, self.num_bins-1, self.num_bins-1]
 
-        # Apply noise and masks to images
+        # Apply noise to gray and lab images
+        noisy_gray_image = image_gaussian_noise(gray_image, self.image_noise, space='gray')
         noisy_lab_image = image_gaussian_noise(lab_image, self.image_noise, space='lab')
-        masked_noisy_lab_image = image_mask(noisy_lab_image)
-        masked_noisy_lab_image_discretized = lab_continuous_to_lab_discretized(masked_noisy_lab_image, self.num_bins)
 
-        noisy_gray_image = image_gaussian_noise(gt_gray_image, self.image_noise, space='gray')
-        masked_noisy_gray_image = image_mask(noisy_gray_image)
+        # Discretize noisy lab image and add mask
+        noisy_lab_image_discretized = lab_continuous_to_lab_discretized(noisy_lab_image, self.num_bins, void_bin=True)
+        noisy_lab_image_discretized[mask] = [self.num_bins-1, self.num_bins-1, self.num_bins-1]
+        masked_noisy_lab_image_discretized = noisy_lab_image_discretized
 
         # Convert images to tensors and adjust dimensions
         gt_semantics_tensor = torch.tensor(gt_semantics, dtype=torch.long)
         gt_color_tensor = torch.tensor(gt_lab_image, dtype=torch.long)
         lab_image_tensor = torch.tensor(masked_noisy_lab_image_discretized.transpose(2, 0, 1), dtype=torch.float32)  # Shape: (3, H, W)
-        gray_image_tensor = torch.tensor(masked_noisy_gray_image[np.newaxis, ...], dtype=torch.float32)  # Shape: (1, H, W)
-
-        # free memory
-
+        gray_image_tensor = torch.tensor(noisy_gray_image[np.newaxis, ...], dtype=torch.float32)  # Shape: (1, H, W)
 
         return {
             'gt_semantics': gt_semantics_tensor,

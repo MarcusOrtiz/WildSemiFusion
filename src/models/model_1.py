@@ -5,7 +5,6 @@ from src.models.common_models import FourierFeatureLayer, ResidualBlock, Semanti
 
 
 class MultiModalNetwork(nn.Module):
-    # TODO: Change masking to be a value outside of the color space
     # TOOD: Make sure not to count the void class against the model
     def __init__(self, num_bins, num_classes):
         super(MultiModalNetwork, self).__init__()

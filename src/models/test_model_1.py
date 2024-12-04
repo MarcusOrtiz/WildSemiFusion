@@ -3,7 +3,8 @@ import torch
 import matplotlib.pyplot as plt
 import numpy as np
 
-from src.data.utils.data_processing import image_to_array, lab_discretized_to_rgb
+from src.data.utils.data_processing import image_to_array, lab_discretized_to_rgb, lab_continuous_to_lab_discretized, \
+    rgb_to_gray, rgb_to_lab_continuous, load_sequential_data
 from src.data.rellis_2D_dataset import Rellis2DDataset
 from torch.utils.data import DataLoader
 from src.models.model_1 import MultiModalNetwork
@@ -79,35 +80,10 @@ import src.config as cfg
 #     # Break after verifying the first batch for simplicity
 #     break
 # Load preprocessed data
-test_sequences = sorted([seq for seq in os.listdir(cfg.TEST_DIR) if not seq.startswith('.')])
-test_rgb_images = []
-test_semantics = []
-for sequence in test_sequences:
-    test_image_files = sorted(os.listdir(f"{cfg.TEST_DIR}/{sequence}/pylon_camera_node"))
-    test_semantics_images = sorted(os.listdir(f"{cfg.TEST_DIR}/{sequence}/pylon_camera_node_label_id"))
-    assert len(test_image_files) == len(test_semantics_images)
-    for rgb_file, label_file in zip(test_image_files, test_semantics_images):
-        assert rgb_file.split('.')[0] == label_file.split('.')[0]
-    test_rgb_images.extend(
-        [image_to_array(f"{cfg.TEST_DIR}/{sequence}/pylon_camera_node/{image_file}") for image_file in
-         test_image_files])
-    test_semantics.extend([image_to_array(f"{cfg.TEST_DIR}/{sequence}/pylon_camera_node_label_id/{label_file}", 1) for
-                            label_file in test_semantics_images])
-test_preloaded_data = {
-    'rgb_images': test_rgb_images,
-    'gt_semantics': test_semantics
-}
 
+test_preloaded_data = load_sequential_data(cfg.TEST_DIR)
+print("Successfully loaded preprocessed test data")
 
-# Create datasets
-test_dataset = Rellis2DDataset(preloaded_data=test_preloaded_data, num_bins=cfg.NUM_BINS, image_size=cfg.IMAGE_SIZE,
-                               image_noise=cfg.IMAGE_NOISE, image_mask_rate=cfg.IMAGE_MASK_RATE)
-print("Created testing dataset")
-
-# Load the datasets
-test_dataloader = DataLoader(test_dataset, batch_size=cfg.BATCH_SIZE, shuffle=False, num_workers=cfg.NUM_WORKERS,
-                             pin_memory=False, drop_last=True)
-print("Created testing dataloader")
 
 # Create model
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -119,7 +95,7 @@ print("Model initialized successfully")
 model = model.to(device)
 print("Model moved to device")
 
-state_dict = torch.load(cfg.BEST_MODEL_PATH)
+state_dict = torch.load(cfg.BEST_MODEL_PATH_BASE)
 model.load_state_dict(state_dict)
 
 model.eval()
@@ -133,18 +109,24 @@ with torch.no_grad():
     normalized_locations[:, 0] /= cfg.IMAGE_SIZE[0]
     normalized_locations[:, 1] /= cfg.IMAGE_SIZE[1]
 
-    for batch in test_dataloader:
-        gt_semantics = batch['gt_semantics'].to(device)  # TODO: change dataset to follow format
-        gt_colors = batch['gt_color'].to(device)  # TODO: change dataset to follow format
-        gray_images = batch['gray_image'].to(device)
-        lab_images = batch['lab_image'].to(device)
-        batch_size = gt_semantics.shape[0]
+    for rgb_image, gt_semantics in zip(test_preloaded_data['rgb_images'], test_preloaded_data['gt_semantics']):
+        # Convert rgb_image to gray and lab
+        gray_image = rgb_to_gray(rgb_image)
+        lab_image = rgb_to_lab_continuous(rgb_image)
+        lab_image_discretized = lab_continuous_to_lab_discretized(lab_image, cfg.NUM_BINS, void_bin=True)
+
+        batch_size = 1
+
         locations = torch.from_numpy(normalized_locations).to(device).repeat(batch_size, 1, 1)
+        gt_semantics_tensor = torch.tensor(gt_semantics, dtype=torch.long).unsqueeze(0)
+        gt_color_tensor = torch.tensor(lab_image_discretized, dtype=torch.long).unsqueeze(0)
+        lab_image_tensor = torch.tensor(lab_image_discretized.transpose(2, 0, 1), dtype=torch.float32).unsqueeze(0)  # Shape: (3, H, W)
+        gray_image_tensor = torch.tensor(gray_image[np.newaxis, ...], dtype=torch.float32).unsqueeze(0)  # Shape: (1, H, W)
 
         # Predictions from model
-        preds_semantics, preds_color_logits = model(locations, gray_images, lab_images)
+        preds_semantics, preds_color_logits = model(locations, gray_image_tensor, lab_image_tensor)
         # Extract the first sample from the batch
-        assert preds_semantics.shape[0] == preds_color_logits.shape[0] == cfg.BATCH_SIZE * cfg.IMAGE_SIZE[0] * \
+        assert preds_semantics.shape[0] == preds_color_logits.shape[0] == batch_size * cfg.IMAGE_SIZE[0] * \
                cfg.IMAGE_SIZE[1], \
             "Should be num_locations * batch_size"
         assert preds_semantics.shape[-1] == cfg.CLASSES, "Semantic logits should have classes as the last dimension"
@@ -163,12 +145,12 @@ with torch.no_grad():
 
         # Convert to NumPy array and translate to rgb
         preds_colors_np = preds_colors.cpu().numpy()
-        preds_colors_rgb = lab_discretized_to_rgb(preds_colors_np[0], cfg.NUM_BINS)
+        preds_colors_rgb = lab_discretized_to_rgb(preds_colors_np[0], cfg.NUM_BINS, void_bin=True)
         print("After reshaping preds shape: ", preds_colors_np.shape)
 
         # Ground truth color
-        gt_colors_np = gt_colors.cpu().numpy()
-        gt_colors_rgb = lab_discretized_to_rgb(gt_colors_np[0], cfg.NUM_BINS)
+        gt_colors_np = gt_color_tensor.cpu().numpy()
+        gt_colors_rgb = lab_discretized_to_rgb(gt_colors_np[0], cfg.NUM_BINS, void_bin=True)
 
         # Display gt vs pred
         fig, axs = plt.subplots(1, 2, figsize=(10, 5))

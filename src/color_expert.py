@@ -9,14 +9,9 @@ import random
 import src.config as cfg
 from src.models.model_1 import MultiModalNetwork
 from src.data.rellis_2D_dataset import Rellis2DDataset
-from src.plotting import plot_base_losses
+from src.plotting import plot_color_losses
 from matplotlib import pyplot as plt
 
-"""
-TODO: Set up argument parser for command-line flags for plotting and using previous weights
-TODO: Consider adding confidence as output, this would also have an associated loss
-TODO: Verify seed does not affect randomization used in the model and processing
-"""
 
 # Set the seed for random, NumPy, and PyTorch
 random.seed(cfg.SEED)
@@ -25,31 +20,12 @@ torch.manual_seed(cfg.SEED)
 torch.cuda.manual_seed(cfg.SEED)
 
 # Ensure the save directory exists
-if not os.path.exists(cfg.SAVE_DIR_BASE):
+if not os.path.exists(cfg.SAVE_DIR_COLOR):
     os.makedirs(cfg.SAVE_DIR_BASE)
-
 
 # Initialize loss trackers
 training_losses = []
 validation_losses = []
-
-training_losses_semantics = []
-training_losses_color = []
-
-validation_losses_semantics = []
-validation_losses_color = []
-
-t_losses = {
-    'total': training_losses,
-    'semantics': training_losses_semantics,
-    'color': training_losses_color
-}
-
-v_losses = {
-    'total': validation_losses,
-    'semantics': validation_losses_semantics,
-    'color': validation_losses_color
-}
 
 """
 Generate Locations (currently all pixels TODO: always consistent on number of locations between indexes)
@@ -69,12 +45,10 @@ def train_val(model, dataloader, val_dataloader, epochs, lr, checkpoint_path, be
 
     if torch.cuda.device_count() > 1:
         optimizer = torch.optim.Adam([
-            {'params': model.module.semantic_fcn.parameters(), 'lr': 5e-6, 'weight_decay': 1e-5},
             {'params': model.module.color_fcn.parameters(), 'weight_decay': 1e-4},
         ], lr=lr)
     else:
         optimizer = torch.optim.Adam([
-            {'params': model.semantic_fcn.parameters(), 'lr': 5e-6, 'weight_decay': 1e-5},
             {'params': model.color_fcn.parameters(), 'weight_decay': 1e-4},
         ], lr=lr)
 
@@ -84,10 +58,9 @@ def train_val(model, dataloader, val_dataloader, epochs, lr, checkpoint_path, be
     start_epoch = 0
     best_loss = float('inf')
 
-    # Start timing
+    # Start timing TODO: Save timestamps in model checkpoint
     start_time = time.time()
 
-    criterion_ce_semantics = nn.CrossEntropyLoss(ignore_index=0)  # TODO: Make sure to account for void class
     criterion_ce_color = nn.CrossEntropyLoss(ignore_index=cfg.NUM_BINS-1)
 
     best_color_val_loss = float('inf')
@@ -100,75 +73,28 @@ def train_val(model, dataloader, val_dataloader, epochs, lr, checkpoint_path, be
 
 
         if (epoch + 1) % cfg.PLOT_INTERVAL == 0:
-            plot_base_losses(t_losses, v_losses)
+            plot_color_losses(training_losses, validation_losses)
 
         count = 0
         for batch in dataloader:
             count += 1
 
-            # from src.data.utils.data_processing import lab_discretized_to_rgb
-            # gt_semantics = batch['gt_semantics']
-            # gt_color = batch['gt_color']
-            # lab_image = batch['lab_image']
-            # gray_image = batch['gray_image']
-            #
-            # # Assuming `train_rgb_images` corresponds to a part of the dataset,
-            # # visualize the first image in the batch for clarity
-            # fig, axs = plt.subplots(2, 2, figsize=(15, 15))
-            #
-            # print(f"GT Semantics Shape: {gt_semantics.shape}")
-            # print(f"GT Color Shape: {gt_color.shape}")
-            # print(f"LAB Image Shape: {lab_image.shape}")
-            # print(f"Gray Image Shape: {gray_image.shape}")
-            #
-            # axs[0, 0].imshow(lab_discretized_to_rgb(gt_color[0].numpy(), cfg.NUM_BINS))
-            # axs[0, 0].set_title('GT LAB Image to RGB')
-            # axs[0, 1].imshow(gt_semantics[0].to(torch.uint8).numpy(), cmap='gray')
-            # axs[0, 1].set_title('GT Semantics')
-            #
-            # axs[1, 0].imshow(lab_discretized_to_rgb(lab_image[0].numpy().transpose(1, 2, 0), cfg.NUM_BINS))
-            # axs[1, 0].set_title('LAB Image to RGB')
-            # axs[1, 1].imshow(gray_image[0].numpy().transpose(1, 2, 0), cmap='gray')
-            # axs[1, 1].set_title('Gray Image')
-            #
-            #
-            #
-            # plt.tight_layout()
-            # plt.show()
-
-
             # if (count < 10 or count % 10 == 0): print(f"Loading training batch {count}", flush=True)
-            gt_semantics = batch['gt_semantics'].to(device)  # TODO: change dataset to follow format
-            gt_color = batch['gt_color'].to(device)  # TODO: change dataset to follow format
+            gt_semantics = batch['gt_semantics'].to(device)
+            gt_color = batch['gt_color'].to(device)
             gray_images = batch['gray_image'].to(device)
             lab_images = batch['lab_image'].to(device)
-            if torch.cuda.is_available():
-                print(f"Allocated memory after batch load: {torch.cuda.memory_allocated()} bytes")
-                print(f"Reserved memory after batch load: {torch.cuda.memory_reserved()} bytes")
 
             # Repeat locations along batch dimension
             batch_size = gt_semantics.shape[0]
             locations = normalized_locations_tensor.unsqueeze(0).expand(batch_size, -1, -1)
-            if torch.cuda.is_available():
-                print(f"Allocated memory after locations: {torch.cuda.memory_allocated()} bytes")
-                print(f"Reserved memory after locations: {torch.cuda.memory_reserved()} bytes")
-            # locations.requires_grad_(True)
 
             optimizer.zero_grad()
 
             # Predictions from model
             preds_semantics, preds_color_logits = model(locations, gray_images, lab_images)
-            if torch.cuda.is_available():
-                print(f"Allocated memory after model: {torch.cuda.memory_allocated()} bytes")
-                print(f"Reserved memory after model: {torch.cuda.memory_reserved()} bytes")
             del locations, gray_images, lab_images
 
-            # Semantic loss
-            # print(f"Preds Semantics Shape: {preds_semantics.shape}")
-            # print(f"GT Semantics Shape: {gt_semantics.long().view(-1).shape}")
-            loss_semantics = cfg.WEIGHT_SEMANTICS * criterion_ce_semantics(preds_semantics,
-                                                                           gt_semantics.long().view(-1))
-            del preds_semantics, gt_semantics
 
             # Color loss
             # print(f"Preds Color Shape: {preds_color_logits.view(-1, cfg.NUM_BINS).shape}")
@@ -179,7 +105,7 @@ def train_val(model, dataloader, val_dataloader, epochs, lr, checkpoint_path, be
             del preds_color_logits, gt_color
 
             # Total loss
-            total_loss = loss_semantics + loss_color
+            total_loss = loss_color
 
             # Optimization
             total_loss.backward()
@@ -189,8 +115,6 @@ def train_val(model, dataloader, val_dataloader, epochs, lr, checkpoint_path, be
         average_epoch_loss = epoch_loss / len(dataloader)
 
         training_losses.append(average_epoch_loss)
-        training_losses_semantics.append(loss_semantics.item())
-        training_losses_color.append(loss_color.item())
 
         print(f"Epoch {epoch + 1}/{epochs}, Loss: {average_epoch_loss}")
 
@@ -201,8 +125,8 @@ def train_val(model, dataloader, val_dataloader, epochs, lr, checkpoint_path, be
             for batch in val_dataloader:
                 count += 1
                 # print(f"Loading validation batch {count}", flush=True)
-                gt_semantics = batch['gt_semantics'].to(device)  # TODO: change dataset to follow format
-                gt_color = batch['gt_color'].to(device)  # TODO: change dataset to follow format
+                gt_semantics = batch['gt_semantics'].to(device)
+                gt_color = batch['gt_color'].to(device)
                 gray_images = batch['gray_image'].to(device)
                 lab_images = batch['lab_image'].to(device)
 
@@ -286,51 +210,33 @@ def train_val(model, dataloader, val_dataloader, epochs, lr, checkpoint_path, be
 
     return model
 
-
-if torch.cuda.is_available():
-    torch.cuda.empty_cache()
-    device = torch.device("cuda")
-
-else:
-    device = torch.device("cpu")
-
-print(f"Using device with cleared cache: {device}")
-
 # Initialize model
 model = MultiModalNetwork(cfg.NUM_BINS, cfg.CLASSES)
-print("Model initialized successfully")
-
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+model.to(device)
+print(f"Initialized model and moved to {device}")
+if torch.cuda.is_available():
+    torch.cuda.empty_cache()
+    print("Cleared CUDA cache")
 if torch.cuda.device_count() > 1:
-    print(f"Using {torch.cuda.device_count()} GPUs!")
     model = nn.DataParallel(model)
+    print(f"Using {torch.cuda.device_count()} GPUs!")
 
-model = model.to(device)
-print("Model moved to device")
-
-# Show memory reserved and allocated
-# print(f"Memory reserved: {torch.cuda.memory_reserved()} bytes")
-# print(f"Memory allocated: {torch.cuda.memory_allocated()} bytes")
-
-# Load preprocessed data
+# Create and load datasets
 train_preloaded_data = load_sequential_data(cfg.TRAIN_DIR)
 val_preloaded_data = load_sequential_data(cfg.VAL_DIR)
-print("Loaded training and validation preprocessed data")
+print("Successfully loaded preprocessed training and validation data")
 
-# Create datasets
 train_dataset = Rellis2DDataset(preloaded_data=train_preloaded_data, num_bins=cfg.NUM_BINS, image_size=cfg.IMAGE_SIZE,
                                 image_noise=cfg.IMAGE_NOISE, image_mask_rate=cfg.IMAGE_MASK_RATE)
-print("Created training dataset")
 val_dataset = Rellis2DDataset(preloaded_data=val_preloaded_data, num_bins=cfg.NUM_BINS, image_size=cfg.IMAGE_SIZE,
                               image_noise=cfg.IMAGE_NOISE, image_mask_rate=cfg.IMAGE_MASK_RATE)
-print("Created validation dataset")
 
-# Load the datasets
 train_dataloader = DataLoader(train_dataset, batch_size=cfg.BATCH_SIZE, shuffle=True, num_workers=cfg.NUM_WORKERS,
                               pin_memory=False, drop_last=True)
-print("Created training dataloader")
 val_dataloader = DataLoader(val_dataset, batch_size=cfg.BATCH_SIZE, shuffle=False, num_workers=cfg.NUM_WORKERS,
                             pin_memory=False, drop_last=True)
-print("Created validation dataloader")
+print("Created training and validation dataloaders")
 
 # Train and validate the model
 trained_model = train_val(
