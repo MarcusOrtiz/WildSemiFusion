@@ -28,10 +28,10 @@ WEIGHT_COLOR = 20
 NUM_WORKERS = 0
 
 # Model and Dataset parameters
-NUM_BINS = 313 # including void
+NUM_BINS = 256 # including void
 CLASSES = 35  # including void
 IMAGE_SIZE = (224, 224)
-IMAGE_NOISE = 0.02
+IMAGE_NOISE = 0.01
 IMAGE_MASK_RATE = (.1, .3)
 
 # Other parameters
