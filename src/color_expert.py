@@ -7,7 +7,7 @@ from src.data.utils.data_processing import image_to_array, load_sequential_data
 import numpy as np
 import random
 import src.config as cfg
-from src.models.model_1 import MultiModalNetwork
+from src.models.experts import ColorExpert
 from src.data.rellis_2D_dataset import Rellis2DDataset
 from src.plotting import plot_color_losses
 from matplotlib import pyplot as plt
@@ -21,7 +21,7 @@ torch.cuda.manual_seed(cfg.SEED)
 
 # Ensure the save directory exists
 if not os.path.exists(cfg.SAVE_DIR_COLOR):
-    os.makedirs(cfg.SAVE_DIR_BASE)
+    os.makedirs(cfg.SAVE_DIR_COLOR)
 
 # Initialize loss trackers
 training_losses = []
@@ -78,7 +78,6 @@ def train_val(model, dataloader, val_dataloader, epochs, lr, checkpoint_path, be
             # if (count < 10 or count % 10 == 0): print(f"Loading training batch {count}", flush=True)
             gt_semantics = batch['gt_semantics'].to(device)
             gt_color = batch['gt_color'].to(device)
-            gray_images = batch['gray_image'].to(device)
             lab_images = batch['lab_image'].to(device)
 
             # Repeat locations along batch dimension
@@ -88,9 +87,8 @@ def train_val(model, dataloader, val_dataloader, epochs, lr, checkpoint_path, be
             optimizer.zero_grad()
 
             # Predictions from model
-            preds_semantics, preds_color_logits = model(locations, gray_images, lab_images)
-            del locations, gray_images, lab_images
-
+            preds_color_logits = model(locations, lab_images)
+            del locations, lab_images
 
             # Color loss
             # print(f"Preds Color Shape: {preds_color_logits.view(-1, cfg.NUM_BINS).shape}")
@@ -121,7 +119,6 @@ def train_val(model, dataloader, val_dataloader, epochs, lr, checkpoint_path, be
                 # print(f"Loading validation batch {batch_idx}", flush=True)
                 gt_semantics = batch['gt_semantics'].to(device)
                 gt_color = batch['gt_color'].to(device)
-                gray_images = batch['gray_image'].to(device)
                 lab_images = batch['lab_image'].to(device)
 
                 # Repeat locations along batch dimension
@@ -129,8 +126,8 @@ def train_val(model, dataloader, val_dataloader, epochs, lr, checkpoint_path, be
                 locations = normalized_locations_tensor.unsqueeze(0).expand(batch_size, -1, -1)
 
                 # Predicting with model
-                preds_color_logits = model(locations, gray_images, lab_images)
-                del locations, gray_images, lab_images
+                preds_color_logits = model(locations, lab_images)
+                del locations, lab_images
 
                 # Color loss
                 # print(f"Preds Color Shape: {preds_color_logits.view(-1, cfg.NUM_BINS).shape}")
@@ -186,8 +183,8 @@ def train_val(model, dataloader, val_dataloader, epochs, lr, checkpoint_path, be
     return model
 
 # Initialize model
-model = MultiModalNetwork(cfg.NUM_BINS, cfg.CLASSES)
-device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+model = ColorExpert(cfg.NUM_BINS)
+device = torch.device("cuda" if torch.cuda.is_available() else "mps")
 model.to(device)
 print(f"Initialized model and moved to {device}")
 if torch.cuda.is_available():
@@ -220,7 +217,7 @@ trained_model = train_val(
     val_dataloader,
     epochs=cfg.EPOCHS,
     lr=cfg.LR,
-    checkpoint_path=cfg.CHECKPOINT_PATH_BASE,
-    best_model_path=cfg.BEST_MODEL_PATH_BASE
+    checkpoint_path=cfg.CHECKPOINT_PATH_COLOR,
+    best_model_path=cfg.BEST_MODEL_PATH_COLOR
 )
 print("Training complete")

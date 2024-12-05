@@ -8,6 +8,7 @@ BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 # Paths
 SAVE_DIR_BASE = os.path.join(BASE_DIR, "saved_model_base_1")
+# SAVE_DIR_BASE = os.path.join(BASE_DIR, "saved_model_test_full")
 SAVE_DIR_COLOR = os.path.join(BASE_DIR, "saved_expert_color_1")
 SAVE_DIR_BASE_COLOR = os.path.join(BASE_DIR, "saved_model_base_expert_color_1")
 TRAIN_DIR = os.path.join(BASE_DIR, "../input/rellis_2d_preprocessed/train")
@@ -20,7 +21,7 @@ BEST_MODEL_PATH_COLOR = os.path.join(SAVE_DIR_COLOR, "best_model.pth")
 
 # Training parameters
 BATCH_SIZE = 8
-EPOCHS = 500
+EPOCHS = 400
 LR = 0.00002
 EARLY_STOP_EPOCHS = 30
 
