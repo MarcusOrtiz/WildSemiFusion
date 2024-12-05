@@ -71,14 +71,10 @@ def train_val(model, dataloader, val_dataloader, epochs, lr, checkpoint_path, be
         model.train()
         epoch_loss = 0.0
 
-
         if (epoch + 1) % cfg.PLOT_INTERVAL == 0:
             plot_color_losses(training_losses, validation_losses)
 
-        count = 0
-        for batch in dataloader:
-            count += 1
-
+        for idx, batch in enumerate(dataloader):
             # if (count < 10 or count % 10 == 0): print(f"Loading training batch {count}", flush=True)
             gt_semantics = batch['gt_semantics'].to(device)
             gt_color = batch['gt_color'].to(device)
@@ -120,40 +116,21 @@ def train_val(model, dataloader, val_dataloader, epochs, lr, checkpoint_path, be
 
         model.eval()
         val_loss = 0.0
-        count = 0
         with torch.no_grad():
-            for batch in val_dataloader:
-                count += 1
-                # print(f"Loading validation batch {count}", flush=True)
+            for batch_idx, batch in enumerate(val_dataloader):
+                # print(f"Loading validation batch {batch_idx}", flush=True)
                 gt_semantics = batch['gt_semantics'].to(device)
                 gt_color = batch['gt_color'].to(device)
                 gray_images = batch['gray_image'].to(device)
                 lab_images = batch['lab_image'].to(device)
 
-                if torch.cuda.is_available():
-                    print(f"Allocated memory after batch load: {torch.cuda.memory_allocated()} bytes")
-                    print(f"Reserved memory after batch load: {torch.cuda.memory_reserved()} bytes")
-
                 # Repeat locations along batch dimension
                 batch_size = gt_semantics.shape[0]
                 locations = normalized_locations_tensor.unsqueeze(0).expand(batch_size, -1, -1)
-                if torch.cuda.is_available():
-                    print(f"Allocated memory after locations: {torch.cuda.memory_allocated()} bytes")
-                    print(f"Reserved memory after locations: {torch.cuda.memory_reserved()} bytes")
 
                 # Predicting with model
-                preds_semantics, preds_color_logits = model(locations, gray_images, lab_images)
-                if torch.cuda.is_available():
-                    print(f"Allocated memory after model: {torch.cuda.memory_allocated()} bytes")
-                    print(f"Reserved memory after model: {torch.cuda.memory_reserved()} bytes")
+                preds_color_logits = model(locations, gray_images, lab_images)
                 del locations, gray_images, lab_images
-
-                # Semantic loss
-                # print(f"Preds Semantics Shape: {preds_semantics.shape}")
-                # print(f"GT Semantics Shape: {gt_semantics.long().view(-1).shape}")
-                loss_semantics = cfg.WEIGHT_SEMANTICS * criterion_ce_semantics(preds_semantics,
-                                                                               gt_semantics.long().view(-1))
-                del preds_semantics, gt_semantics
 
                 # Color loss
                 # print(f"Preds Color Shape: {preds_color_logits.view(-1, cfg.NUM_BINS).shape}")
@@ -163,13 +140,11 @@ def train_val(model, dataloader, val_dataloader, epochs, lr, checkpoint_path, be
                 loss_color = cfg.WEIGHT_COLOR * criterion_ce_color(preds_color_logits, gt_color)
                 del preds_color_logits, gt_color
 
-                val_loss += loss_semantics + loss_color
+                val_loss += loss_color
 
         average_val_loss = val_loss / len(val_dataloader)
 
         validation_losses.append(average_val_loss.item())
-        validation_losses_semantics.append(loss_semantics.item())
-        validation_losses_color.append(loss_color.item())
 
         print(f"Validation Loss: {average_val_loss.item()}")
 

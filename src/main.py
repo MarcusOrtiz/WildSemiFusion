@@ -64,22 +64,21 @@ normalized_locations[:, 0] /= cfg.IMAGE_SIZE[0]
 normalized_locations[:, 1] /= cfg.IMAGE_SIZE[1]
 
 
-def train_val(model, dataloader, val_dataloader, epochs, lr, checkpoint_path, best_model_path):
-    model.to(device)
+def train_val(model_local, dataloader, val_dataloader_local, epochs, lr, checkpoint_path, best_model_path):
+    model_local.to(device)
 
     if torch.cuda.device_count() > 1:
         optimizer = torch.optim.Adam([
-            {'params': model.module.semantic_fcn.parameters(), 'lr': 5e-6, 'weight_decay': 1e-5},
-            {'params': model.module.color_fcn.parameters(), 'weight_decay': 1e-4},
+            {'params': model_local.module.semantic_fcn.parameters(), 'lr': 5e-6, 'weight_decay': 1e-5},
+            {'params': model_local.module.color_fcn.parameters(), 'weight_decay': 1e-4},
         ], lr=lr)
     else:
         optimizer = torch.optim.Adam([
-            {'params': model.semantic_fcn.parameters(), 'lr': 5e-6, 'weight_decay': 1e-5},
-            {'params': model.color_fcn.parameters(), 'weight_decay': 1e-4},
+            {'params': model_local.semantic_fcn.parameters(), 'lr': 5e-6, 'weight_decay': 1e-5},
+            {'params': model_local.color_fcn.parameters(), 'weight_decay': 1e-4},
         ], lr=lr)
 
-    scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'min', factor=cfg.LR_DECAY_FACTOR,
-                                                           patience=cfg.PATIENCE)
+    scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'min', factor=cfg.LR_DECAY_FACTOR, patience=cfg.PATIENCE)
 
     start_epoch = 0
     best_loss = float('inf')
@@ -95,9 +94,8 @@ def train_val(model, dataloader, val_dataloader, epochs, lr, checkpoint_path, be
 
     normalized_locations_tensor = torch.from_numpy(normalized_locations).to(device)
     for epoch in range(start_epoch, epochs):
-        model.train()
+        model_local.train()
         epoch_loss = 0.0
-
 
         if (epoch + 1) % cfg.PLOT_INTERVAL == 0:
             plot_base_losses(t_losses, v_losses)
@@ -138,36 +136,26 @@ def train_val(model, dataloader, val_dataloader, epochs, lr, checkpoint_path, be
 
 
             # if (count < 10 or count % 10 == 0): print(f"Loading training batch {count}", flush=True)
-            gt_semantics = batch['gt_semantics'].to(device)  # TODO: change dataset to follow format
-            gt_color = batch['gt_color'].to(device)  # TODO: change dataset to follow format
+            gt_semantics = batch['gt_semantics'].to(device)
+            gt_color = batch['gt_color'].to(device)
             gray_images = batch['gray_image'].to(device)
             lab_images = batch['lab_image'].to(device)
-            if torch.cuda.is_available():
-                print(f"Allocated memory after batch load: {torch.cuda.memory_allocated()} bytes")
-                print(f"Reserved memory after batch load: {torch.cuda.memory_reserved()} bytes")
 
             # Repeat locations along batch dimension
             batch_size = gt_semantics.shape[0]
             locations = normalized_locations_tensor.unsqueeze(0).expand(batch_size, -1, -1)
-            if torch.cuda.is_available():
-                print(f"Allocated memory after locations: {torch.cuda.memory_allocated()} bytes")
-                print(f"Reserved memory after locations: {torch.cuda.memory_reserved()} bytes")
             # locations.requires_grad_(True)
 
             optimizer.zero_grad()
 
             # Predictions from model
-            preds_semantics, preds_color_logits = model(locations, gray_images, lab_images)
-            if torch.cuda.is_available():
-                print(f"Allocated memory after model: {torch.cuda.memory_allocated()} bytes")
-                print(f"Reserved memory after model: {torch.cuda.memory_reserved()} bytes")
+            preds_semantics, preds_color_logits = model_local(locations, gray_images, lab_images)
             del locations, gray_images, lab_images
 
             # Semantic loss
             # print(f"Preds Semantics Shape: {preds_semantics.shape}")
             # print(f"GT Semantics Shape: {gt_semantics.long().view(-1).shape}")
-            loss_semantics = cfg.WEIGHT_SEMANTICS * criterion_ce_semantics(preds_semantics,
-                                                                           gt_semantics.long().view(-1))
+            loss_semantics = cfg.WEIGHT_SEMANTICS * criterion_ce_semantics(preds_semantics, gt_semantics.long().view(-1))
             del preds_semantics, gt_semantics
 
             # Color loss
@@ -178,10 +166,8 @@ def train_val(model, dataloader, val_dataloader, epochs, lr, checkpoint_path, be
             loss_color = cfg.WEIGHT_COLOR * criterion_ce_color(preds_color_logits, gt_color)
             del preds_color_logits, gt_color
 
-            # Total loss
+            # Total loss and optimization
             total_loss = loss_semantics + loss_color
-
-            # Optimization
             total_loss.backward()
             optimizer.step()
             epoch_loss += total_loss.item()
@@ -194,40 +180,30 @@ def train_val(model, dataloader, val_dataloader, epochs, lr, checkpoint_path, be
 
         print(f"Epoch {epoch + 1}/{epochs}, Loss: {average_epoch_loss}")
 
-        model.eval()
+        model_local.eval()
         val_loss = 0.0
         count = 0
         with torch.no_grad():
-            for batch in val_dataloader:
+            for batch in val_dataloader_local:
                 count += 1
                 # print(f"Loading validation batch {count}", flush=True)
-                gt_semantics = batch['gt_semantics'].to(device)  # TODO: change dataset to follow format
-                gt_color = batch['gt_color'].to(device)  # TODO: change dataset to follow format
+                gt_semantics = batch['gt_semantics'].to(device)
+                gt_color = batch['gt_color'].to(device)
                 gray_images = batch['gray_image'].to(device)
                 lab_images = batch['lab_image'].to(device)
-
-                if torch.cuda.is_available():
-                    print(f"Allocated memory after batch load: {torch.cuda.memory_allocated()} bytes")
-                    print(f"Reserved memory after batch load: {torch.cuda.memory_reserved()} bytes")
 
                 # Repeat locations along batch dimension
                 batch_size = gt_semantics.shape[0]
                 locations = normalized_locations_tensor.unsqueeze(0).expand(batch_size, -1, -1)
-                if torch.cuda.is_available():
-                    print(f"Allocated memory after locations: {torch.cuda.memory_allocated()} bytes")
-                    print(f"Reserved memory after locations: {torch.cuda.memory_reserved()} bytes")
 
                 # Predicting with model
-                preds_semantics, preds_color_logits = model(locations, gray_images, lab_images)
-                if torch.cuda.is_available():
-                    print(f"Allocated memory after model: {torch.cuda.memory_allocated()} bytes")
-                    print(f"Reserved memory after model: {torch.cuda.memory_reserved()} bytes")
+                preds_semantics, preds_color_logits = model_local(locations, gray_images, lab_images)
                 del locations, gray_images, lab_images
 
                 # Semantic loss
                 # print(f"Preds Semantics Shape: {preds_semantics.shape}")
                 # print(f"GT Semantics Shape: {gt_semantics.long().view(-1).shape}")
-                loss_semantics = cfg.WEIGHT_SEMANTICS * criterion_ce_semantics(preds_semantics,
+                loss_semantics_val = cfg.WEIGHT_SEMANTICS * criterion_ce_semantics(preds_semantics,
                                                                                gt_semantics.long().view(-1))
                 del preds_semantics, gt_semantics
 
@@ -236,21 +212,23 @@ def train_val(model, dataloader, val_dataloader, epochs, lr, checkpoint_path, be
                 # print(f"GT Color Shape: {gt_color.view(-1).shape}")
                 preds_color_logits = preds_color_logits.view(-1, cfg.NUM_BINS)
                 gt_color = gt_color.view(-1)
-                loss_color = cfg.WEIGHT_COLOR * criterion_ce_color(preds_color_logits, gt_color)
+                loss_color_val = cfg.WEIGHT_COLOR * criterion_ce_color(preds_color_logits, gt_color)
                 del preds_color_logits, gt_color
 
-                val_loss += loss_semantics + loss_color
+                val_loss += loss_semantics_val + loss_color_val
 
-        average_val_loss = val_loss / len(val_dataloader)
+        average_val_loss = val_loss / len(val_dataloader_local)
+
+        color_val_loss = loss_color_val.item()
 
         validation_losses.append(average_val_loss.item())
-        validation_losses_semantics.append(loss_semantics.item())
-        validation_losses_color.append(loss_color.item())
+        validation_losses_semantics.append(loss_semantics_val.item())
+        validation_losses_color.append(loss_color_val.item())
 
         print(f"Validation Loss: {average_val_loss.item()}")
 
-        if loss_color < best_color_val_loss:
-            best_color_val_loss = loss_color
+        if color_val_loss < best_color_val_loss:
+            best_color_val_loss = color_val_loss
             epochs_no_improve_color = 0
         else:
             epochs_no_improve_color += 1
@@ -258,18 +236,18 @@ def train_val(model, dataloader, val_dataloader, epochs, lr, checkpoint_path, be
         if (epochs_no_improve_color >= cfg.EARLY_STOP_EPOCHS) and (epoch >= 200):
             print(
                 f"Early stopping triggered at epoch {epoch + 1}. SDF validation loss did not improve for {cfg.EARLY_STOP_EPOCHS} consecutive epochs.")
-            torch.save(model.state_dict(), best_model_path)
+            torch.save(model_local.state_dict(), best_model_path)
             print(f"Model saved at early stopping point with validation loss: {best_color_val_loss}")
             break
 
         if average_val_loss < best_loss:
             best_loss = average_val_loss
-            torch.save(model.state_dict(), best_model_path)
+            torch.save(model_local.state_dict(), best_model_path)
             print(f"New best model saved with validation loss: {best_loss}")
 
         torch.save({
             'epoch': epoch + 1,
-            'model_state_dict': model.state_dict(),
+            'model_state_dict': model_local.state_dict(),
             'optimizer_state_dict': optimizer.state_dict(),
             'scheduler_state_dict': scheduler.state_dict(),
             'loss': average_epoch_loss,
@@ -284,7 +262,7 @@ def train_val(model, dataloader, val_dataloader, epochs, lr, checkpoint_path, be
     print(
         f"Total training time: {total_time // 3600:.0f} hours, {(total_time % 3600) // 60:.0f} minutes, {total_time % 60:.0f} seconds")
 
-    return model
+    return model_local
 
 
 if torch.cuda.is_available():
