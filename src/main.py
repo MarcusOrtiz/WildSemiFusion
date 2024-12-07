@@ -183,6 +183,9 @@ def train_val(model_local, dataloader, val_dataloader_local, epochs, lr, checkpo
 
         print(f"Epoch {epoch + 1}/{epochs}, Loss: {average_epoch_loss}")
 
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
+
         model_local.eval()
         val_loss = 0.0
         count = 0
