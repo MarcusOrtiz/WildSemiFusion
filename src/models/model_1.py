@@ -57,6 +57,6 @@ class MultiModalNetwork(nn.Module):
 
         # Generate predictions
         semantics = self.semantic_fcn(compressed_features)  # (batch_size * num_locations, num_classes)
-        raw_color_logits = self.color_fcn(compressed_features)  # (batch_size * num_locations, 3, num_bins) of type
+        raw_color_logits = self.color_fcn(compressed_features)  # (batch_size * num_locations, 3, num_bins)
 
         return semantics, raw_color_logits

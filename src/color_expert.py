@@ -9,7 +9,8 @@ import random
 import src.config as cfg
 from src.models.experts import ColorExpert
 from src.data.rellis_2D_dataset import Rellis2DDataset
-from src.plotting import plot_color_losses
+from src.plotting import plot_color_losses, plot_times
+from src.utils import generate_normalized_locations
 from matplotlib import pyplot as plt
 
 
@@ -26,19 +27,9 @@ if not os.path.exists(cfg.SAVE_DIR_COLOR):
 # Initialize loss trackers
 training_losses = []
 validation_losses = []
+times = []
 
-"""
-Generate Locations (currently all pixels TODO: always consistent on number of locations between indexes)
-Locations is somewhat misleading, it's actually the indices of the non-void pixels whereas WildFusion uses actual
-Locations are normalized to [0, 1]
-"""
-y_coords, x_coords = np.meshgrid(np.arange(cfg.IMAGE_SIZE[0]), np.arange(cfg.IMAGE_SIZE[1]),
-                                 indexing='ij')
-locations_grid = np.stack([y_coords, x_coords], axis=-1).reshape(-1, 2)  # (IMAGE_SIZE[0]*IMAGE_SIZE[1], 2)
-normalized_locations = locations_grid.astype(np.float32)
-normalized_locations[:, 0] /= cfg.IMAGE_SIZE[0]
-normalized_locations[:, 1] /= cfg.IMAGE_SIZE[1]
-
+normalized_locations = generate_normalized_locations()
 
 def train_val(model, dataloader, val_dataloader, epochs, lr, checkpoint_path, best_model_path):
     model.to(device)
@@ -73,9 +64,10 @@ def train_val(model, dataloader, val_dataloader, epochs, lr, checkpoint_path, be
 
         if (epoch + 1) % cfg.PLOT_INTERVAL == 0:
             plot_color_losses(training_losses, validation_losses)
+            plot_times(times, cfg.SAVE_DIR_COLOR)
 
         for idx, batch in enumerate(dataloader):
-            # if (count < 10 or count % 10 == 0): print(f"Loading training batch {count}", flush=True)
+            if (idx < 2 or idx % 100 == 0): print(f"Loading training batch {idx}", flush=True)
             gt_semantics = batch['gt_semantics'].to(device)
             gt_color = batch['gt_color'].to(device)
             lab_images = batch['lab_image'].to(device)
@@ -142,6 +134,7 @@ def train_val(model, dataloader, val_dataloader, epochs, lr, checkpoint_path, be
         average_val_loss = val_loss / len(val_dataloader)
 
         validation_losses.append(average_val_loss.item())
+        times.append(time.time() - start_time)
 
         print(f"Validation Loss: {average_val_loss.item()}")
 
@@ -162,6 +155,7 @@ def train_val(model, dataloader, val_dataloader, epochs, lr, checkpoint_path, be
             best_loss = average_val_loss
             torch.save(model.state_dict(), best_model_path)
             print(f"New best model saved with validation loss: {best_loss}")
+
 
         torch.save({
             'epoch': epoch + 1,
@@ -184,7 +178,7 @@ def train_val(model, dataloader, val_dataloader, epochs, lr, checkpoint_path, be
 
 # Initialize model
 model = ColorExpert(cfg.NUM_BINS)
-device = torch.device("cuda" if torch.cuda.is_available() else "mps")
+device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 model.to(device)
 print(f"Initialized model and moved to {device}")
 if torch.cuda.is_available():

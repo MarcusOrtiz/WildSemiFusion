@@ -162,3 +162,19 @@ class ResidualBlock(nn.Module):
             x = self.output_activation(x)
 
         return x
+
+
+
+class CombineLABColor(nn.Module):
+    def __init__(self, in_dim, out_dim):
+        super(CombineLABColor, self).__init__()
+        self.fc1 = nn.Linear(in_dim, 64)
+        self.fc2 = nn.Linear(64,  out_dim)
+
+    def forward(self, lab1, lab2):
+        pass
+#       Receive logits for color prediction
+#       Split up the lab images to l, a, b
+#       Pass through small nueral network to combine each channel
+#       Remake the image and return
+

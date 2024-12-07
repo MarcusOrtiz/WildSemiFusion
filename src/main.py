@@ -9,7 +9,7 @@ import random
 import src.config as cfg
 from src.models.model_1 import MultiModalNetwork
 from src.data.rellis_2D_dataset import Rellis2DDataset
-from src.plotting import plot_base_losses
+from src.plotting import plot_losses, plot_times
 from matplotlib import pyplot as plt
 
 """
@@ -38,6 +38,7 @@ training_losses_color = []
 
 validation_losses_semantics = []
 validation_losses_color = []
+times = []
 
 t_losses = {
     'total': training_losses,
@@ -98,7 +99,8 @@ def train_val(model_local, dataloader, val_dataloader_local, epochs, lr, checkpo
         epoch_loss = 0.0
 
         if (epoch + 1) % cfg.PLOT_INTERVAL == 0:
-            plot_base_losses(t_losses, v_losses)
+            plot_losses(t_losses, v_losses, cfg.SAVE_DIR_BASE)
+            plot_times(times, cfg.SAVE_DIR_BASE)
 
         count = 0
         for batch in dataloader:
@@ -174,6 +176,7 @@ def train_val(model_local, dataloader, val_dataloader_local, epochs, lr, checkpo
 
         average_epoch_loss = epoch_loss / len(dataloader)
 
+        times.append(time.time() - start_time)
         training_losses.append(average_epoch_loss)
         training_losses_semantics.append(loss_semantics.item())
         training_losses_color.append(loss_color.item())
@@ -233,6 +236,7 @@ def train_val(model_local, dataloader, val_dataloader_local, epochs, lr, checkpo
         else:
             epochs_no_improve_color += 1
 
+
         if (epochs_no_improve_color >= cfg.EARLY_STOP_EPOCHS) and (epoch >= 200):
             print(
                 f"Early stopping triggered at epoch {epoch + 1}. SDF validation loss did not improve for {cfg.EARLY_STOP_EPOCHS} consecutive epochs.")
@@ -270,7 +274,7 @@ if torch.cuda.is_available():
     device = torch.device("cuda")
 
 else:
-    device = torch.device("cpu")
+    device = torch.device("mps")
 
 print(f"Using device with cleared cache: {device}")
 
