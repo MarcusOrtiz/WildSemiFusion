@@ -75,3 +75,33 @@ def plot_color_losses(training_losses: List[any], validation_losses: List[any], 
 
 def plot_semantics_losses():
     pass
+
+# from src.data.utils.data_processing import lab_discretized_to_rgb
+# gt_semantics = batch['gt_semantics']
+# gt_color = batch['gt_color']
+# lab_image = batch['lab_image']
+# gray_image = batch['gray_image']
+#
+# # Assuming `train_rgb_images` corresponds to a part of the dataset,
+# # visualize the first image in the batch for clarity
+# fig, axs = plt.subplots(2, 2, figsize=(15, 15))
+#
+# print(f"GT Semantics Shape: {gt_semantics.shape}")
+# print(f"GT Color Shape: {gt_color.shape}")
+# print(f"LAB Image Shape: {lab_image.shape}")
+# print(f"Gray Image Shape: {gray_image.shape}")
+#
+# axs[0, 0].imshow(lab_discretized_to_rgb(gt_color[0].numpy(), cfg.NUM_BINS))
+# axs[0, 0].set_title('GT LAB Image to RGB')
+# axs[0, 1].imshow(gt_semantics[0].to(torch.uint8).numpy(), cmap='gray')
+# axs[0, 1].set_title('GT Semantics')
+#
+# axs[1, 0].imshow(lab_discretized_to_rgb(lab_image[0].numpy().transpose(1, 2, 0), cfg.NUM_BINS))
+# axs[1, 0].set_title('LAB Image to RGB')
+# axs[1, 1].imshow(gray_image[0].numpy().transpose(1, 2, 0), cmap='gray')
+# axs[1, 1].set_title('Gray Image')
+#
+#
+#
+# plt.tight_layout()
+# plt.show()

@@ -24,25 +24,36 @@ class WeightedColorModel(nn.Module):
     def forward(self, locations, gray_images, lab_images):
         preds_semantics, preds_color_base = self.base_model(locations, gray_images, lab_images)
         preds_color_expert = self.color_expert(locations, lab_images)
-        # Weighted combination
-        preds_color = self.weight * preds_color_base + (1 - self.weight) * preds_color_expert
-        return preds_semantics, preds_color
+        preds_color_combined = self.weight * preds_color_base + (1 - self.weight) * preds_color_expert
+        return preds_semantics, preds_color_combined
 
 
-class CombinedColorMLPModel():
+class DimensionalWeightedColorModel(nn.Module):
     def __init__(self, num_bins, num_classes):
-        super(CombinedColorMLPModel, self).__init__()
+        super(DimensionalWeightedColorModel, self).__init__()
         self.base_model = MultiModalNetwork(num_bins, num_classes)
         self.color_expert = ColorExpert(num_bins)
+        self.base_model.load_state_dict(torch.load(cfg.BEST_MODEL_PATH_BASE))
+        self.color_expert.load_state_dict(torch.load(cfg.BEST_MODEL_PATH_COLOR))
+        for param in self.base_model.parameters():
+            param.requires_grad = False
+        for param in self.color_expert.parameters():
+            param.requires_grad = False
+
+        self.weights = nn.Parameter(torch.full((3,), 0.5))
 
     def forward(self, locations, gray_images, lab_images):
         preds_semantics, preds_color_base = self.base_model(locations, gray_images, lab_images)
         preds_color_expert = self.color_expert(locations, lab_images)
-        pass
 
-class CombinedColorFusionModel():
+        weights_space = self.weights.view(1, 3, 1)
+        preds_color_combined = weights_space * preds_color_base + (1 - weights_space) * preds_color_expert
+        return preds_semantics, preds_color_combined
+
+
+class FusionColorModel():
     def __init__(self, num_bins, num_classes):
-        super(CombinedColorFusionModel, self).__init__()
+        super(FusionColorModel, self).__init__()
         self.base_model = MultiModalNetwork(num_bins, num_classes)
         self.color_expert = ColorExpert(num_bins)
 

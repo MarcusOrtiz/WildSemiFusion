@@ -4,22 +4,17 @@ import random
 import torch
 import torch.nn as nn
 from src.data.utils.data_processing import load_sequential_data
-from src.models.combined_1 import WeightedColorModel
+from src.models.combined_1 import WeightedColorModel, DimensionalWeightedColorModel
 from src.data.rellis_2D_dataset import Rellis2DDataset
 import src.config as cfg
 from torch.utils.data import DataLoader
 import numpy as np
 
 from src.plotting import plot_color_losses, plot_times
-from src.utils import generate_normalized_locations
+from src.utils import generate_normalized_locations, populate_random_seeds
 
+populate_random_seeds()
 
-random.seed(cfg.SEED)
-np.random.seed(cfg.SEED)
-torch.manual_seed(cfg.SEED)
-torch.cuda.manual_seed(cfg.SEED)
-
-# Ensure the save directory exists
 if not os.path.exists(cfg.SAVE_DIR_COMBINED_WEIGHTED_COLOR):
     os.makedirs(cfg.SAVE_DIR_COMBINED_WEIGHTED_COLOR)
 
@@ -27,21 +22,23 @@ times = []
 training_losses = []
 validation_losses = []
 
+
 def generate_plots(epoch):
     if (epoch + 1) % cfg.PLOT_INTERVAL == 0:
         plot_color_losses(training_losses, validation_losses, cfg.SAVE_DIR_COMBINED_WEIGHTED_COLOR)
-        plot_times(times, cfg.SAVE_DIR_COLOR)
+        plot_times(times, cfg.SAVE_DIR_COMBINED_WEIGHTED_COLOR)
+
 
 def train_val(model, device, train_dataloader, val_dataloader, epochs, lr, checkpoint_path, best_model_path):
     model_module = model.module if isinstance(model, nn.DataParallel) else model
     optimizer = torch.optim.Adam([
-        {'params': [model_module.weight], 'weight_decay': 1e-4},
-        ], lr=lr)
+        {'params': [model_module.weights], 'weight_decay': 1e-4},
+    ], lr=lr)
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'min', factor=cfg.LR_DECAY_FACTOR, patience=cfg.PATIENCE)
 
     start_epoch = 0
     best_loss = float('inf')
-    criterion_ce_color = nn.CrossEntropyLoss(ignore_index=cfg.NUM_BINS-1)
+    criterion_ce_color = nn.CrossEntropyLoss(ignore_index=cfg.NUM_BINS - 1)
     best_color_val_loss = float('inf')
     epochs_no_improve_color = 0
 
@@ -49,9 +46,9 @@ def train_val(model, device, train_dataloader, val_dataloader, epochs, lr, check
     normalized_locations_tensor = torch.from_numpy(normalized_locations).to(device)
 
     for epoch in range(start_epoch, epochs):
-        epoch_start_time = time.time()
         generate_plots(epoch)
 
+        epoch_start_time = time.time()
         model.train()
         epoch_loss = 0.0
         for idx, batch in enumerate(train_dataloader):
@@ -108,11 +105,10 @@ def train_val(model, device, train_dataloader, val_dataloader, epochs, lr, check
                 val_loss += loss_color_val
 
         average_val_loss = val_loss / len(val_dataloader)
-        validation_losses.append(average_val_loss.item())
         color_val_loss = average_val_loss.item()
+        validation_losses.append(average_val_loss.item())
         times.append(time.time() - epoch_start_time)
         print(f"Validation Loss: {average_val_loss.item()}, total train time: {sum(times)}")
-
 
         if color_val_loss < best_color_val_loss:
             best_color_val_loss = color_val_loss
@@ -140,6 +136,7 @@ def train_val(model, device, train_dataloader, val_dataloader, epochs, lr, check
             'best_loss': best_loss
         }, checkpoint_path)
 
+        if torch.cuda.is_available(): torch.cuda.empty_cache()
         scheduler.step(average_val_loss)
 
     total_time = sum(times)
@@ -149,7 +146,7 @@ def train_val(model, device, train_dataloader, val_dataloader, epochs, lr, check
 
 
 def main():
-    model = WeightedColorModel(cfg.NUM_BINS, cfg.CLASSES)
+    model = DimensionalWeightedColorModel(cfg.NUM_BINS, cfg.CLASSES)
     device = torch.device("cuda" if torch.cuda.is_available() else "mps")
     model.to(device)
     if torch.cuda.is_available():
@@ -184,7 +181,7 @@ def main():
         epochs=cfg.EPOCHS,
         lr=cfg.LR,
         checkpoint_path=cfg.CHECKPOINT_PATH_COMBINED,
-        best_model_path=cfg.CHECKPOINT_PATH_COMBINED
+        best_model_path=cfg.BEST_MODEL_PATH_COMBINED
     )
     print("Training complete")
 

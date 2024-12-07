@@ -16,3 +16,9 @@ if torch.cuda.is_available():
 ### Manage Copies
 Each of the transformations is meant to make a copy of the image, fix this or del as 
 soon as possible to manage memory constraints
+
+
+## Training Scripts
+TODO: Set up argument parser for command-line flags for plotting and using previous weights
+TODO: Consider adding confidence as output, this would also have an associated loss
+TODO: Verify seed does not affect randomization used in the model and processing

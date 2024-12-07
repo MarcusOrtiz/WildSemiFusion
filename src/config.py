@@ -22,7 +22,7 @@ CHECKPOINT_PATH_COMBINED = os.path.join(SAVE_DIR_COMBINED_WEIGHTED_COLOR, "check
 BEST_MODEL_PATH_COMBINED = os.path.join(SAVE_DIR_COMBINED_WEIGHTED_COLOR, "best_model.pth")
 
 # Training parameters
-BATCH_SIZE = 16
+BATCH_SIZE = 8
 EPOCHS = 300
 LR = 0.00002
 EARLY_STOP_EPOCHS = 15
@@ -32,7 +32,7 @@ WEIGHT_SEMANTICS = 1
 WEIGHT_COLOR = 20
 
 # Data processing parameters (for now to avoid error)
-NUM_WORKERS = 2
+NUM_WORKERS = 0
 
 # Model and Dataset parameters
 NUM_BINS = 257 # including void which must be last bin, consider switching to 193

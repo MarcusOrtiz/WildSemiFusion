@@ -10,17 +10,12 @@ import src.config as cfg
 from src.models.experts import ColorExpert
 from src.data.rellis_2D_dataset import Rellis2DDataset
 from src.plotting import plot_color_losses, plot_times
-from src.utils import generate_normalized_locations
+from src.utils import generate_normalized_locations, populate_random_seeds
 from matplotlib import pyplot as plt
 
 
-# Set the seed for random, NumPy, and PyTorch
-random.seed(cfg.SEED)
-np.random.seed(cfg.SEED)
-torch.manual_seed(cfg.SEED)
-torch.cuda.manual_seed(cfg.SEED)
+populate_random_seeds()
 
-# Ensure the save directory exists
 if not os.path.exists(cfg.SAVE_DIR_COLOR):
     os.makedirs(cfg.SAVE_DIR_COLOR)
 
