@@ -183,8 +183,7 @@ def train_val(model_local, dataloader, val_dataloader_local, epochs, lr, checkpo
 
         print(f"Epoch {epoch + 1}/{epochs}, Loss: {average_epoch_loss}")
 
-        if torch.cuda.is_available():
-            torch.cuda.empty_cache()
+        if torch.cuda.is_available(): torch.cuda.empty_cache()
 
         model_local.eval()
         val_loss = 0.0
@@ -261,6 +260,7 @@ def train_val(model_local, dataloader, val_dataloader_local, epochs, lr, checkpo
             'best_loss': best_loss
         }, checkpoint_path)
 
+        if torch.cuda.is_available(): torch.cuda.empty_cache()
         scheduler.step(average_val_loss)
 
     # End timing and calculate duration
