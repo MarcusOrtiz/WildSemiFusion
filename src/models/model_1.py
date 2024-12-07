@@ -44,9 +44,9 @@ class MultiModalNetwork(nn.Module):
         # lab_features = lab_features.repeat_interleave(num_locations, dim=0) # (batch_size, 256) -> (batch_size * num_locations, 256)
         gray_features = gray_features[:, None, :].expand(-1, num_locations, -1).reshape(-1, gray_features.size(-1))
         lab_features = lab_features[:, None, :].expand(-1, num_locations, -1).reshape(-1, lab_features.size(-1))
-        if torch.cuda.is_available():
-            print(f"Allocated memory after encoding expansion: {torch.cuda.memory_allocated()} bytes")
-            print(f"Reserved memory encoding expansion: {torch.cuda.memory_reserved()} bytes")
+        # if torch.cuda.is_available():
+        #     print(f"Allocated memory after encoding expansion: {torch.cuda.memory_allocated()} bytes")
+        #     print(f"Reserved memory encoding expansion: {torch.cuda.memory_reserved()} bytes")
 
         # Concatenation and compression of encoding features
         combining_features = torch.cat([location_features, gray_features, lab_features],
