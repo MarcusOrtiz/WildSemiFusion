@@ -14,12 +14,7 @@ SAVE_DIR_COMBINED_WEIGHTED_COLOR = os.path.join(BASE_DIR, "saved_model_base_expe
 TRAIN_DIR = os.path.join(BASE_DIR, "../input/rellis_2d_preprocessed/train")
 VAL_DIR = os.path.join(BASE_DIR, "../input/rellis_2d_preprocessed/val")
 TEST_DIR = os.path.join(BASE_DIR, "../input/rellis_2d_preprocessed/test")
-CHECKPOINT_PATH_BASE = os.path.join(SAVE_DIR_BASE, "checkpoint.pth")
-BEST_MODEL_PATH_BASE = os.path.join(SAVE_DIR_BASE, "best_model.pth")
-CHECKPOINT_PATH_COLOR = os.path.join(SAVE_DIR_COLOR, "checkpoint.pth")
 BEST_MODEL_PATH_COLOR = os.path.join(SAVE_DIR_COLOR, "best_model.pth")
-CHECKPOINT_PATH_COMBINED = os.path.join(SAVE_DIR_COMBINED_WEIGHTED_COLOR, "checkpoint.pth")
-BEST_MODEL_PATH_COMBINED = os.path.join(SAVE_DIR_COMBINED_WEIGHTED_COLOR, "best_model.pth")
 
 # Training parameters
 BATCH_SIZE = 8
@@ -32,7 +27,8 @@ WEIGHT_SEMANTICS = 1
 WEIGHT_COLOR = 20
 
 # Data processing parameters (for now to avoid error)
-NUM_WORKERS = 0
+NUM_WORKERS = 3
+PIN_MEMORY = True
 
 # Model and Dataset parameters
 NUM_BINS = 257 # including void which must be last bin, consider switching to 193

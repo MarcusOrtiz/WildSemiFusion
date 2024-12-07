@@ -9,7 +9,7 @@ from src.data.rellis_2D_dataset import Rellis2DDataset
 from torch.utils.data import DataLoader
 from src.models.model_1 import MultiModalNetwork
 
-import src.config as cfg
+import src.local_config as cfg
 
 # Verify dataset
 # for idx in range(len(train_dataset)):
@@ -95,7 +95,7 @@ print("Model initialized successfully")
 model = model.to(device)
 print("Model moved to device")
 
-state_dict = torch.load(cfg.BEST_MODEL_PATH_BASE)
+state_dict = torch.load(os.path.join(cfg.SAVE_DIR_BASE, 'best_model.pth'), map_location=device)
 model.load_state_dict(state_dict)
 
 model.eval()

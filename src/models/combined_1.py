@@ -1,17 +1,19 @@
+import os
+
 from src.models.model_1 import MultiModalNetwork
 from src.models.experts import ColorExpert
 import torch.nn as nn
 import torch
-import src.config as cfg
+import src.local_config as cfg
 
 
 class WeightedColorModel(nn.Module):
-    def __init__(self, num_bins, num_classes):
+    def __init__(self, num_bins, num_classes, device):
         super(WeightedColorModel, self).__init__()
         self.base_model = MultiModalNetwork(num_bins, num_classes)
         self.color_expert = ColorExpert(num_bins)
-        self.base_model.load_state_dict(torch.load(cfg.BEST_MODEL_PATH_BASE))
-        self.color_expert.load_state_dict(torch.load(cfg.BEST_MODEL_PATH_COLOR))
+        self.base_model.load_state_dict(torch.load(os.path.join(cfg.SAVE_DIR_BASE, "best_model.pth"), map_location=device))
+        self.color_expert.load_state_dict(torch.load(os.path.join(cfg.SAVE_DIR_COLOR, "best_model.pth"), map_location=device))
         for param in self.base_model.parameters():
             param.requires_grad = False
         for param in self.color_expert.parameters():
@@ -29,12 +31,12 @@ class WeightedColorModel(nn.Module):
 
 
 class DimensionalWeightedColorModel(nn.Module):
-    def __init__(self, num_bins, num_classes):
+    def __init__(self, num_bins, num_classes, device):
         super(DimensionalWeightedColorModel, self).__init__()
         self.base_model = MultiModalNetwork(num_bins, num_classes)
         self.color_expert = ColorExpert(num_bins)
-        self.base_model.load_state_dict(torch.load(cfg.BEST_MODEL_PATH_BASE))
-        self.color_expert.load_state_dict(torch.load(cfg.BEST_MODEL_PATH_COLOR))
+        self.base_model.load_state_dict(torch.load(os.path.join(cfg.SAVE_DIR_BASE, "best_model.pth"), map_location=device))
+        self.color_expert.load_state_dict(torch.load(os.path.join(cfg.SAVE_DIR_COLOR, "best_model.pth"), map_location=device))
         for param in self.base_model.parameters():
             param.requires_grad = False
         for param in self.color_expert.parameters():
@@ -51,7 +53,19 @@ class DimensionalWeightedColorModel(nn.Module):
         return preds_semantics, preds_color_combined
 
 
-class FusionColorModel():
+class MLPColorModel(nn.Module):
+    def __init__(self, num_bins, num_classes):
+        super(MLPColorModel, self).__init__()
+        self.base_model = MultiModalNetwork(num_bins, num_classes)
+        self.color_expert = ColorExpert(num_bins)
+
+    def forward(self, locations, gray_images, lab_images):
+        semantics, raw_color_logits = self.base_model(locations, gray_images, lab_images)
+        color_predictions = self.color_expert(locations, lab_images)
+        return semantics, raw_color_logits, color_predictions
+
+
+class FusionColorModel(nn.Module):
     def __init__(self, num_bins, num_classes):
         super(FusionColorModel, self).__init__()
         self.base_model = MultiModalNetwork(num_bins, num_classes)

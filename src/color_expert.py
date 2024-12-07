@@ -6,7 +6,7 @@ from torch.utils.data import DataLoader
 from src.data.utils.data_processing import image_to_array, load_sequential_data
 import numpy as np
 import random
-import src.config as cfg
+import src.local_config as cfg
 from src.models.experts import ColorExpert
 from src.data.rellis_2D_dataset import Rellis2DDataset
 from src.plotting import plot_color_losses, plot_times
@@ -26,7 +26,10 @@ times = []
 
 normalized_locations = generate_normalized_locations()
 
-def train_val(model, dataloader, val_dataloader, epochs, lr, checkpoint_path, best_model_path):
+def train_val(model, dataloader, val_dataloader, epochs, lr, save_dir: str):
+    checkpoint_path = os.path.join(save_dir, "checkpoint.pth")
+    best_model_path = os.path.join(save_dir, "best_model.pth")
+
     model.to(device)
 
     if torch.cuda.device_count() > 1:
@@ -194,9 +197,9 @@ val_dataset = Rellis2DDataset(preloaded_data=val_preloaded_data, num_bins=cfg.NU
                               image_noise=cfg.IMAGE_NOISE, image_mask_rate=cfg.IMAGE_MASK_RATE)
 
 train_dataloader = DataLoader(train_dataset, batch_size=cfg.BATCH_SIZE, shuffle=True, num_workers=cfg.NUM_WORKERS,
-                              pin_memory=False, drop_last=True)
+                              pin_memory=cfg.PIN_MEMORY, drop_last=True)
 val_dataloader = DataLoader(val_dataset, batch_size=cfg.BATCH_SIZE, shuffle=False, num_workers=cfg.NUM_WORKERS,
-                            pin_memory=False, drop_last=True)
+                            pin_memory=cfg.PIN_MEMORY, drop_last=True)
 print("Created training and validation dataloaders")
 
 # Train and validate the model
@@ -206,7 +209,6 @@ trained_model = train_val(
     val_dataloader,
     epochs=cfg.EPOCHS,
     lr=cfg.LR,
-    checkpoint_path=cfg.CHECKPOINT_PATH_COLOR,
-    best_model_path=cfg.BEST_MODEL_PATH_COLOR
+    save_dir=cfg.SAVE_DIR_COLOR
 )
 print("Training complete")

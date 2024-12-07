@@ -6,7 +6,7 @@ from torch.utils.data import DataLoader
 from src.data.utils.data_processing import image_to_array, load_sequential_data
 import numpy as np
 import random
-import src.config as cfg
+import src.local_config as cfg
 from src.models.model_1 import MultiModalNetwork
 from src.data.rellis_2D_dataset import Rellis2DDataset
 from src.plotting import plot_losses, plot_times
@@ -46,7 +46,10 @@ def generate_plots(epoch):
         plot_times(times, cfg.SAVE_DIR_BASE)
 
 
-def train_val(model, device, train_dataloader, val_dataloader, epochs, lr, checkpoint_path, best_model_path):
+def train_val(model, device, train_dataloader, val_dataloader, epochs, lr, save_dir: str):
+    checkpoint_path = os.path.join(save_dir, "checkpoint.pth")
+    best_model_path = os.path.join(save_dir, "best_model.pth")
+
     model_module = model.module if isinstance(model, nn.DataParallel) else model
     optimizer = torch.optim.Adam([
         {'params': model_module.semantic_fcn.parameters(), 'lr': 5e-6, 'weight_decay': 1e-5},
@@ -202,9 +205,9 @@ def main():
                                   image_noise=cfg.IMAGE_NOISE, image_mask_rate=cfg.IMAGE_MASK_RATE)
 
     train_dataloader = DataLoader(train_dataset, batch_size=cfg.BATCH_SIZE, shuffle=True, num_workers=cfg.NUM_WORKERS,
-                                  pin_memory=False, drop_last=True)
+                                  pin_memory=cfg.PIN_MEMORY, drop_last=True)
     val_dataloader = DataLoader(val_dataset, batch_size=cfg.BATCH_SIZE, shuffle=False, num_workers=cfg.NUM_WORKERS,
-                                pin_memory=False, drop_last=True)
+                                pin_memory=cfg.PIN_MEMORY, drop_last=True)
     print(f"Created training dataloader with {len(train_dataset)} files and validation dataloader with {len(val_dataset)} files")
 
     # Train and validate the model
@@ -215,8 +218,7 @@ def main():
         val_dataloader,
         epochs=cfg.EPOCHS,
         lr=cfg.LR,
-        checkpoint_path=cfg.CHECKPOINT_PATH_BASE,
-        best_model_path=cfg.BEST_MODEL_PATH_BASE
+        save_dir=cfg.SAVE_DIR_BASE
     )
     print("Training complete")
 
