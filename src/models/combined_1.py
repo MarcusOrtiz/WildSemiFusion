@@ -1,97 +1,100 @@
 import os
 
 from src.models.model_1 import MultiModalNetwork
-from src.models.experts import ColorExpert
+from src.models.experts import ColorExpertModel
 import torch.nn as nn
 import torch
 import src.local_config as cfg
 
 
-class WeightedColorModel(nn.Module):
+class ColorModel(nn.Module):
     def __init__(self, num_bins, num_classes, device):
-        super(WeightedColorModel, self).__init__()
-        self.base_model = MultiModalNetwork(num_bins, num_classes)
-        self.color_expert = ColorExpert(num_bins)
+        super(ColorModel, self).__init__()
+        self.num_bins = num_bins
+        self.num_classes = num_classes
+        self.device = device
         self.base_model.load_state_dict(torch.load(os.path.join(cfg.SAVE_DIR_BASE, "best_model.pth"), map_location=device))
         self.color_expert.load_state_dict(torch.load(os.path.join(cfg.SAVE_DIR_COLOR, "best_model.pth"), map_location=device))
-        for param in self.base_model.parameters():
-            param.requires_grad = False
-        for param in self.color_expert.parameters():
-            param.requires_grad = False
+        for p in self.base_model.parameters():
+            p.requires_grad = False
+        for p in self.color_expert.parameters():
+            p.requires_grad = False
 
-        self.weight = nn.Parameter(torch.tensor(0.5))
-
-    # Output from these is a discretized color prediction in logits and a semnatic prediciton, we can disregard the semantic prediction and
-    # use the logits to combine them in a mlp with a linear relationship
-    def forward(self, locations, gray_images, lab_images):
+    def forward_base(self, locations, gray_images, lab_images):
         preds_semantics, preds_color_base = self.base_model(locations, gray_images, lab_images)
         preds_color_expert = self.color_expert(locations, lab_images)
+        return preds_semantics, preds_color_base, preds_color_expert
+
+
+class WeightedColorModel(ColorModel):
+    def __init__(self, num_bins, num_classes, device):
+        super(WeightedColorModel, self).__init__(num_bins, num_classes, device)
+        self.weight = nn.Parameter(torch.tensor(0.5))
+
+    def forward(self, locations, gray_images, lab_images):
+        preds_semantics, preds_color_base, preds_color_expert = self.forward_base(locations, gray_images, lab_images)
+
         preds_color_combined = self.weight * preds_color_base + (1 - self.weight) * preds_color_expert
         return preds_semantics, preds_color_combined
 
 
-class DimensionalWeightedColorModel(nn.Module):
+class ChannelWeightedColorModel(ColorModel):
     def __init__(self, num_bins, num_classes, device):
-        super(DimensionalWeightedColorModel, self).__init__()
-        self.base_model = MultiModalNetwork(num_bins, num_classes)
-        self.color_expert = ColorExpert(num_bins)
-        self.base_model.load_state_dict(torch.load(os.path.join(cfg.SAVE_DIR_BASE, "best_model.pth"), map_location=device))
-        self.color_expert.load_state_dict(torch.load(os.path.join(cfg.SAVE_DIR_COLOR, "best_model.pth"), map_location=device))
-        for param in self.base_model.parameters():
-            param.requires_grad = False
-        for param in self.color_expert.parameters():
-            param.requires_grad = False
-
+        super(ChannelWeightedColorModel, self).__init__(num_bins, num_classes, device)
         self.weights = nn.Parameter(torch.full((3,), 0.5))
 
     def forward(self, locations, gray_images, lab_images):
-        preds_semantics, preds_color_base = self.base_model(locations, gray_images, lab_images)
-        preds_color_expert = self.color_expert(locations, lab_images)
+        preds_semantics, preds_color_base, preds_color_expert = self.forward_base(locations, gray_images, lab_images)
 
         weights_space = self.weights.view(1, 3, 1)
         preds_color_combined = weights_space * preds_color_base + (1 - weights_space) * preds_color_expert
         return preds_semantics, preds_color_combined
 
 
-class MLPColorModel(nn.Module):
-    def __init__(self, num_bins, num_classes):
-        super(MLPColorModel, self).__init__()
-        self.base_model = MultiModalNetwork(num_bins, num_classes)
-        self.color_expert = ColorExpert(num_bins)
+class ChannelBinWeightedColorModel(ColorModel):
+    def __init__(self, num_bins, num_classes, device):
+        super(ChannelBinWeightedColorModel, self).__init__(num_bins, num_classes, device)
+        self.weights = nn.Parameter(torch.full((3, num_bins), 0.5))
 
     def forward(self, locations, gray_images, lab_images):
-        semantics, raw_color_logits = self.base_model(locations, gray_images, lab_images)
-        color_predictions = self.color_expert(locations, lab_images)
-        return semantics, raw_color_logits, color_predictions
+        preds_semantics, preds_color_base, preds_color_expert = self.forward_base(locations, gray_images, lab_images)
+
+        weights_space = self.weights.unsqueeze(0)
+        preds_color_combined = weights_space * preds_color_base + (1 - weights_space) * preds_color_expert
+        return preds_semantics, preds_color_combined
 
 
-class FusionColorModel(nn.Module):
-    def __init__(self, num_bins, num_classes):
-        super(FusionColorModel, self).__init__()
-        self.base_model = MultiModalNetwork(num_bins, num_classes)
-        self.color_expert = ColorExpert(num_bins)
+class LinearColorModel(ColorModel):
+    def __init__(self, num_bins, num_classes, device):
+        super(LinearColorModel, self).__init__(num_bins, num_classes, device)
 
-    def forward(self, locations, gray_images, lab_images):
-        semantics, raw_color_logits = self.base_model(locations, gray_images, lab_images)
-        color_predictions = self.color_expert(locations, lab_images)
-        return semantics, raw_color_logits, color_predictions
-
-
-class CombinedSemanticModel():
-    def __init__(self, num_bins, num_classes):
-        super(CombinedSemanticModel, self).__init__()
-        self.base_model = MultiModalNetwork(num_bins, num_classes)
-        # Define a semantic expert
+        self.fc1 = nn.Linear(num_bins * 2, num_bins)
 
     def forward(self, locations, gray_images, lab_images):
-        pass
+        preds_semantics, preds_color_base, preds_color_expert = self.forward_base(locations, gray_images, lab_images)
+
+        preds_color_combined = torch.cat([preds_color_base, preds_color_expert], dim=-1)  # (N, C, 2*num_bins)
+        samples, channels, _ = preds_color_combined.shape
+        preds_color_combined = preds_color_combined.view(samples * channels, -1)
+
+        preds_color_combined = self.mlp(preds_color_combined)
+        preds_color_combined = preds_color_combined.view(samples, channels, -1)
+        return preds_semantics, preds_color_combined
 
 
-class CombinedSemanticFusedModel():
-    def __init__(self, num_bins, num_classes):
-        super(CombinedSemanticFusedModel, self).__init__()
-        self.base_model = MultiModalNetwork(num_bins, num_classes)
-        # Define a semantic expert
+class MLPColorModel(ColorModel):
+    def __init__(self, num_bins, num_classes, device):
+        super(MLPColorModel, self).__init__(num_bins, num_classes, device)
+
+        self.fc1 = nn.Linear(num_bins * 2, num_bins)
 
     def forward(self, locations, gray_images, lab_images):
-        pass
+        preds_semantics, preds_color_base, preds_color_expert = self.forward_base(locations, gray_images, lab_images)
+
+        preds_color_combined = torch.cat([preds_color_base, preds_color_expert], dim=-1)  # (N, C, 2*num_bins)
+        samples, channels, _ = preds_color_combined.shape
+        preds_color_combined = preds_color_combined.view(samples * channels, -1)
+
+        preds_color_combined = self.mlp(preds_color_combined)
+        preds_color_combined = preds_color_combined.view(samples, channels, -1)
+        return preds_semantics, preds_color_combined

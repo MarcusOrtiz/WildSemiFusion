@@ -238,10 +238,8 @@ def channel_size(channel_limits: Tuple[int, int]):
     return channel_limits[1] - channel_limits[0]
 
 
-def load_sequential_data(directory: str, num_of_sequences: int = None):
+def load_sequential_data(directory: str, files_limit: int = None):
     sequences = sorted([seq for seq in os.listdir(directory) if not seq.startswith('.')])
-    if num_of_sequences is not None:
-        sequences = sequences[:num_of_sequences]
     rgb_images = []
     semantics = []
     for sequence in sequences:
@@ -254,6 +252,10 @@ def load_sequential_data(directory: str, num_of_sequences: int = None):
         rgb_images.extend([image_to_array(f"{directory}/{sequence}/pylon_camera_node/{image_file}") for image_file in image_files])
         semantics.extend([image_to_array(f"{directory}/{sequence}/pylon_camera_node_label_id/{label_file}", 1) for
                           label_file in semantics_images])
+
+    if files_limit is not None and len(rgb_images) > files_limit:
+        rgb_images = rgb_images[:files_limit]
+        semantics = semantics[:files_limit]
     return {
         'rgb_images': rgb_images,
         'gt_semantics': semantics

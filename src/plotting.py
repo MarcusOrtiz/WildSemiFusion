@@ -1,5 +1,5 @@
 import matplotlib.pyplot as plt
-import src.config as cfg
+import src.local_config as cfg
 from typing import Dict, List
 import os
 

@@ -7,7 +7,7 @@ from src.data.utils.data_processing import image_to_array, load_sequential_data
 import numpy as np
 import random
 import src.local_config as cfg
-from src.models.experts import ColorExpert
+from src.models.experts import ColorExpertModel
 from src.data.rellis_2D_dataset import Rellis2DDataset
 from src.plotting import plot_color_losses, plot_times
 from src.utils import generate_normalized_locations, populate_random_seeds
@@ -174,8 +174,9 @@ def train_val(model, dataloader, val_dataloader, epochs, lr, save_dir: str):
 
     return model
 
+
 # Initialize model
-model = ColorExpert(cfg.NUM_BINS)
+model = ColorExpertModel(cfg.NUM_BINS)
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 model.to(device)
 print(f"Initialized model and moved to {device}")

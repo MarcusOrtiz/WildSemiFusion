@@ -7,7 +7,7 @@ from src.data.utils.data_processing import image_to_array, lab_discretized_to_rg
     rgb_to_gray, rgb_to_lab_continuous, load_sequential_data
 from src.data.rellis_2D_dataset import Rellis2DDataset
 from torch.utils.data import DataLoader
-from src.models.experts import ColorExpert
+from src.models.experts import ColorExpertModel
 import src.local_config as cfg
 
 
@@ -19,7 +19,7 @@ print("Successfully loaded preprocessed test data")
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 print(f"Using device: {device}")
 
-model = ColorExpert(num_bins=cfg.NUM_BINS)
+model = ColorExpertModel(num_bins=cfg.NUM_BINS)
 print("Model initialized successfully")
 
 model = model.to(device)

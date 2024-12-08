@@ -1,22 +1,16 @@
 import time
 import os
-import random
 import torch
 import torch.nn as nn
 from src.data.utils.data_processing import load_sequential_data
-from src.models.combined_1 import WeightedColorModel, DimensionalWeightedColorModel
+from src.models.combined_1 import WeightedColorModel, ChannelWeightedColorModel, MLPColorModel
 from src.data.rellis_2D_dataset import Rellis2DDataset
 import src.local_config as cfg
 from torch.utils.data import DataLoader
-import numpy as np
 
 from src.plotting import plot_color_losses, plot_times
 from src.utils import generate_normalized_locations, populate_random_seeds
 
-populate_random_seeds()
-
-if not os.path.exists(cfg.SAVE_DIR_COMBINED_WEIGHTED_COLOR):
-    os.makedirs(cfg.SAVE_DIR_COMBINED_WEIGHTED_COLOR)
 
 times = []
 training_losses = []
@@ -25,17 +19,19 @@ validation_losses = []
 
 def generate_plots(epoch):
     if (epoch + 1) % cfg.PLOT_INTERVAL == 0:
-        plot_color_losses(training_losses, validation_losses, cfg.SAVE_DIR_COMBINED_WEIGHTED_COLOR)
-        plot_times(times, cfg.SAVE_DIR_COMBINED_WEIGHTED_COLOR)
+        plot_color_losses(training_losses, validation_losses, cfg.SAVE_DIR_FUSION_COLOR)
+        plot_times(times, cfg.SAVE_DIR_FUSION_COLOR)
 
 
 def train_val(model, device, train_dataloader, val_dataloader, epochs, lr, save_dir: str):
+    if not os.path.exists(save_dir):
+        os.makedirs(save_dir)
     checkpoint_path = os.path.join(save_dir, "checkpoint.pth")
     best_model_path = os.path.join(save_dir, "best_model.pth")
 
     model_module = model.module if isinstance(model, nn.DataParallel) else model
     optimizer = torch.optim.Adam([
-        {'params': [model_module.weights], 'weight_decay': 1e-4},
+        {'params': model_module.mlp.parameters(), 'weight_decay': 1e-4},
     ], lr=lr)
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'min', factor=cfg.LR_DECAY_FACTOR, patience=cfg.PATIENCE)
 
@@ -149,8 +145,10 @@ def train_val(model, device, train_dataloader, val_dataloader, epochs, lr, save_
 
 
 def main():
-    device = torch.device("cuda" if torch.cuda.is_available() else "mps")
-    model = DimensionalWeightedColorModel(cfg.NUM_BINS, cfg.CLASSES, device)
+    populate_random_seeds()
+
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    model = MLPColorModel(cfg.NUM_BINS, cfg.CLASSES, device)
     model.to(device)
     if torch.cuda.is_available():
         torch.cuda.empty_cache()
@@ -160,8 +158,8 @@ def main():
         print(f"Using {torch.cuda.device_count()} GPUs!")
     print(f"Model successfully initialized and moved to {device}")
 
-    train_preloaded_data = load_sequential_data(cfg.TRAIN_DIR)
-    val_preloaded_data = load_sequential_data(cfg.VAL_DIR)
+    train_preloaded_data = load_sequential_data(cfg.TRAIN_DIR, cfg.TRAIN_FILES_LIMIT)
+    val_preloaded_data = load_sequential_data(cfg.VAL_DIR, cfg.VAL_FILES_LIMIT)
     print("Successfully loaded preprocessed training and validation data")
 
     train_dataset = Rellis2DDataset(preloaded_data=train_preloaded_data, num_bins=cfg.NUM_BINS, image_size=cfg.IMAGE_SIZE,
@@ -175,7 +173,7 @@ def main():
                                 pin_memory=cfg.PIN_MEMORY, drop_last=True)
     print(f"Created training dataloader with {len(train_dataset)} files and validation dataloader with {len(val_dataset)} files")
 
-    # Train and validate the model
+    # Train and validate each color model
     trained_model = train_val(
         model,
         device,
@@ -183,7 +181,7 @@ def main():
         val_dataloader,
         epochs=cfg.EPOCHS,
         lr=cfg.LR,
-        save_dir=cfg.SAVE_DIR_COMBINED_WEIGHTED_COLOR
+        save_dir=cfg.SAVE_DIR_FUSION_COLOR + "_mlp"
     )
     print("Training complete")
 

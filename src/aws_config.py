@@ -34,6 +34,8 @@ WEIGHT_COLOR = 20
 # Data processing parameters (for now to avoid error)
 NUM_WORKERS = 3
 PIN_MEMORY = True
+TRAIN_FILES_LIMIT = None
+VAL_FILES_LIMIT = None
 
 # Model and Dataset parameters
 NUM_BINS = 257 # including void which must be last bin, consider switching to 193

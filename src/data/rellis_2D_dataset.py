@@ -7,8 +7,8 @@ import numpy as np
 from src.data.utils.data_processing import (rgb_to_gray, rgb_to_lab_continuous, lab_continuous_to_lab_discretized,
                                             gray_continuous_to_gray_discretized, image_gaussian_noise, create_mask)
 from src.data.utils.data_processing import image_to_array
-from src.config import IMAGE_SIZE
-import src.config as cfg
+from src.local_config import IMAGE_SIZE
+import src.local_config as cfg
 
 ONTOLOGY_VOID = 0
 

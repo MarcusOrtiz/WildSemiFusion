@@ -1,45 +1,46 @@
 import os
 
-# Random seed for reproducibility
-SEED = 7
+SRC_DIR = os.path.dirname(os.path.abspath(__file__))
 
-# Base directory
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+# Saved Model Directories
+SAVE_DIR = os.path.join(SRC_DIR, "../saved_models")
+SAVE_DIR_BASE = os.path.join(SAVE_DIR, "base_1")
+SAVE_DIR_COLOR = os.path.join(SAVE_DIR, "color_expert_1")
+SAVE_DIR_WEIGHTED_COLOR = os.path.join(SAVE_DIR, "weighted_color_1")
+SAVE_DIR_MLP_COLOR = os.path.join(SAVE_DIR, "mlp_color_1")
+SAVE_DIR_FUSION_COLOR = os.path.join(SAVE_DIR, "fusion_color_1")
 
-# Paths
-SAVE_DIR_BASE = os.path.join(BASE_DIR, "saved_model_base_1")
-# SAVE_DIR_BASE = os.path.join(BASE_DIR, "saved_model_test_full")
-SAVE_DIR_COLOR = os.path.join(BASE_DIR, "saved_expert_color_1")
-SAVE_DIR_COMBINED_WEIGHTED_COLOR = os.path.join(BASE_DIR, "saved_model_base_expert_color_1")
-TRAIN_DIR = os.path.join(BASE_DIR, "../input/rellis_2d_preprocessed/train")
-VAL_DIR = os.path.join(BASE_DIR, "../input/rellis_2d_preprocessed/val")
-TEST_DIR = os.path.join(BASE_DIR, "../input/rellis_2d_preprocessed/test")
-BEST_MODEL_PATH_COLOR = os.path.join(SAVE_DIR_COLOR, "best_model.pth")
+# Data Directories
+INPUT_DIR = os.path.join(SRC_DIR, "../input")
+TRAIN_DIR = os.path.join(INPUT_DIR, "rellis_2d_preprocessed/train")
+VAL_DIR = os.path.join(INPUT_DIR, "rellis_2d_preprocessed/val")
+TEST_DIR = os.path.join(INPUT_DIR, "rellis_2d_preprocessed/test")
+
+# Data processing parameters
+NUM_WORKERS = 0
+PIN_MEMORY = False
+TRAIN_FILES_LIMIT = 500
+VAL_FILES_LIMIT = 150
 
 # Training parameters
-BATCH_SIZE = 8
-EPOCHS = 300
+BATCH_SIZE = 6
+EPOCHS = 20
 LR = 0.00002
-EARLY_STOP_EPOCHS = 15
-
-# Loss weights
+EARLY_STOP_EPOCHS = 10
 WEIGHT_SEMANTICS = 1
 WEIGHT_COLOR = 20
+PATIENCE = 5
+LR_DECAY_FACTOR = 0.6
 
-# Data processing parameters (for now to avoid error)
-NUM_WORKERS = 3
-PIN_MEMORY = True
-
-# Model and Dataset parameters
-NUM_BINS = 257 # including void which must be last bin, consider switching to 193
+# Dataset and preprocessing parameters
+NUM_BINS = 257  # including void which must be last bin, consider switching to 193
 CLASSES = 35  # including void
 IMAGE_SIZE = (224, 224)
 IMAGE_NOISE = 0.01
 IMAGE_MASK_RATE = (.1, .25)
 
-# Other parameters
-PATIENCE = 5
-LR_DECAY_FACTOR = 0.6
-
 # Plotting
 PLOT_INTERVAL = 5
+
+# Random seed for reproducibility
+SEED = 7

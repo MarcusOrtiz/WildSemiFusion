@@ -243,7 +243,7 @@ fabric.properties
 *.pth
 input/*
 !input/rellis_2d/.gitkeep
-src/saved_model_base_1/*
+saved_models/base_1/*
 
 # Ignore all files in .idea directory
 .idea/*
@@ -265,3 +265,5 @@ src/saved_model_base_1/*
 
 
 src/saved_*/*
+
+saved_models/*

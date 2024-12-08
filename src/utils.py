@@ -1,5 +1,5 @@
 import numpy as np
-import src.config as cfg
+import src.local_config as cfg
 import torch
 import random
 
