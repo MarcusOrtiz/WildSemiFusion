@@ -1,65 +1,41 @@
-import os
 import time
+import os
 import torch
 import torch.nn as nn
-from torch.utils.data import DataLoader
-from src.data.utils.data_processing import image_to_array, load_sequential_data
-import numpy as np
-import random
-import src.local_config as cfg
-from src.models.model_1 import MultiModalNetwork
+import argparse
+import importlib
+from src.data.utils.data_processing import load_sequential_data
+from src.models.color_1 import WeightedColorModel, ChannelWeightedColorModel, ChannelBinWeightedColorModel, LinearColorModel
 from src.data.rellis_2D_dataset import Rellis2DDataset
-from src.plotting import plot_losses, plot_times
-from matplotlib import pyplot as plt
-from src.utils import generate_normalized_locations, populate_random_seeds
+from torch.utils.data import DataLoader
 
-populate_random_seeds()
+from src.plotting import plot_color_losses, plot_times
+from src.utils import generate_normalized_locations, populate_random_seeds, model_to_device
 
-if not os.path.exists(cfg.SAVE_DIR_BASE):
-    os.makedirs(cfg.SAVE_DIR_BASE)
-
-# Initialize loss trackers
-training_losses = []
-validation_losses = []
-training_losses_semantics = []
-training_losses_color = []
-validation_losses_semantics = []
-validation_losses_color = []
-times = []
-
-t_losses = {
-    'total': training_losses,
-    'semantics': training_losses_semantics,
-    'color': training_losses_color
-}
-
-v_losses = {
-    'total': validation_losses,
-    'semantics': validation_losses_semantics,
-    'color': validation_losses_color
-}
+parser = argparse.ArgumentParser(description="Train a expert model foucsed on color prediction")
+parser.add_argument('--config', type=str, default='src.local_config',
+                    help='Path to the configuration module (src.local_config | src.aws_config)')
+args = parser.parse_args()
+cfg = importlib.import_module(args.config)
 
 
-def generate_plots(epoch):
+def generate_plots(epoch, training_losses, validation_losses, times, save_dir):
     if (epoch + 1) % cfg.PLOT_INTERVAL == 0:
-        plot_losses(t_losses, v_losses, cfg.SAVE_DIR_BASE)
-        plot_times(times, cfg.SAVE_DIR_BASE)
+        plot_color_losses(training_losses, validation_losses, save_dir)
+        plot_times(times, save_dir)
 
 
-def train_val(model, device, train_dataloader, val_dataloader, epochs, lr, save_dir: str):
+def train_val(model, device, optimizer, train_dataloader, val_dataloader, epochs, save_dir: str):
+    os.makedirs(save_dir, exist_ok=True)
     checkpoint_path = os.path.join(save_dir, "checkpoint.pth")
     best_model_path = os.path.join(save_dir, "best_model.pth")
 
-    model_module = model.module if isinstance(model, nn.DataParallel) else model
-    optimizer = torch.optim.Adam([
-        {'params': model_module.semantic_fcn.parameters(), 'lr': 5e-6, 'weight_decay': 1e-5},
-        {'params': model_module.color_fcn.parameters(), 'weight_decay': 1e-4},
-    ], lr=lr)
+    training_losses, validation_losses, times = [], [], []
+
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'min', factor=cfg.LR_DECAY_FACTOR, patience=cfg.PATIENCE)
 
     start_epoch = 0
     best_loss = float('inf')
-    criterion_ce_semantics = nn.CrossEntropyLoss(ignore_index=0)
     criterion_ce_color = nn.CrossEntropyLoss(ignore_index=cfg.NUM_BINS - 1)
     best_color_val_loss = float('inf')
     epochs_no_improve_color = 0
@@ -68,10 +44,10 @@ def train_val(model, device, train_dataloader, val_dataloader, epochs, lr, save_
     normalized_locations_tensor = torch.from_numpy(normalized_locations).to(device)
 
     for epoch in range(start_epoch, epochs):
-        generate_plots(epoch)
+        generate_plots(epoch, training_losses, validation_losses, times, save_dir)
 
-        model.train()
         epoch_start_time = time.time()
+        model.train()
         epoch_loss = 0.0
         for idx, batch in enumerate(train_dataloader):
             # if (idx < 2 or idx % 100 == 0): print(f"Loading training batch {idx}", flush=True)
@@ -88,37 +64,27 @@ def train_val(model, device, train_dataloader, val_dataloader, epochs, lr, save_
             optimizer.zero_grad()
 
             preds_semantics, preds_color_logits = model(locations, gray_images, lab_images)
-            del locations, gray_images, lab_images
 
-            loss_semantics = cfg.WEIGHT_SEMANTICS * criterion_ce_semantics(preds_semantics, gt_semantics.long().view(-1))
-            del preds_semantics, gt_semantics
-
+            # Color loss
             preds_color_logits = preds_color_logits.view(-1, cfg.NUM_BINS)
             gt_color = gt_color.view(-1)
             loss_color = cfg.WEIGHT_COLOR * criterion_ce_color(preds_color_logits, gt_color)
-            del preds_color_logits, gt_color
 
-            total_loss = loss_semantics + loss_color
+            total_loss = loss_color
             total_loss.backward()
             optimizer.step()
             epoch_loss += total_loss.item()
 
         average_epoch_loss = epoch_loss / len(train_dataloader)
-
         training_losses.append(average_epoch_loss)
-        training_losses_semantics.append(loss_semantics.item())
-        training_losses_color.append(loss_color.item())
-
-        print(f"Epoch {epoch + 1}/{epochs}, Loss: {average_epoch_loss}")
-
-        if torch.cuda.is_available(): torch.cuda.empty_cache()
+        print(f"Epoch {epoch + 1}/{epochs})")
+        print(f"Training Loss: {average_epoch_loss}")
 
         model.eval()
         val_loss = 0.0
         with torch.no_grad():
-            for idx, batch in enumerate(val_dataloader):
-                # if (idx < 2 or idx % 100 == 0): print(f"Loading validation batch {idx}", flush=True)
-
+            for batch_idx, batch in enumerate(val_dataloader):
+                # print(f"Loading validation batch {batch_idx}", flush=True)
                 gt_semantics = batch['gt_semantics'].to(device)
                 gt_color = batch['gt_color'].to(device)
                 gray_images = batch['gray_image'].to(device)
@@ -128,24 +94,18 @@ def train_val(model, device, train_dataloader, val_dataloader, epochs, lr, save_
                 batch_size = gt_semantics.shape[0]
                 locations = normalized_locations_tensor.unsqueeze(0).expand(batch_size, -1, -1)
 
-                preds_semantics, preds_color_logits = model(locations, gray_images, lab_images)
-                del locations, gray_images, lab_images
+                preds_semantics_logits, preds_color_logits = model(locations, gray_images, lab_images)
 
-                loss_semantics_val = cfg.WEIGHT_SEMANTICS * criterion_ce_semantics(preds_semantics, gt_semantics.long().view(-1))
-                del preds_semantics, gt_semantics
-
+                # Color loss
                 preds_color_logits = preds_color_logits.view(-1, cfg.NUM_BINS)
                 gt_color = gt_color.view(-1)
                 loss_color_val = cfg.WEIGHT_COLOR * criterion_ce_color(preds_color_logits, gt_color)
-                del preds_color_logits, gt_color
 
-                val_loss += loss_semantics_val + loss_color_val
+                val_loss += loss_color_val
 
         average_val_loss = val_loss / len(val_dataloader)
-        color_val_loss = loss_color_val.item()
+        color_val_loss = average_val_loss.item()
         validation_losses.append(average_val_loss.item())
-        validation_losses_semantics.append(loss_semantics_val.item())
-        validation_losses_color.append(loss_color_val.item())
         times.append(time.time() - epoch_start_time)
         print(f"Validation Loss: {average_val_loss.item()}, total train time: {sum(times)}")
 
@@ -155,7 +115,7 @@ def train_val(model, device, train_dataloader, val_dataloader, epochs, lr, save_
         else:
             epochs_no_improve_color += 1
 
-        if (epochs_no_improve_color >= cfg.EARLY_STOP_EPOCHS) and (epoch >= 150):
+        if (epochs_no_improve_color >= cfg.EARLY_STOP_EPOCHS) and (epoch >= 10):
             print(f"Early stop at epoch {epoch + 1}. Color validation loss did not improve for {cfg.EARLY_STOP_EPOCHS} consecutive epochs.")
             torch.save(model.state_dict(), best_model_path)
             print(f"Model saved at early stopping point with validation loss: {best_color_val_loss}")
@@ -183,44 +143,94 @@ def train_val(model, device, train_dataloader, val_dataloader, epochs, lr, save_
 
     return model
 
-def main():
-    model = MultiModalNetwork(cfg.NUM_BINS, cfg.CLASSES)
-    device = torch.device("cuda" if torch.cuda.is_available() else "mps")
-    model.to(device)
-    if torch.cuda.is_available():
-        torch.cuda.empty_cache()
-        print("Cleared CUDA cache")
-    if torch.cuda.device_count() > 1:
-        model = nn.DataParallel(model)
-        print(f"Using {torch.cuda.device_count()} GPUs!")
-    print(f"Model successfully initialized and moved to {device}")
 
-    train_preloaded_data = load_sequential_data(cfg.TRAIN_DIR)
-    val_preloaded_data = load_sequential_data(cfg.VAL_DIR)
+def main():
+    populate_random_seeds()
+
+    train_preloaded_data = load_sequential_data(cfg.TRAIN_DIR, cfg.TRAIN_FILES_LIMIT)
+    val_preloaded_data = load_sequential_data(cfg.VAL_DIR, cfg.VAL_FILES_LIMIT)
     print("Successfully loaded preprocessed training and validation data")
 
     train_dataset = Rellis2DDataset(preloaded_data=train_preloaded_data, num_bins=cfg.NUM_BINS, image_size=cfg.IMAGE_SIZE,
                                     image_noise=cfg.IMAGE_NOISE, image_mask_rate=cfg.IMAGE_MASK_RATE)
     val_dataset = Rellis2DDataset(preloaded_data=val_preloaded_data, num_bins=cfg.NUM_BINS, image_size=cfg.IMAGE_SIZE,
                                   image_noise=cfg.IMAGE_NOISE, image_mask_rate=cfg.IMAGE_MASK_RATE)
-
     train_dataloader = DataLoader(train_dataset, batch_size=cfg.BATCH_SIZE, shuffle=True, num_workers=cfg.NUM_WORKERS,
                                   pin_memory=cfg.PIN_MEMORY, drop_last=True)
     val_dataloader = DataLoader(val_dataset, batch_size=cfg.BATCH_SIZE, shuffle=False, num_workers=cfg.NUM_WORKERS,
                                 pin_memory=cfg.PIN_MEMORY, drop_last=True)
     print(f"Created training dataloader with {len(train_dataset)} files and validation dataloader with {len(val_dataset)} files")
 
-    # Train and validate the model
-    trained_model = train_val(
-        model,
+    # Train and validate each color model
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    weighted_model = WeightedColorModel(cfg.NUM_BINS, cfg.CLASSES, device)
+    weighted_model = model_to_device(weighted_model, device)
+    model_module = weighted_model.module if isinstance(weighted_model, nn.DataParallel) else weighted_model
+    optimizer = torch.optim.Adam([
+        {'params': model_module.color_fusion_weight.parameters(), 'weight_decay': 1e-4},
+    ], lr=cfg.LR)
+    trained_weighted_model = train_val(
+        weighted_model,
         device,
+        optimizer,
         train_dataloader,
         val_dataloader,
         epochs=cfg.EPOCHS,
-        lr=cfg.LR,
-        save_dir=cfg.SAVE_DIR_BASE
+        save_dir=cfg.SAVE_DIR_SEMANTICS_COLOR + "_weighted"
     )
-    print("Training complete")
+    print("Training finished for weighted color model")
+
+    channel_weighted_model = ChannelWeightedColorModel(cfg.NUM_BINS, cfg.CLASSES, device)
+    channel_weighted_model = model_to_device(channel_weighted_model, device)
+    model_module = channel_weighted_model.module if isinstance(channel_weighted_model, nn.DataParallel) else channel_weighted_model
+    optimizer = torch.optim.Adam([
+        {'params': model_module.color_fusion_channel_weights.parameters(), 'weight_decay': 1e-4},
+    ], lr=cfg.LR)
+    trained_channel_weighted_model = train_val(
+        channel_weighted_model,
+        device,
+        optimizer,
+        train_dataloader,
+        val_dataloader,
+        epochs=cfg.EPOCHS,
+        save_dir=cfg.SAVE_DIR_SEMANTICS_COLOR + "_channel_weighted"
+    )
+    print("Training finished for channel weighted color model")
+
+
+    channel_bins_weighted_model = ChannelBinWeightedColorModel(cfg.NUM_BINS, cfg.CLASSES, device)
+    channel_bins_weighted_model = model_to_device(channel_bins_weighted_model, device)
+    model_module = channel_bins_weighted_model.module if isinstance(channel_bins_weighted_model, nn.DataParallel) else channel_bins_weighted_model
+    optimizer = torch.optim.Adam([
+        {'params': model_module.color_fusion_channel_bin_weights.parameters(), 'weight_decay': 1e-4},
+    ], lr=cfg.LR)
+    trained_channel_weighted_model = train_val(
+        channel_bins_weighted_model,
+        device,
+        optimizer,
+        train_dataloader,
+        val_dataloader,
+        epochs=cfg.EPOCHS,
+        save_dir=cfg.SAVE_DIR_SEMANTICS_COLOR + "channel_bins_weighted"
+    )
+    print("Training finished for channel and bins weighted color model")
+
+    linear_model = LinearColorModel(cfg.NUM_BINS, cfg.CLASSES, device)
+    linear_model = model_to_device(linear_model, device)
+    model_module = linear_model.module if isinstance(linear_model, nn.DataParallel) else linear_model
+    optimizer = torch.optim.Adam([
+        {'params': model_module.color_fusion_fc1.parameters(), 'weight_decay': 1e-4},
+    ], lr=cfg.LR)
+    trained_linear_model = train_val(
+        linear_model,
+        device,
+        optimizer,
+        train_dataloader,
+        val_dataloader,
+        epochs=cfg.EPOCHS,
+        save_dir=cfg.SAVE_DIR_SEMANTICS_COLOR + "_linear"
+    )
+    print("Training finished for linear color model")
 
 
 if __name__ == "__main__":
