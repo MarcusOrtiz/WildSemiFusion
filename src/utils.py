@@ -2,6 +2,7 @@ import numpy as np
 import src.local_config as cfg
 import torch
 import random
+import torch.nn as nn
 
 """
 Generate Locations (currently all pixels TODO: always consistent on number of locations between indexes)
@@ -16,6 +17,18 @@ def generate_normalized_locations() -> np.array:
     normalized_locations[:, 0] /= cfg.IMAGE_SIZE[0]
     normalized_locations[:, 1] /= cfg.IMAGE_SIZE[1]
     return normalized_locations
+
+def model_to_device(model, device):
+    # Must return model in case of DataParallel
+    model.to(device)
+    print(f"Initialized model and moved to {device}")
+    if torch.cuda.is_available():
+        torch.cuda.empty_cache()
+        print("Cleared CUDA cache")
+    if torch.cuda.device_count() > 1:
+        model = nn.DataParallel(model)
+        print(f"Using {torch.cuda.device_count()} GPUs!")
+    return model
 
 
 def populate_random_seeds():

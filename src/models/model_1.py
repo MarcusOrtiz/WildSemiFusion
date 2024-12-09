@@ -35,10 +35,6 @@ class MultiModalNetwork(nn.Module):
         del gray_images
         lab_features = self.lab_cnn(lab_images)  # (batch_size, 3, image_size[0], image_size[1]) -> (batch_size, 256)
         del lab_images
-        if torch.cuda.is_available():
-            pass
-            # print(f"Allocated memory after encoding: {torch.cuda.memory_allocated()} bytes")
-            # print(f"Reserved memory after encoding: {torch.cuda.memory_reserved()} bytes")
 
         # Expand lab_features and gray_features to match the number of query locations
         # gray_features = gray_features.repeat_interleave(num_locations, dim=0) # (batch_size, 256) -> (batch_size * num_locations, 256)

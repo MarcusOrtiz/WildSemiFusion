@@ -25,7 +25,7 @@ print("Model initialized successfully")
 model = model.to(device)
 print("Model moved to device")
 
-state_dict = torch.load(cfg.SAVE_DIR_COLOR + 'best_model.pth', map_location=device)
+state_dict = torch.load(cfg.SAVE_DIR_COLOR_EXPERT + 'best_model.pth', map_location=device)
 model.load_state_dict(state_dict)
 
 model.eval()

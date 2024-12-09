@@ -16,8 +16,8 @@ from matplotlib import pyplot as plt
 
 populate_random_seeds()
 
-if not os.path.exists(cfg.SAVE_DIR_COLOR):
-    os.makedirs(cfg.SAVE_DIR_COLOR)
+if not os.path.exists(cfg.SAVE_DIR_COLOR_EXPERT):
+    os.makedirs(cfg.SAVE_DIR_COLOR_EXPERT)
 
 # Initialize loss trackers
 training_losses = []
@@ -62,36 +62,29 @@ def train_val(model, dataloader, val_dataloader, epochs, lr, save_dir: str):
 
         if (epoch + 1) % cfg.PLOT_INTERVAL == 0:
             plot_color_losses(training_losses, validation_losses)
-            plot_times(times, cfg.SAVE_DIR_COLOR)
+            plot_times(times, cfg.SAVE_DIR_COLOR_EXPERT)
 
         for idx, batch in enumerate(dataloader):
-            if (idx < 2 or idx % 100 == 0): print(f"Loading training batch {idx}", flush=True)
-            gt_semantics = batch['gt_semantics'].to(device)
+            # if (idx < 2 or idx % 100 == 0): print(f"Loading training batch {idx}", flush=True)
+
             gt_color = batch['gt_color'].to(device)
             lab_images = batch['lab_image'].to(device)
 
             # Repeat locations along batch dimension
-            batch_size = gt_semantics.shape[0]
+            batch_size = gt_color.shape[0]
             locations = normalized_locations_tensor.unsqueeze(0).expand(batch_size, -1, -1)
 
             optimizer.zero_grad()
 
-            # Predictions from model
             preds_color_logits = model(locations, lab_images)
             del locations, lab_images
 
-            # Color loss
-            # print(f"Preds Color Shape: {preds_color_logits.view(-1, cfg.NUM_BINS).shape}")
-            # print(f"GT Color Shape: {gt_color.view(-1).shape}")
             preds_color_logits = preds_color_logits.view(-1, cfg.NUM_BINS)
             gt_color = gt_color.view(-1)
             loss_color = cfg.WEIGHT_COLOR * criterion_ce_color(preds_color_logits, gt_color)
             del preds_color_logits, gt_color
 
-            # Total loss
             total_loss = loss_color
-
-            # Optimization
             total_loss.backward()
             optimizer.step()
             epoch_loss += total_loss.item()
@@ -100,44 +93,42 @@ def train_val(model, dataloader, val_dataloader, epochs, lr, save_dir: str):
 
         training_losses.append(average_epoch_loss)
 
-        print(f"Epoch {epoch + 1}/{epochs}, Loss: {average_epoch_loss}")
+        print(f"Epoch {epoch + 1}/{epochs})")
+        print(f"Training Loss: {average_epoch_loss}")
+
+        if torch.cuda.is_available(): torch.cuda.empty_cache()
 
         model.eval()
         val_loss = 0.0
         with torch.no_grad():
-            for batch_idx, batch in enumerate(val_dataloader):
-                # print(f"Loading validation batch {batch_idx}", flush=True)
-                gt_semantics = batch['gt_semantics'].to(device)
+            for idx, batch in enumerate(val_dataloader):
+                # if (idx < 2 or idx % 100 == 0): print(f"Loading validation batch {idx}", flush=True)
+
                 gt_color = batch['gt_color'].to(device)
                 lab_images = batch['lab_image'].to(device)
 
                 # Repeat locations along batch dimension
-                batch_size = gt_semantics.shape[0]
+                batch_size = gt_color.shape[0]
                 locations = normalized_locations_tensor.unsqueeze(0).expand(batch_size, -1, -1)
 
-                # Predicting with model
                 preds_color_logits = model(locations, lab_images)
                 del locations, lab_images
 
-                # Color loss
-                # print(f"Preds Color Shape: {preds_color_logits.view(-1, cfg.NUM_BINS).shape}")
-                # print(f"GT Color Shape: {gt_color.view(-1).shape}")
                 preds_color_logits = preds_color_logits.view(-1, cfg.NUM_BINS)
                 gt_color = gt_color.view(-1)
-                loss_color = cfg.WEIGHT_COLOR * criterion_ce_color(preds_color_logits, gt_color)
+                loss_color_val = cfg.WEIGHT_COLOR * criterion_ce_color(preds_color_logits, gt_color)
                 del preds_color_logits, gt_color
 
-                val_loss += loss_color
+                val_loss += loss_color_val
 
         average_val_loss = val_loss / len(val_dataloader)
-
+        color_val_loss = loss_color_val.item()
         validation_losses.append(average_val_loss.item())
         times.append(time.time() - start_time)
+        print(f"Validation Loss: {average_val_loss.item()}, total train time: {sum(times)}")
 
-        print(f"Validation Loss: {average_val_loss.item()}")
-
-        if loss_color < best_color_val_loss:
-            best_color_val_loss = loss_color
+        if color_val_loss < best_color_val_loss:
+            best_color_val_loss = color_val_loss
             epochs_no_improve_color = 0
         else:
             epochs_no_improve_color += 1
@@ -154,7 +145,6 @@ def train_val(model, dataloader, val_dataloader, epochs, lr, save_dir: str):
             torch.save(model.state_dict(), best_model_path)
             print(f"New best model saved with validation loss: {best_loss}")
 
-
         torch.save({
             'epoch': epoch + 1,
             'model_state_dict': model.state_dict(),
@@ -164,6 +154,7 @@ def train_val(model, dataloader, val_dataloader, epochs, lr, save_dir: str):
             'best_loss': best_loss
         }, checkpoint_path)
 
+        if torch.cuda.is_available(): torch.cuda.empty_cache()
         scheduler.step(average_val_loss)
 
     # End timing and calculate duration
@@ -210,6 +201,6 @@ trained_model = train_val(
     val_dataloader,
     epochs=cfg.EPOCHS,
     lr=cfg.LR,
-    save_dir=cfg.SAVE_DIR_COLOR
+    save_dir=cfg.SAVE_DIR_COLOR_EXPERT
 )
 print("Training complete")

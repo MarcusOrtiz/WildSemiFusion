@@ -5,10 +5,10 @@ SRC_DIR = os.path.dirname(os.path.abspath(__file__))
 # Saved Model Directories
 SAVE_DIR = os.path.join(SRC_DIR, "../saved_models")
 SAVE_DIR_BASE = os.path.join(SAVE_DIR, "base_1")
-SAVE_DIR_COLOR = os.path.join(SAVE_DIR, "color_expert_1")
-SAVE_DIR_WEIGHTED_COLOR = os.path.join(SAVE_DIR, "weighted_color_1")
-SAVE_DIR_MLP_COLOR = os.path.join(SAVE_DIR, "mlp_color_1")
-SAVE_DIR_FUSION_COLOR = os.path.join(SAVE_DIR, "fusion_color_1")
+SAVE_DIR_COLOR_EXPERT = os.path.join(SAVE_DIR, "color_expert_1")
+SAVE_DIR_SEMANTICS_EXPERT = os.path.join(SAVE_DIR, "semantics_expert_1")
+SAVE_DIR_COLOR = os.path.join(SAVE_DIR, "color_1")
+SAVE_DIR_COLOR_SEMANTICS = os.path.join(SAVE_DIR, "color_semantics_1")
 
 # Data Directories
 INPUT_DIR = os.path.join(SRC_DIR, "../input")
@@ -19,8 +19,8 @@ TEST_DIR = os.path.join(INPUT_DIR, "rellis_2d_preprocessed/test")
 # Data processing parameters
 NUM_WORKERS = 0
 PIN_MEMORY = False
-TRAIN_FILES_LIMIT = 500
-VAL_FILES_LIMIT = 150
+TRAIN_FILES_LIMIT = 100
+VAL_FILES_LIMIT = 25
 
 # Training parameters
 BATCH_SIZE = 6
@@ -34,7 +34,7 @@ LR_DECAY_FACTOR = 0.6
 
 # Dataset and preprocessing parameters
 NUM_BINS = 257  # including void which must be last bin, consider switching to 193
-CLASSES = 35  # including void
+CLASSES = 35  # including void which must be first class
 IMAGE_SIZE = (224, 224)
 IMAGE_NOISE = 0.01
 IMAGE_MASK_RATE = (.1, .25)
