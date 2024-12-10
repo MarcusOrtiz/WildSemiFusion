@@ -18,9 +18,15 @@ def generate_plots(epoch, training_losses, validation_losses, times, save_dir):
         plot_times(times, cfg.SAVE_DIR_BASE)
 
 
+def save_best_model(model, save_dir):
+    torch.save(model.state_dict(), os.path.join(save_dir, "best_model.pth"))
+    torch.save(model.lab_cnn.state_dict(), os.path.join(save_dir, "lab_cnn_model.pth"))
+    torch.save(model.gray_cnn.state_dict(), os.path.join(save_dir, "gray_cnn_model.pth"))
+    torch.save(model.fourier_layer.state_dict(), os.path.join(save_dir, "fourier_layer_model.pth"))
+
+
 def train_val(model, device, train_dataloader, val_dataloader, epochs, lr, save_dir: str, use_checkpoint: bool):
     checkpoint_path = os.path.join(save_dir, "checkpoint.pth")
-    best_model_path = os.path.join(save_dir, "best_model.pth")
 
     model_module = model.module if isinstance(model, nn.DataParallel) else model
     optimizer = torch.optim.Adam([
@@ -33,14 +39,15 @@ def train_val(model, device, train_dataloader, val_dataloader, epochs, lr, save_
     ], lr=lr)
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'min', factor=cfg.LR_DECAY_FACTOR, patience=cfg.PATIENCE)
 
-    param_to_name = {param: name for name, param in model.named_parameters()}
-
-    # for i, param_group in enumerate(optimizer.param_groups):
-    #     print(f"Parameter Group {i}:")
-    #     for param in param_group['params']:
-    #         param_name = param_to_name.get(param, "Unnamed Parameter")
-    #         print(f"Name: {param_name}, Size: {param.size()}, Requires Grad: {param.requires_grad}")
-
+    criterion_ce_semantics = nn.CrossEntropyLoss(ignore_index=0)
+    criterion_ce_color = nn.CrossEntropyLoss(ignore_index=cfg.NUM_BINS - 1)
+    best_color_val_loss = float('inf')
+    epochs_no_improve_color = 0
+    training_losses = {'total': [], 'semantics': [], 'color': []}
+    validation_losses = {'total': [], 'semantics': [], 'color': []}
+    times = []
+    start_epoch = 0
+    best_loss = float('inf')
     if use_checkpoint and os.path.exists(checkpoint_path):
         print(f"Checkpoint at {checkpoint_path} being used")
         checkpoint = torch.load(checkpoint_path)
@@ -48,26 +55,10 @@ def train_val(model, device, train_dataloader, val_dataloader, epochs, lr, save_
         optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
         scheduler.load_state_dict(checkpoint['scheduler_state_dict'])
         start_epoch = checkpoint['epoch']
-        best_loss = checkpoint.get('best_loss', float('inf'))
-    else:
-        start_epoch = 0
-        best_loss = float('inf')
-
-    criterion_ce_semantics = nn.CrossEntropyLoss(ignore_index=0)
-    criterion_ce_color = nn.CrossEntropyLoss(ignore_index=cfg.NUM_BINS - 1)
-    best_color_val_loss = float('inf')
-    epochs_no_improve_color = 0
-    training_losses = {
-        'total': [],
-        'semantics': [],
-        'color': []
-    }
-    validation_losses = {
-        'total': [],
-        'semantics': [],
-        'color': []
-    }
-    times = []
+        best_loss = checkpoint.get('best_loss', best_loss)
+        training_losses = checkpoint.get('training_losses', training_losses)
+        validation_losses = checkpoint.get('validation_losses', validation_losses)
+        times = checkpoint.get('times', times)
 
     normalized_locations = generate_normalized_locations()
     normalized_locations_tensor = torch.from_numpy(normalized_locations).to(device)
@@ -91,10 +82,6 @@ def train_val(model, device, train_dataloader, val_dataloader, epochs, lr, save_
             locations = normalized_locations_tensor.unsqueeze(0).expand(batch_size, -1, -1)
 
             locations.requires_grad_(True)
-
-            # for name, param in model.named_parameters():
-            #     if param.requires_grad and param.grad is not None:
-            #         print(f"{name} has gradients")
 
             optimizer.zero_grad()
 
@@ -171,13 +158,13 @@ def train_val(model, device, train_dataloader, val_dataloader, epochs, lr, save_
 
         if (epochs_no_improve_color >= cfg.EARLY_STOP_EPOCHS) and (epoch >= 150):
             print(f"Early stop at epoch {epoch + 1}. Color validation loss did not improve for {cfg.EARLY_STOP_EPOCHS} consecutive epochs.")
-            torch.save(model.state_dict(), best_model_path)
+            save_best_model(model, save_dir)
             print(f"Model saved at early stopping point with validation loss: {best_color_val_loss}")
             break
 
         if average_val_loss < best_loss:
             best_loss = average_val_loss
-            torch.save(model.state_dict(), best_model_path)
+            save_best_model(model, save_dir)
             print(f"New best model saved with validation loss: {best_loss}")
 
         torch.save({
