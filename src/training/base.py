@@ -195,7 +195,7 @@ def main():
 
     model = BaseModel(cfg.NUM_BINS, cfg.CLASSES)
     device = torch.device("cuda" if torch.cuda.is_available() else "mps")
-    model = model_to_device(model, device)
+    compiled_model = model_to_device(model, device)
     print(f"WildFusion initialized successfully, moved to {device}")
 
     train_preloaded_data = load_sequential_data(cfg.TRAIN_DIR, cfg.TRAIN_FILES_LIMIT)
@@ -215,7 +215,7 @@ def main():
 
     # Train and validate the model
     trained_model = train_val(
-        model,
+        compiled_model,
         device,
         train_dataloader,
         val_dataloader,
