@@ -11,12 +11,6 @@ from src.utils import generate_normalized_locations, populate_random_seeds, mode
 import argparse
 import importlib
 
-parser = argparse.ArgumentParser(description="Train a expert model foucsed on color prediction")
-parser.add_argument('--config', type=str, default='src.local_config',
-                    help='Path to the configuration module (src.local_config | src.aws_config)')
-args = parser.parse_args()
-cfg = importlib.import_module(args.config)
-
 
 def generate_plots(epoch, training_losses, validation_losses, times, save_dir):
     if (epoch + 1) % cfg.PLOT_INTERVAL == 0:
@@ -24,7 +18,7 @@ def generate_plots(epoch, training_losses, validation_losses, times, save_dir):
         plot_times(times, cfg.SAVE_DIR_BASE)
 
 
-def train_val(model, device, train_dataloader, val_dataloader, epochs, lr, save_dir: str):
+def train_val(model, device, train_dataloader, val_dataloader, epochs, lr, save_dir: str, use_checkpoint: bool):
     checkpoint_path = os.path.join(save_dir, "checkpoint.pth")
     best_model_path = os.path.join(save_dir, "best_model.pth")
 
@@ -35,8 +29,18 @@ def train_val(model, device, train_dataloader, val_dataloader, epochs, lr, save_
     ], lr=lr)
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'min', factor=cfg.LR_DECAY_FACTOR, patience=cfg.PATIENCE)
 
-    start_epoch = 0
-    best_loss = float('inf')
+    if use_checkpoint and os.path.exists(checkpoint_path):
+        print(f"Checkpoint at {checkpoint_path} being used")
+        checkpoint = torch.load(checkpoint_path)
+        model.load_state_dict(checkpoint['model_state_dict'])
+        optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
+        scheduler.load_state_dict(checkpoint['scheduler_state_dict'])
+        start_epoch = checkpoint['epoch']
+        best_loss = checkpoint.get('best_loss', float('inf'))
+    else:
+        start_epoch = 0
+        best_loss = float('inf')
+
     criterion_ce_semantics = nn.CrossEntropyLoss(ignore_index=0)
     criterion_ce_color = nn.CrossEntropyLoss(ignore_index=cfg.NUM_BINS - 1)
     best_color_val_loss = float('inf')
@@ -164,7 +168,10 @@ def train_val(model, device, train_dataloader, val_dataloader, epochs, lr, save_
             'optimizer_state_dict': optimizer.state_dict(),
             'scheduler_state_dict': scheduler.state_dict(),
             'loss': average_epoch_loss,
-            'best_loss': best_loss
+            'best_loss': best_loss,
+            'training_losses': training_losses,
+            'validation_losses': validation_losses,
+            'times': times
         }, checkpoint_path)
 
         if torch.cuda.is_available(): torch.cuda.empty_cache()
@@ -184,7 +191,7 @@ def main():
     model = BaseModel(cfg.NUM_BINS, cfg.CLASSES)
     device = torch.device("cuda" if torch.cuda.is_available() else "mps")
     model = model_to_device(model, device)
-    print("WildFusion initialized successfully, moved to device")
+    print(f"WildFusion initialized successfully, moved to {device}")
 
     train_preloaded_data = load_sequential_data(cfg.TRAIN_DIR, cfg.TRAIN_FILES_LIMIT)
     val_preloaded_data = load_sequential_data(cfg.VAL_DIR, cfg.VAL_FILES_LIMIT)
@@ -209,10 +216,18 @@ def main():
         val_dataloader,
         epochs=cfg.EPOCHS,
         lr=cfg.LR,
-        save_dir=cfg.SAVE_DIR_BASE
+        save_dir=cfg.SAVE_DIR_BASE,
+        use_checkpoint=not args.scratch
     )
     print("Training complete for base WildFusion model \n ---------------------")
 
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Train a expert model foucsed on color prediction")
+    parser.add_argument('--config', type=str, default='src.local_config',
+                        help='Path to the configuration module (src.local_config | src.aws_config)')
+    parser.add_argument('--scratch', action='store_true', help='If not specified and checkpoint is stored, it will be used')
+    args = parser.parse_args()
+    cfg = importlib.import_module(args.config)
+
     main()

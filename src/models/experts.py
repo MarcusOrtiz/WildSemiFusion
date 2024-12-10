@@ -84,3 +84,7 @@ class SemanticExpertModel(nn.Module):
 
         return raw_semantic_logits
 
+
+#   Do yolo for semantics
+
+

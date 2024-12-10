@@ -154,6 +154,7 @@ def main():
     device = torch.device("cuda" if torch.cuda.is_available() else "mps")
     model = ColorExpertModel(cfg.NUM_BINS)
     model = model_to_device(model, device)
+    print(f"Color expert model successfully initialized and mvoed to {device}")
 
     train_preloaded_data = load_sequential_data(cfg.TRAIN_DIR, cfg.TRAIN_FILES_LIMIT)
     val_preloaded_data = load_sequential_data(cfg.VAL_DIR, cfg.VAL_FILES_LIMIT)

@@ -155,6 +155,7 @@ def main():
     device = torch.device("cuda" if torch.cuda.is_available() else "mps")
     model = SemanticExpertModel(cfg.NUM_BINS)
     model = model_to_device(model, device)
+    print(f"Semantics expert model successfully initialized and mvoed to {device}")
 
     # Create and load datasets
     train_preloaded_data = load_sequential_data(cfg.TRAIN_DIR, cfg.TRAIN_FILES_LIMIT)
