@@ -3,6 +3,7 @@ import time
 import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
+from torch.cuda.amp import autocast, GradScaler
 from src.data.utils.data_processing import image_to_array, load_sequential_data
 from src.models.base import BaseModel
 from src.data.rellis_2D_dataset import Rellis2DDataset
@@ -38,6 +39,7 @@ def train_val(model, device, train_dataloader, val_dataloader, epochs, lr, save_
         {'params': model_module.compression_layer.parameters()},
     ], lr=lr)
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'min', factor=cfg.LR_DECAY_FACTOR, patience=cfg.PATIENCE)
+    scaler = GradScaler()
 
     criterion_ce_semantics = nn.CrossEntropyLoss(ignore_index=0)
     criterion_ce_color = nn.CrossEntropyLoss(ignore_index=cfg.NUM_BINS - 1)
@@ -71,36 +73,36 @@ def train_val(model, device, train_dataloader, val_dataloader, epochs, lr, save_
         epoch_loss = 0.0
         for idx, batch in enumerate(train_dataloader):
             # if (idx < 2 or idx % 100 == 0): print(f"Loading training batch {idx}", flush=True)
-
-            gt_semantics = batch['gt_semantics'].to(device)
-            gt_color = batch['gt_color'].to(device)
-            gray_images = batch['gray_image'].to(device)
-            lab_images = batch['lab_image'].to(device)
-
-            # Repeat locations along batch dimension
-            batch_size = gt_semantics.shape[0]
-            locations = normalized_locations_tensor.unsqueeze(0).expand(batch_size, -1, -1)
-
-            locations.requires_grad_(True)
-
-            if torch.cuda.is_available(): torch.compiler.cudagraph_mark_step_begin()
             optimizer.zero_grad()
+            with autocast():
+                gt_semantics = batch['gt_semantics'].to(device)
+                gt_color = batch['gt_color'].to(device)
+                gray_images = batch['gray_image'].to(device)
+                lab_images = batch['lab_image'].to(device)
 
-            preds_semantics, preds_color_logits = model(locations, gray_images, lab_images)
-            del locations, gray_images, lab_images
+                # Repeat locations along batch dimension
+                batch_size = gt_semantics.shape[0]
+                locations = normalized_locations_tensor.unsqueeze(0).expand(batch_size, -1, -1)
 
-            loss_semantics = cfg.WEIGHT_SEMANTICS * criterion_ce_semantics(preds_semantics, gt_semantics.long().view(-1))
-            del preds_semantics, gt_semantics
+                locations.requires_grad_(True)
 
-            preds_color_logits = preds_color_logits.view(-1, cfg.NUM_BINS)
-            gt_color = gt_color.view(-1)
-            loss_color = cfg.WEIGHT_COLOR * criterion_ce_color(preds_color_logits, gt_color)
-            del preds_color_logits, gt_color
+                preds_semantics, preds_color_logits = model(locations, gray_images, lab_images)
+                del locations, gray_images, lab_images
 
-            total_loss = loss_semantics + loss_color
-            total_loss.backward()
-            optimizer.step()
+                loss_semantics = cfg.WEIGHT_SEMANTICS * criterion_ce_semantics(preds_semantics, gt_semantics.long().view(-1))
+                del preds_semantics, gt_semantics
+
+                preds_color_logits = preds_color_logits.view(-1, cfg.NUM_BINS)
+                gt_color = gt_color.view(-1)
+                loss_color = cfg.WEIGHT_COLOR * criterion_ce_color(preds_color_logits, gt_color)
+                del preds_color_logits, gt_color
+
+                total_loss = loss_semantics + loss_color
+
             epoch_loss += total_loss.item()
+            scaler.scale(total_loss).backward()
+            scaler.step(optimizer)
+            scaler.update()
 
         average_epoch_loss = epoch_loss / len(train_dataloader)
 
@@ -119,31 +121,28 @@ def train_val(model, device, train_dataloader, val_dataloader, epochs, lr, save_
         with torch.no_grad():
             for idx, batch in enumerate(val_dataloader):
                 # if (idx < 2 or idx % 100 == 0): print(f"Loading validation batch {idx}", flush=True)
+                with autocast():
+                    gt_semantics = batch['gt_semantics'].to(device)
+                    gt_color = batch['gt_color'].to(device)
+                    gray_images = batch['gray_image'].to(device)
+                    lab_images = batch['lab_image'].to(device)
 
-                gt_semantics = batch['gt_semantics'].to(device)
-                gt_color = batch['gt_color'].to(device)
-                gray_images = batch['gray_image'].to(device)
-                lab_images = batch['lab_image'].to(device)
+                    # Repeat locations along batch dimension
+                    batch_size = gt_semantics.shape[0]
+                    locations = normalized_locations_tensor.unsqueeze(0).expand(batch_size, -1, -1)
 
-                # Repeat locations along batch dimension
-                batch_size = gt_semantics.shape[0]
-                locations = normalized_locations_tensor.unsqueeze(0).expand(batch_size, -1, -1)
+                    preds_semantics, preds_color_logits = model(locations, gray_images, lab_images)
+                    del locations, gray_images, lab_images
 
-                if torch.cuda.is_available():
-                    torch.compiler.cudagraph_mark_step_begin()
+                    loss_semantics_val = cfg.WEIGHT_SEMANTICS * criterion_ce_semantics(preds_semantics, gt_semantics.long().view(-1))
+                    del preds_semantics, gt_semantics
 
-                preds_semantics, preds_color_logits = model(locations, gray_images, lab_images)
-                del locations, gray_images, lab_images
+                    preds_color_logits = preds_color_logits.view(-1, cfg.NUM_BINS)
+                    gt_color = gt_color.view(-1)
+                    loss_color_val = cfg.WEIGHT_COLOR * criterion_ce_color(preds_color_logits, gt_color)
+                    del preds_color_logits, gt_color
 
-                loss_semantics_val = cfg.WEIGHT_SEMANTICS * criterion_ce_semantics(preds_semantics, gt_semantics.long().view(-1))
-                del preds_semantics, gt_semantics
-
-                preds_color_logits = preds_color_logits.view(-1, cfg.NUM_BINS)
-                gt_color = gt_color.view(-1)
-                loss_color_val = cfg.WEIGHT_COLOR * criterion_ce_color(preds_color_logits, gt_color)
-                del preds_color_logits, gt_color
-
-                val_loss += loss_semantics_val + loss_color_val
+                    val_loss += loss_semantics_val + loss_color_val
 
         average_val_loss = val_loss / len(val_dataloader)
         color_val_loss = loss_color_val.item()
