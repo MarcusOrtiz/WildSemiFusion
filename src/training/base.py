@@ -111,7 +111,8 @@ def train_val(model, device, train_dataloader, val_dataloader, epochs, lr, save_
         print(f"Epoch {epoch + 1}/{epochs}")
         print(f"Training Loss: {average_epoch_loss}")
 
-        if torch.cuda.is_available(): torch.cuda.empty_cache()
+        if torch.cuda.is_available() and not hasattr(model, "_torchdynamo_orig_callable"):
+            torch.cuda.empty_cache()
 
         model.eval()
         val_loss = 0.0
@@ -183,7 +184,8 @@ def train_val(model, device, train_dataloader, val_dataloader, epochs, lr, save_
             'times': times
         }, checkpoint_path)
 
-        if torch.cuda.is_available(): torch.cuda.empty_cache()
+        if torch.cuda.is_available() and not hasattr(model, "_torchdynamo_orig_callable"):
+            torch.cuda.empty_cache()
         scheduler.step(average_val_loss)
 
     total_time = sum(times)
