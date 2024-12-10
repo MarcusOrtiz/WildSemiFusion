@@ -4,7 +4,8 @@ SRC_DIR = os.path.dirname(os.path.abspath(__file__))
 
 # Saved Model Directories
 SAVE_DIR = os.path.join(SRC_DIR, "../saved_models")
-AWS_SAVE_DIR = os.path.join(SAVE_DIR, "../aws_saved_models") # Just for visually testing aws locally
+# AWS_SAVE_DIR = os.path.join(SAVE_DIR, "../aws_saved_models") # Just for visually testing aws locally
+AWS_SAVE_DIR = SAVE_DIR
 SAVE_DIR_BASE = os.path.join(SAVE_DIR, "base")
 SAVE_DIR_COLOR_EXPERT = os.path.join(SAVE_DIR, "color_expert")
 SAVE_DIR_SEMANTICS_EXPERT = os.path.join(SAVE_DIR, "semantics_expert")
