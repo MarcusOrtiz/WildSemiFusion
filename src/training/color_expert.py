@@ -57,6 +57,7 @@ def train_val(model, device, train_dataloader, val_dataloader, epochs, lr, save_
             batch_size = gt_color.shape[0]
             locations = normalized_locations_tensor.unsqueeze(0).expand(batch_size, -1, -1)
 
+            locations.requires_grad_(True)
             optimizer.zero_grad()
 
             preds_color_logits = model(locations, lab_images)

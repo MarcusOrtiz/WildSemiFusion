@@ -3,7 +3,8 @@ import os
 SRC_DIR = os.path.dirname(os.path.abspath(__file__))
 
 # Saved Model Directories
-SAVE_DIR = os.path.join(SRC_DIR, "../saved_models")
+# SAVE_DIR = os.path.join(SRC_DIR, "../saved_models")
+SAVE_DIR = os.path.join(SRC_DIR, "../aws_saved_models") # Just for visually testing aws locally
 SAVE_DIR_BASE = os.path.join(SAVE_DIR, "base")
 SAVE_DIR_COLOR_EXPERT = os.path.join(SAVE_DIR, "color_expert")
 SAVE_DIR_SEMANTICS_EXPERT = os.path.join(SAVE_DIR, "semantics_expert")
@@ -28,7 +29,7 @@ EPOCHS = 5
 LR = 0.00002
 EARLY_STOP_EPOCHS = 10
 WEIGHT_SEMANTICS = 1
-WEIGHT_COLOR = 1
+WEIGHT_COLOR = 1.5
 PATIENCE = 5
 LR_DECAY_FACTOR = 0.6
 

@@ -26,8 +26,20 @@ def train_val(model, device, train_dataloader, val_dataloader, epochs, lr, save_
     optimizer = torch.optim.Adam([
         {'params': model_module.semantic_fcn.parameters(), 'lr': 5e-6, 'weight_decay': 1e-5},
         {'params': model_module.color_fcn.parameters(), 'weight_decay': 1e-4},
+        {'params': model_module.lab_cnn.parameters()},
+        {'params': model_module.gray_cnn.parameters()},
+        {'params': model_module.fourier_layer.parameters()},
+        {'params': model_module.compression_layer.parameters()},
     ], lr=lr)
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'min', factor=cfg.LR_DECAY_FACTOR, patience=cfg.PATIENCE)
+
+    param_to_name = {param: name for name, param in model.named_parameters()}
+
+    # for i, param_group in enumerate(optimizer.param_groups):
+    #     print(f"Parameter Group {i}:")
+    #     for param in param_group['params']:
+    #         param_name = param_to_name.get(param, "Unnamed Parameter")
+    #         print(f"Name: {param_name}, Size: {param.size()}, Requires Grad: {param.requires_grad}")
 
     if use_checkpoint and os.path.exists(checkpoint_path):
         print(f"Checkpoint at {checkpoint_path} being used")
@@ -77,6 +89,12 @@ def train_val(model, device, train_dataloader, val_dataloader, epochs, lr, save_
             # Repeat locations along batch dimension
             batch_size = gt_semantics.shape[0]
             locations = normalized_locations_tensor.unsqueeze(0).expand(batch_size, -1, -1)
+
+            locations.requires_grad_(True)
+
+            # for name, param in model.named_parameters():
+            #     if param.requires_grad and param.grad is not None:
+            #         print(f"{name} has gradients")
 
             optimizer.zero_grad()
 
