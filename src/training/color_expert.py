@@ -3,19 +3,14 @@ import time
 import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
+from torch.cuda.amp import autocast, GradScaler
 from src.data.utils.data_processing import load_sequential_data
 from src.models.experts import ColorExpertModel
 from src.data.rellis_2D_dataset import Rellis2DDataset
-from src.plotting import plot_color_loss, plot_times
-from src.utils import generate_normalized_locations, populate_random_seeds, model_to_device
+from src.plotting import generate_plots
+from src.utils import generate_normalized_locations, populate_random_seeds, model_to_device, compile_model
 import argparse
 import importlib
-
-
-def generate_plots(epoch, training_losses, validation_losses, times, save_dir):
-    if (epoch + 1) % cfg.PLOT_INTERVAL == 0:
-        plot_color_loss(training_losses, validation_losses, save_dir)
-        plot_times(times, save_dir)
 
 
 def load_embeddings(model, embeddings_dir: str):
@@ -40,30 +35,46 @@ def script_embeddings_inplace(model):
     model.lab_cnn = torch.jit.script(model.lab_cnn)
 
 
-def train_val(model, device, train_dataloader, val_dataloader, epochs, lr, save_dir: str):
+def train_val(model, device, train_dataloader, val_dataloader, epochs, lr, save_dir: str, use_checkpoint: bool):
     os.makedirs(save_dir, exist_ok=True)
     checkpoint_path = os.path.join(save_dir, "checkpoint.pth")
     best_model_path = os.path.join(save_dir, "best_model.pth")
 
     model_module = model.module if isinstance(model, nn.DataParallel) else model
+
     load_embeddings(model_module, cfg.EMBEDDINGS_DIR)
     freeze_embeddings(model_module)
     script_embeddings_inplace(model_module)
+
+    model = compile_model(model)
 
     optimizer = torch.optim.Adam([
         {'params': model_module.color_fcn.parameters(), 'weight_decay': 1e-4},
         {'params': model_module.compression_layer()}
     ], lr=lr)
 
-    scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'min', factor=cfg.LR_DECAY_FACTOR,
-                                                           patience=cfg.PATIENCE)
+    scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'min', factor=cfg.LR_DECAY_FACTOR, patience=cfg.PATIENCE)
+    scaler = GradScaler()
 
-    start_epoch = 0
-    best_loss = float('inf')
     criterion_ce_color = nn.CrossEntropyLoss(ignore_index=cfg.NUM_BINS - 1)
     best_color_val_loss = float('inf')
     epochs_no_improve_color = 0
-    training_losses, validation_losses, times = [], [], []
+    training_losses = {'total': [], 'semantics': [], 'color': []}
+    validation_losses = {'total': [], 'semantics': [], 'color': []}
+    times = []
+    start_epoch = 0
+    best_loss = float('inf')
+    if use_checkpoint and os.path.exists(checkpoint_path):
+        print(f"Checkpoint at {checkpoint_path} being used")
+        checkpoint = torch.load(checkpoint_path)
+        model.load_state_dict(checkpoint['model_state_dict'])
+        optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
+        scheduler.load_state_dict(checkpoint['scheduler_state_dict'])
+        start_epoch = checkpoint['epoch']
+        best_loss = checkpoint.get('best_loss', best_loss)
+        training_losses = checkpoint.get('training_losses', training_losses)
+        validation_losses = checkpoint.get('validation_losses', validation_losses)
+        times = checkpoint.get('times', times)
 
     normalized_locations = generate_normalized_locations()
     normalized_locations_tensor = torch.from_numpy(normalized_locations).to(device)
@@ -76,45 +87,8 @@ def train_val(model, device, train_dataloader, val_dataloader, epochs, lr, save_
         epoch_loss = 0.0
         for idx, batch in enumerate(train_dataloader):
             # if (idx < 2 or idx % 100 == 0): print(f"Loading training batch {idx}", flush=True)
-
-            gt_color = batch['gt_color'].to(device)
-            lab_images = batch['lab_image'].to(device)
-
-            # Repeat locations along batch dimension
-            batch_size = gt_color.shape[0]
-            locations = normalized_locations_tensor.unsqueeze(0).expand(batch_size, -1, -1)
-
-            locations.requires_grad_(True)
             optimizer.zero_grad()
-
-            preds_color_logits = model(locations, lab_images)
-            del locations, lab_images
-
-            preds_color_logits = preds_color_logits.view(-1, cfg.NUM_BINS)
-            gt_color = gt_color.view(-1)
-            loss_color = cfg.WEIGHT_COLOR * criterion_ce_color(preds_color_logits, gt_color)
-            del preds_color_logits, gt_color
-
-            total_loss = loss_color
-            total_loss.backward()
-            optimizer.step()
-            epoch_loss += total_loss.item()
-
-        average_epoch_loss = epoch_loss / len(train_dataloader)
-
-        training_losses.append(average_epoch_loss)
-
-        print(f"Epoch {epoch + 1}/{epochs}")
-        print(f"Training Loss: {average_epoch_loss}")
-
-        if torch.cuda.is_available(): torch.cuda.empty_cache()
-
-        model.eval()
-        val_loss = 0.0
-        with torch.no_grad():
-            for idx, batch in enumerate(val_dataloader):
-                # if (idx < 2 or idx % 100 == 0): print(f"Loading validation batch {idx}", flush=True)
-
+            with autocast():
                 gt_color = batch['gt_color'].to(device)
                 lab_images = batch['lab_image'].to(device)
 
@@ -122,20 +96,62 @@ def train_val(model, device, train_dataloader, val_dataloader, epochs, lr, save_
                 batch_size = gt_color.shape[0]
                 locations = normalized_locations_tensor.unsqueeze(0).expand(batch_size, -1, -1)
 
+                locations.requires_grad_(True)
+
                 preds_color_logits = model(locations, lab_images)
                 del locations, lab_images
 
                 preds_color_logits = preds_color_logits.view(-1, cfg.NUM_BINS)
                 gt_color = gt_color.view(-1)
-                loss_color_val = cfg.WEIGHT_COLOR * criterion_ce_color(preds_color_logits, gt_color)
+                loss_color = cfg.WEIGHT_COLOR * criterion_ce_color(preds_color_logits, gt_color)
                 del preds_color_logits, gt_color
 
-                val_loss += loss_color_val
+                total_loss = loss_color
+
+            epoch_loss += total_loss.item()
+            scaler.scale(total_loss).backward()
+            scaler.step(optimizer)
+            scaler.update()
+
+        average_epoch_loss = epoch_loss / len(train_dataloader)
+
+        training_losses['total'].append(average_epoch_loss)
+        training_losses['color'].append(loss_color.item())
+
+        print(f"Epoch {epoch + 1}/{epochs}")
+        print(f"Training Loss: {average_epoch_loss}")
+
+        if torch.cuda.is_available() and not hasattr(model, "_torchdynamo_orig_callable"):
+            torch.cuda.empty_cache()
+
+        model.eval()
+        val_loss = 0.0
+        with torch.no_grad():
+            for idx, batch in enumerate(val_dataloader):
+                # if (idx < 2 or idx % 100 == 0): print(f"Loading validation batch {idx}", flush=True)
+                with autocast:
+                    gt_color = batch['gt_color'].to(device)
+                    lab_images = batch['lab_image'].to(device)
+
+                    # Repeat locations along batch dimension
+                    batch_size = gt_color.shape[0]
+                    locations = normalized_locations_tensor.unsqueeze(0).expand(batch_size, -1, -1)
+
+                    preds_color_logits = model(locations, lab_images)
+                    del locations, lab_images
+
+                    preds_color_logits = preds_color_logits.view(-1, cfg.NUM_BINS)
+                    gt_color = gt_color.view(-1)
+                    loss_color_val = cfg.WEIGHT_COLOR * criterion_ce_color(preds_color_logits, gt_color)
+                    del preds_color_logits, gt_color
+
+                    val_loss += loss_color_val
 
         average_val_loss = val_loss / len(val_dataloader)
         color_val_loss = loss_color_val.item()
 
-        validation_losses.append(average_val_loss.item())
+        validation_losses['total'].append(average_val_loss.item())
+        validation_losses['color'].append(color_val_loss)
         times.append(time.time() - epoch_start_time)
         print(f"Validation Loss: {average_val_loss.item()}")
         print(f"Total Time: {sum(times)}")
@@ -164,10 +180,14 @@ def train_val(model, device, train_dataloader, val_dataloader, epochs, lr, save_
             'optimizer_state_dict': optimizer.state_dict(),
             'scheduler_state_dict': scheduler.state_dict(),
             'loss': average_epoch_loss,
-            'best_loss': best_loss
+            'best_loss': best_loss,
+            'training_losses': training_losses,
+            'validation_losses': validation_losses,
+            'times': times
         }, checkpoint_path)
 
-        if torch.cuda.is_available(): torch.cuda.empty_cache()
+        if torch.cuda.is_available() and not hasattr(model, "_torchdynamo_orig_callable"):
+            torch.cuda.empty_cache()
         scheduler.step(average_val_loss)
 
     total_time = sum(times)
@@ -206,7 +226,8 @@ def main():
         val_dataloader,
         epochs=cfg.EPOCHS,
         lr=cfg.LR,
-        save_dir=cfg.SAVE_DIR_COLOR_EXPERT
+        save_dir=cfg.SAVE_DIR_COLOR_EXPERT,
+        use_checkpoint=not args.scratch
     )
     print("Training complete for color expert model \n ---------------------")
 
@@ -215,7 +236,10 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Train a expert model foucsed on color prediction")
     parser.add_argument('--config', type=str, default='src.local_config',
                         help='Path to the configuration module (src.local_config | src.aws_config)')
+    parser.add_argument('--scratch', action='store_true', help='If not specified and checkpoint is stored, it will be used')
     args = parser.parse_args()
     cfg = importlib.import_module(args.config)
+
+    torch.set_float32_matmul_precision('highest')
 
     main()

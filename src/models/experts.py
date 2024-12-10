@@ -1,22 +1,8 @@
 import torch
 import torch.nn as nn
-from src.models.common_models import FourierFeatureLayer, ResidualBlock, SemanticNet, ColorNet, LABCNN, GrayscaleCNN, \
+from src.models.common_models import FourierFeatureLayer, ResidualBlock, SemanticNet, ComplexColorNet, LABCNN, GrayscaleCNN, \
     CompressionLayer
 
-
-class ComplexColorNet(ColorNet):
-    def __init__(self, in_features, hidden_dim, num_bins):
-        super(ComplexColorNet, self).__init__(in_features, hidden_dim, num_bins)
-        self.fc3 = nn.Linear(hidden_dim, 2 * 3 * num_bins)
-
-
-
-    def forward(self, x):
-        x = self.complex_fc(x)
-        x = torch.cat([torch.sin(x), torch.cos(x)], dim=-1)
-        x = self.fc1(x)
-        x = self.fc2(x)
-        return x
 
 class ColorExpertModel(nn.Module):
     def __init__(self, num_bins):
@@ -26,7 +12,7 @@ class ColorExpertModel(nn.Module):
 
         self.compression_layer = CompressionLayer(in_dim=256, out_dim=128)
 
-        self.color_fcn = ColorNet(in_features=128, hidden_dim=64, num_bins=num_bins)
+        self.color_fcn = ComplexColorNet(in_features=128, hidden_dim_1=96, hidden_dim_2=64, num_bins=num_bins)
 
     def forward(self, locations, lab_images):
         '''

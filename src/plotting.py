@@ -4,6 +4,12 @@ from typing import Dict, List
 import os
 
 
+def generate_plots(epoch, training_losses, validation_losses, times, save_dir):
+    if (epoch + 1) % cfg.PLOT_INTERVAL == 0:
+        plot_losses(training_losses, validation_losses, save_dir)
+        plot_times(times, save_dir)
+
+
 def plot_times(times: List[float], save_dir: str):
     save_path = os.path.join(save_dir, "time_per_epoch.png")
     epochs = range(1, len(times) + 1)
@@ -56,38 +62,6 @@ def plot_losses(training_losses: Dict[str, any], validation_losses: Dict[str, an
     plt.savefig(LOSS_PLOT_PATH_BASE)
     plt.close()
     print(f"Plot saved to: {LOSS_PLOT_PATH_BASE}")
-
-
-def plot_color_loss(training_losses: List[any], validation_losses: List[any], save_dir: str):
-    LOSS_PLOT_PATH_COLOR = os.path.join(save_dir, "loss_plot_color.png")
-
-    plt.figure(figsize=(10, 5))
-    plt.plot(training_losses, label="Training Loss")
-    plt.plot(validation_losses, label="Validation Loss")
-    plt.xlabel("Epochs")
-    plt.ylabel("Loss")
-    plt.legend(loc="upper right")
-    plt.title("Color Training and Validation Losses")
-
-    plt.savefig(LOSS_PLOT_PATH_COLOR)
-    plt.close()
-    print(f"Plot saved to: {LOSS_PLOT_PATH_COLOR}")
-
-
-def plot_semantics_loss(training_losses: List[any], validation_losses: List[any], save_dir: str):
-    LOSS_PLOT_PATH_SEMANTICS = os.path.join(save_dir, "loss_plot_semantics.png")
-
-    plt.figure(figsize=(10, 5))
-    plt.plot(training_losses, label="Training Loss")
-    plt.plot(validation_losses, label="Validation Loss")
-    plt.xlabel("Epochs")
-    plt.ylabel("Loss")
-    plt.legend(loc="upper right")
-    plt.title("Semantics Training and Validation Losses")
-
-    plt.savefig(LOSS_PLOT_PATH_SEMANTICS)
-    plt.close()
-    print(f"Plot saved to: {LOSS_PLOT_PATH_SEMANTICS}")
 
 
 # from src.data.utils.data_processing import lab_discretized_to_rgb
