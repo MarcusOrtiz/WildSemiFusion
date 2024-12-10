@@ -4,10 +4,10 @@ from src.models.common_models import FourierFeatureLayer, ResidualBlock, Semanti
     CompressionLayer
 
 
-class WildFusionModel(nn.Module):
+class BaseModel(nn.Module):
     # TOOD: Make sure not to count the void class against the model
     def __init__(self, num_bins, num_classes):
-        super(WildFusionModel, self).__init__()
+        super(BaseModel, self).__init__()
         self.fourier_layer = FourierFeatureLayer(in_dim=2, out_dim=128)
         self.lab_cnn = LABCNN(image_size=(224, 224), out_dim=128)
         self.gray_cnn = GrayscaleCNN(image_size=(224, 224), out_dim=128)

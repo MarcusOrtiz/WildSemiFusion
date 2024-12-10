@@ -5,10 +5,10 @@ import importlib
 
 def main():
     training_scripts = [
-        # "python -m src.training.base --config " + args.config,
-        # "python -m src.training.color_expert --config " + args.config,
-        # "python -m src.training.semantics_expert --config " + args.config,
-        "python -m src.training.color --config " + args.config,
+        "python -m src.training.base --config " + args.config,
+        "python -m src.training.color_expert --config " + args.config,
+        "python -m src.training.semantics_expert --config " + args.config,
+        # "python -m src.training.color --config " + args.config,
     ]
 
     failed_scripts = []

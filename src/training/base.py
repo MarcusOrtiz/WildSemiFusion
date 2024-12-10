@@ -4,7 +4,7 @@ import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
 from src.data.utils.data_processing import image_to_array, load_sequential_data
-from src.models.base import WildFusionModel
+from src.models.base import BaseModel
 from src.data.rellis_2D_dataset import Rellis2DDataset
 from src.plotting import plot_losses, plot_times
 from src.utils import generate_normalized_locations, populate_random_seeds, model_to_device
@@ -181,7 +181,7 @@ def main():
     if not os.path.exists(cfg.SAVE_DIR_BASE):
         os.makedirs(cfg.SAVE_DIR_BASE)
 
-    model = WildFusionModel(cfg.NUM_BINS, cfg.CLASSES)
+    model = BaseModel(cfg.NUM_BINS, cfg.CLASSES)
     device = torch.device("cuda" if torch.cuda.is_available() else "mps")
     model = model_to_device(model, device)
     print("WildFusion initialized successfully, moved to device")

@@ -16,7 +16,7 @@ TRAIN_DIR = os.path.join(INPUT_DIR, "rellis_2d_preprocessed/train")
 VAL_DIR = os.path.join(INPUT_DIR, "rellis_2d_preprocessed/val")
 TEST_DIR = os.path.join(INPUT_DIR, "rellis_2d_preprocessed/test")
 
-# Data processing parameters
+# Pytorch data processing parameters (limits should be None for full dataset)
 NUM_WORKERS = 3
 PIN_MEMORY = True
 TRAIN_FILES_LIMIT = 50

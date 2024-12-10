@@ -191,7 +191,7 @@ def main():
         train_dataloader,
         val_dataloader,
         epochs=cfg.EPOCHS,
-        save_dir=cfg.SAVE_DIR_SEMANTICS_COLOR + "_weighted"
+        save_dir=cfg.SAVE_DIR_COLOR + "_weighted"
     )
     print("Training finished for weighted color model \n ---------------------")
 
@@ -199,7 +199,7 @@ def main():
     channel_weighted_model = model_to_device(channel_weighted_model, device)
     model_module = channel_weighted_model.module if isinstance(channel_weighted_model, nn.DataParallel) else channel_weighted_model
     optimizer = torch.optim.Adam([
-        {'params': model_module.color_fusion_channel_weights.parameters(), 'weight_decay': 1e-4},
+        {'params': model_module.color_fusion_channel_weights, 'weight_decay': 1e-4},
     ], lr=cfg.LR)
     trained_channel_weighted_model = train_val(
         channel_weighted_model,
@@ -208,7 +208,7 @@ def main():
         train_dataloader,
         val_dataloader,
         epochs=cfg.EPOCHS,
-        save_dir=cfg.SAVE_DIR_SEMANTICS_COLOR + "_channel_weighted"
+        save_dir=cfg.SAVE_DIR_COLOR + "_channel_weighted"
     )
     print("Training finished for channel weighted color model \n ---------------------")
 
@@ -217,7 +217,7 @@ def main():
     channel_bins_weighted_model = model_to_device(channel_bins_weighted_model, device)
     model_module = channel_bins_weighted_model.module if isinstance(channel_bins_weighted_model, nn.DataParallel) else channel_bins_weighted_model
     optimizer = torch.optim.Adam([
-        {'params': model_module.color_fusion_channel_bin_weights.parameters(), 'weight_decay': 1e-4},
+        {'params': model_module.color_fusion_channel_bin_weights, 'weight_decay': 1e-4},
     ], lr=cfg.LR)
     trained_channel_weighted_model = train_val(
         channel_bins_weighted_model,
@@ -226,7 +226,7 @@ def main():
         train_dataloader,
         val_dataloader,
         epochs=cfg.EPOCHS,
-        save_dir=cfg.SAVE_DIR_SEMANTICS_COLOR + "channel_bins_weighted"
+        save_dir=cfg.SAVE_DIR_COLOR + "channel_bins_weighted"
     )
     print("Training finished for channel and bins weighted color model \n ---------------------")
 
@@ -243,7 +243,7 @@ def main():
         train_dataloader,
         val_dataloader,
         epochs=cfg.EPOCHS,
-        save_dir=cfg.SAVE_DIR_SEMANTICS_COLOR + "_linear"
+        save_dir=cfg.SAVE_DIR_COLOR + "_linear"
     )
     print("Training finished for linear color model \n ---------------------")
 
