@@ -4,11 +4,11 @@ SRC_DIR = os.path.dirname(os.path.abspath(__file__))
 
 # Saved Model Directories
 SAVE_DIR = os.path.join(SRC_DIR, "../saved_models")
-SAVE_DIR_BASE = os.path.join(SAVE_DIR, "base_1")
-SAVE_DIR_COLOR_EXPERT = os.path.join(SAVE_DIR, "color_expert_1")
-SAVE_DIR_SEMANTICS_EXPERT = os.path.join(SAVE_DIR, "semantics_expert_1")
-SAVE_DIR_COLOR = os.path.join(SAVE_DIR, "color_1")
-SAVE_DIR_COLOR_SEMANTICS = os.path.join(SAVE_DIR, "color_semantics_1")
+SAVE_DIR_BASE = os.path.join(SAVE_DIR, "base")
+SAVE_DIR_COLOR_EXPERT = os.path.join(SAVE_DIR, "color_expert")
+SAVE_DIR_SEMANTICS_EXPERT = os.path.join(SAVE_DIR, "semantics_expert")
+SAVE_DIR_COLOR = os.path.join(SAVE_DIR, "color")
+SAVE_DIR_COLOR_SEMANTICS = os.path.join(SAVE_DIR, "color_semantics")
 
 # Data Directories
 INPUT_DIR = os.path.join(SRC_DIR, "../input")
@@ -24,11 +24,11 @@ VAL_FILES_LIMIT = 10
 
 # Training parameters
 BATCH_SIZE = 6
-EPOCHS = 20
+EPOCHS = 5
 LR = 0.00002
 EARLY_STOP_EPOCHS = 10
 WEIGHT_SEMANTICS = 1
-WEIGHT_COLOR = 20
+WEIGHT_COLOR = 1
 PATIENCE = 5
 LR_DECAY_FACTOR = 0.6
 

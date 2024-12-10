@@ -1,52 +1,46 @@
 import os
 
-# Random seed for reproducibility
-SEED = 7
+SRC_DIR = os.path.dirname(os.path.abspath(__file__))
 
-# Base directory
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+# Saved Model Directories
+SAVE_DIR = os.path.join(SRC_DIR, "../saved_models")
+SAVE_DIR_BASE = os.path.join(SAVE_DIR, "base")
+SAVE_DIR_COLOR_EXPERT = os.path.join(SAVE_DIR, "color_expert")
+SAVE_DIR_SEMANTICS_EXPERT = os.path.join(SAVE_DIR, "semantics_expert")
+SAVE_DIR_COLOR = os.path.join(SAVE_DIR, "color")
+SAVE_DIR_COLOR_SEMANTICS = os.path.join(SAVE_DIR, "color_semantics")
 
-# Paths
-SAVE_DIR_BASE = os.path.join(BASE_DIR, "saved_model_base_1")
-# SAVE_DIR_BASE = os.path.join(BASE_DIR, "saved_model_test_full")
-SAVE_DIR_COLOR = os.path.join(BASE_DIR, "saved_expert_color_1")
-SAVE_DIR_COMBINED_WEIGHTED_COLOR = os.path.join(BASE_DIR, "saved_model_base_expert_color_1")
-TRAIN_DIR = os.path.join(BASE_DIR, "../input/rellis_2d_preprocessed/train")
-VAL_DIR = os.path.join(BASE_DIR, "../input/rellis_2d_preprocessed/val")
-TEST_DIR = os.path.join(BASE_DIR, "../input/rellis_2d_preprocessed/test")
-CHECKPOINT_PATH_BASE = os.path.join(SAVE_DIR_BASE, "checkpoint.pth")
-BEST_MODEL_PATH_BASE = os.path.join(SAVE_DIR_BASE, "best_model.pth")
-CHECKPOINT_PATH_COLOR = os.path.join(SAVE_DIR_COLOR, "checkpoint.pth")
-BEST_MODEL_PATH_COLOR = os.path.join(SAVE_DIR_COLOR, "best_model.pth")
-CHECKPOINT_PATH_COMBINED = os.path.join(SAVE_DIR_COMBINED_WEIGHTED_COLOR, "checkpoint.pth")
-BEST_MODEL_PATH_COMBINED = os.path.join(SAVE_DIR_COMBINED_WEIGHTED_COLOR, "best_model.pth")
+# Data Directories
+INPUT_DIR = os.path.join(SRC_DIR, "../input")
+TRAIN_DIR = os.path.join(INPUT_DIR, "rellis_2d_preprocessed/train")
+VAL_DIR = os.path.join(INPUT_DIR, "rellis_2d_preprocessed/val")
+TEST_DIR = os.path.join(INPUT_DIR, "rellis_2d_preprocessed/test")
 
-# Training parameters
-BATCH_SIZE = 8
-EPOCHS = 300
-LR = 0.00002
-EARLY_STOP_EPOCHS = 15
-
-# Loss weights
-WEIGHT_SEMANTICS = 1
-WEIGHT_COLOR = 20
-
-# Data processing parameters (for now to avoid error)
+# Data processing parameters
 NUM_WORKERS = 3
 PIN_MEMORY = True
-TRAIN_FILES_LIMIT = None
-VAL_FILES_LIMIT = None
+TRAIN_FILES_LIMIT = 50
+VAL_FILES_LIMIT = 10
 
-# Model and Dataset parameters
-NUM_BINS = 257 # including void which must be last bin, consider switching to 193
-CLASSES = 35  # including void
+# Training parameters
+BATCH_SIZE = 12
+EPOCHS = 200
+LR = 0.00002
+EARLY_STOP_EPOCHS = 10
+WEIGHT_SEMANTICS = 1
+WEIGHT_COLOR = 20
+PATIENCE = 5
+LR_DECAY_FACTOR = 0.6
+
+# Dataset and preprocessing parameters
+NUM_BINS = 257  # including void which must be last bin, consider switching to 193
+CLASSES = 35  # including void which must be first class
 IMAGE_SIZE = (224, 224)
 IMAGE_NOISE = 0.01
 IMAGE_MASK_RATE = (.1, .25)
 
-# Other parameters
-PATIENCE = 5
-LR_DECAY_FACTOR = 0.6
-
 # Plotting
 PLOT_INTERVAL = 5
+
+# Random seed for reproducibility
+SEED = 7

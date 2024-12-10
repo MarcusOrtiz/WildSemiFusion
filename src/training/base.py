@@ -4,7 +4,7 @@ import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
 from src.data.utils.data_processing import image_to_array, load_sequential_data
-from src.models.model_1 import MultiModalNetwork
+from src.models.base import WildFusionModel
 from src.data.rellis_2D_dataset import Rellis2DDataset
 from src.plotting import plot_losses, plot_times
 from src.utils import generate_normalized_locations, populate_random_seeds, model_to_device
@@ -18,30 +18,9 @@ args = parser.parse_args()
 cfg = importlib.import_module(args.config)
 
 
-training_losses = []
-validation_losses = []
-training_losses_semantics = []
-training_losses_color = []
-validation_losses_semantics = []
-validation_losses_color = []
-times = []
-
-t_losses = {
-    'total': training_losses,
-    'semantics': training_losses_semantics,
-    'color': training_losses_color
-}
-
-v_losses = {
-    'total': validation_losses,
-    'semantics': validation_losses_semantics,
-    'color': validation_losses_color
-}
-
-
-def generate_plots(epoch):
+def generate_plots(epoch, training_losses, validation_losses, times, save_dir):
     if (epoch + 1) % cfg.PLOT_INTERVAL == 0:
-        plot_losses(t_losses, v_losses, cfg.SAVE_DIR_BASE)
+        plot_losses(training_losses, validation_losses, save_dir)
         plot_times(times, cfg.SAVE_DIR_BASE)
 
 
@@ -62,12 +41,23 @@ def train_val(model, device, train_dataloader, val_dataloader, epochs, lr, save_
     criterion_ce_color = nn.CrossEntropyLoss(ignore_index=cfg.NUM_BINS - 1)
     best_color_val_loss = float('inf')
     epochs_no_improve_color = 0
+    training_losses = {
+        'total': [],
+        'semantics': [],
+        'color': []
+    }
+    validation_losses = {
+        'total': [],
+        'semantics': [],
+        'color': []
+    }
+    times = []
 
     normalized_locations = generate_normalized_locations()
     normalized_locations_tensor = torch.from_numpy(normalized_locations).to(device)
 
     for epoch in range(start_epoch, epochs):
-        generate_plots(epoch)
+        generate_plots(epoch, training_losses, validation_losses, times, save_dir)
 
         model.train()
         epoch_start_time = time.time()
@@ -104,11 +94,12 @@ def train_val(model, device, train_dataloader, val_dataloader, epochs, lr, save_
 
         average_epoch_loss = epoch_loss / len(train_dataloader)
 
-        training_losses.append(average_epoch_loss)
-        training_losses_semantics.append(loss_semantics.item())
-        training_losses_color.append(loss_color.item())
+        training_losses['total'].append(average_epoch_loss)
+        training_losses['semantics'].append(loss_semantics.item())
+        training_losses['color'].append(loss_color.item())
 
-        print(f"Epoch {epoch + 1}/{epochs}, Loss: {average_epoch_loss}")
+        print(f"Epoch {epoch + 1}/{epochs}")
+        print(f"Training Loss: {average_epoch_loss}")
 
         if torch.cuda.is_available(): torch.cuda.empty_cache()
 
@@ -143,11 +134,12 @@ def train_val(model, device, train_dataloader, val_dataloader, epochs, lr, save_
         average_val_loss = val_loss / len(val_dataloader)
         color_val_loss = loss_color_val.item()
 
-        validation_losses.append(average_val_loss.item())
-        validation_losses_semantics.append(loss_semantics_val.item())
-        validation_losses_color.append(color_val_loss)
+        validation_losses['total'].append(average_val_loss.item())
+        validation_losses['semantics'].append(loss_semantics_val.item())
+        validation_losses['color'].append(color_val_loss)
         times.append(time.time() - epoch_start_time)
-        print(f"Validation Loss: {average_val_loss.item()}, total train time: {sum(times)}")
+        print(f"Validation Loss: {average_val_loss.item()}")
+        print(f"Total Time: {sum(times)}")
 
         if color_val_loss < best_color_val_loss:
             best_color_val_loss = color_val_loss
@@ -189,9 +181,10 @@ def main():
     if not os.path.exists(cfg.SAVE_DIR_BASE):
         os.makedirs(cfg.SAVE_DIR_BASE)
 
-    model = MultiModalNetwork(cfg.NUM_BINS, cfg.CLASSES)
+    model = WildFusionModel(cfg.NUM_BINS, cfg.CLASSES)
     device = torch.device("cuda" if torch.cuda.is_available() else "mps")
     model = model_to_device(model, device)
+    print("WildFusion initialized successfully, moved to device")
 
     train_preloaded_data = load_sequential_data(cfg.TRAIN_DIR, cfg.TRAIN_FILES_LIMIT)
     val_preloaded_data = load_sequential_data(cfg.VAL_DIR, cfg.VAL_FILES_LIMIT)
@@ -218,7 +211,7 @@ def main():
         lr=cfg.LR,
         save_dir=cfg.SAVE_DIR_BASE
     )
-    print("Training complete for base WildFusion model")
+    print("Training complete for base WildFusion model \n ---------------------")
 
 
 if __name__ == "__main__":

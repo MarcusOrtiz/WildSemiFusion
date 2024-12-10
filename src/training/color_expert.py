@@ -6,34 +6,20 @@ from torch.utils.data import DataLoader
 from src.data.utils.data_processing import image_to_array, load_sequential_data
 from src.models.experts import ColorExpertModel
 from src.data.rellis_2D_dataset import Rellis2DDataset
-from src.plotting import plot_color_losses, plot_times
+from src.plotting import plot_color_loss, plot_times
 from src.utils import generate_normalized_locations, populate_random_seeds, model_to_device
 import argparse
 import importlib
 
-parser = argparse.ArgumentParser(description="Train a expert model foucsed on color prediction")
-parser.add_argument('--config', type=str, default='src.local_config',
-                    help='Path to the configuration module (src.local_config | src.aws_config)')
-args = parser.parse_args()
-cfg = importlib.import_module(args.config)
 
-
-def generate_plots(epoch, save_dir):
+def generate_plots(epoch, training_losses, validation_losses, times, save_dir):
     if (epoch + 1) % cfg.PLOT_INTERVAL == 0:
-        plot_color_losses(training_losses, validation_losses, save_dir)
+        plot_color_loss(training_losses, validation_losses, save_dir)
         plot_times(times, save_dir)
 
 
-if not os.path.exists(cfg.SAVE_DIR_COLOR_EXPERT):
-    os.makedirs(cfg.SAVE_DIR_COLOR_EXPERT)
-
-# Initialize loss trackers
-training_losses = []
-validation_losses = []
-times = []
-
-
 def train_val(model, device, train_dataloader, val_dataloader, epochs, lr, save_dir: str):
+    os.makedirs(save_dir, exist_ok=True)
     checkpoint_path = os.path.join(save_dir, "checkpoint.pth")
     best_model_path = os.path.join(save_dir, "best_model.pth")
 
@@ -50,15 +36,16 @@ def train_val(model, device, train_dataloader, val_dataloader, epochs, lr, save_
     criterion_ce_color = nn.CrossEntropyLoss(ignore_index=cfg.NUM_BINS - 1)
     best_color_val_loss = float('inf')
     epochs_no_improve_color = 0
+    training_losses, validation_losses, times = [], [], []
 
     normalized_locations = generate_normalized_locations()
     normalized_locations_tensor = torch.from_numpy(normalized_locations).to(device)
 
     for epoch in range(start_epoch, epochs):
-        generate_plots(epoch, save_dir)
+        generate_plots(epoch, training_losses, validation_losses, times, save_dir)
 
         model.train()
-        epcoh_start_time = time.time()
+        epoch_start_time = time.time()
         epoch_loss = 0.0
         for idx, batch in enumerate(train_dataloader):
             # if (idx < 2 or idx % 100 == 0): print(f"Loading training batch {idx}", flush=True)
@@ -89,7 +76,7 @@ def train_val(model, device, train_dataloader, val_dataloader, epochs, lr, save_
 
         training_losses.append(average_epoch_loss)
 
-        print(f"Epoch {epoch + 1}/{epochs})")
+        print(f"Epoch {epoch + 1}/{epochs}")
         print(f"Training Loss: {average_epoch_loss}")
 
         if torch.cuda.is_available(): torch.cuda.empty_cache()
@@ -121,8 +108,9 @@ def train_val(model, device, train_dataloader, val_dataloader, epochs, lr, save_
         color_val_loss = loss_color_val.item()
 
         validation_losses.append(average_val_loss.item())
-        times.append(time.time() - epcoh_start_time)
-        print(f"Validation Loss: {average_val_loss.item()}, total train time: {sum(times)}")
+        times.append(time.time() - epoch_start_time)
+        print(f"Validation Loss: {average_val_loss.item()}")
+        print(f"Total Time: {sum(times)}")
 
         if color_val_loss < best_color_val_loss:
             best_color_val_loss = color_val_loss
@@ -191,4 +179,14 @@ def main():
         lr=cfg.LR,
         save_dir=cfg.SAVE_DIR_COLOR_EXPERT
     )
-    print("Training complete for color expert")
+    print("Training complete for color expert model \n ---------------------")
+
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Train a expert model foucsed on color prediction")
+    parser.add_argument('--config', type=str, default='src.local_config',
+                        help='Path to the configuration module (src.local_config | src.aws_config)')
+    args = parser.parse_args()
+    cfg = importlib.import_module(args.config)
+
+    main()

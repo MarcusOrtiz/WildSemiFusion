@@ -5,23 +5,17 @@ import torch.nn as nn
 import argparse
 import importlib
 from src.data.utils.data_processing import load_sequential_data
-from src.models.color_1 import WeightedColorModel, ChannelWeightedColorModel, ChannelBinWeightedColorModel, LinearColorModel
+from src.models.color import WeightedColorModel, ChannelWeightedColorModel, ChannelBinWeightedColorModel, LinearColorModel
 from src.data.rellis_2D_dataset import Rellis2DDataset
 from torch.utils.data import DataLoader
 
-from src.plotting import plot_color_losses, plot_times
+from src.plotting import plot_losses, plot_times
 from src.utils import generate_normalized_locations, populate_random_seeds, model_to_device
-
-parser = argparse.ArgumentParser(description="Train a expert model foucsed on color prediction")
-parser.add_argument('--config', type=str, default='src.local_config',
-                    help='Path to the configuration module (src.local_config | src.aws_config)')
-args = parser.parse_args()
-cfg = importlib.import_module(args.config)
 
 
 def generate_plots(epoch, training_losses, validation_losses, times, save_dir):
     if (epoch + 1) % cfg.PLOT_INTERVAL == 0:
-        plot_color_losses(training_losses, validation_losses, save_dir)
+        plot_losses(training_losses, validation_losses, save_dir)
         plot_times(times, save_dir)
 
 
@@ -30,13 +24,24 @@ def train_val(model, device, optimizer, train_dataloader, val_dataloader, epochs
     checkpoint_path = os.path.join(save_dir, "checkpoint.pth")
     best_model_path = os.path.join(save_dir, "best_model.pth")
 
-    training_losses, validation_losses, times = [], [], []
+    training_losses = {
+        'total': [],
+        'semantics': [],
+        'color': []
+    }
+    validation_losses = {
+        'total': [],
+        'semantics': [],
+        'color': []
+    }
+    times = []
 
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'min', factor=cfg.LR_DECAY_FACTOR, patience=cfg.PATIENCE)
 
     start_epoch = 0
     best_loss = float('inf')
     criterion_ce_color = nn.CrossEntropyLoss(ignore_index=cfg.NUM_BINS - 1)
+    criterion_ce_semantics = nn.CrossEntropyLoss(ignore_index=0)
     best_color_val_loss = float('inf')
     epochs_no_improve_color = 0
 
@@ -65,18 +70,22 @@ def train_val(model, device, optimizer, train_dataloader, val_dataloader, epochs
 
             preds_semantics, preds_color_logits = model(locations, gray_images, lab_images)
 
-            # Color loss
             preds_color_logits = preds_color_logits.view(-1, cfg.NUM_BINS)
             gt_color = gt_color.view(-1)
             loss_color = cfg.WEIGHT_COLOR * criterion_ce_color(preds_color_logits, gt_color)
 
-            total_loss = loss_color
+            loss_semantics = cfg.WEIGHT_SEMANTICS * criterion_ce_semantics(preds_semantics.view(-1, cfg.CLASSES), gt_semantics.long().view(-1))
+
+            total_loss = loss_color + loss_semantics
             total_loss.backward()
             optimizer.step()
             epoch_loss += total_loss.item()
 
         average_epoch_loss = epoch_loss / len(train_dataloader)
-        training_losses.append(average_epoch_loss)
+
+        training_losses['total'].append(average_epoch_loss)
+        training_losses['semantics'].append(loss_semantics.item())
+        training_losses['color'].append(loss_color.item())
         print(f"Epoch {epoch + 1}/{epochs})")
         print(f"Training Loss: {average_epoch_loss}")
 
@@ -94,20 +103,26 @@ def train_val(model, device, optimizer, train_dataloader, val_dataloader, epochs
                 batch_size = gt_semantics.shape[0]
                 locations = normalized_locations_tensor.unsqueeze(0).expand(batch_size, -1, -1)
 
-                preds_semantics_logits, preds_color_logits = model(locations, gray_images, lab_images)
+                preds_semantics, preds_color_logits = model(locations, gray_images, lab_images)
 
                 # Color loss
                 preds_color_logits = preds_color_logits.view(-1, cfg.NUM_BINS)
                 gt_color = gt_color.view(-1)
                 loss_color_val = cfg.WEIGHT_COLOR * criterion_ce_color(preds_color_logits, gt_color)
 
-                val_loss += loss_color_val
+                loss_semantics_val = cfg.WEIGHT_SEMANTICS * criterion_ce_semantics(preds_semantics.view(-1, cfg.CLASSES), gt_semantics.long().view(-1))
+
+                val_loss += loss_semantics_val + loss_color_val
 
         average_val_loss = val_loss / len(val_dataloader)
-        color_val_loss = average_val_loss.item()
-        validation_losses.append(average_val_loss.item())
+        color_val_loss = loss_color_val.item()
+
+        validation_losses['total'].append(average_val_loss.item())
+        validation_losses['semantics'].append(loss_semantics_val.item())
+        validation_losses['color'].append(color_val_loss)
         times.append(time.time() - epoch_start_time)
-        print(f"Validation Loss: {average_val_loss.item()}, total train time: {sum(times)}")
+        print(f"Validation Loss: {average_val_loss.item()}")
+        print(f"Total time: {sum(times)}")
 
         if color_val_loss < best_color_val_loss:
             best_color_val_loss = color_val_loss
@@ -167,7 +182,7 @@ def main():
     weighted_model = model_to_device(weighted_model, device)
     model_module = weighted_model.module if isinstance(weighted_model, nn.DataParallel) else weighted_model
     optimizer = torch.optim.Adam([
-        {'params': model_module.color_fusion_weight.parameters(), 'weight_decay': 1e-4},
+        {'params': model_module.color_fusion_weight, 'weight_decay': 1e-4},
     ], lr=cfg.LR)
     trained_weighted_model = train_val(
         weighted_model,
@@ -178,7 +193,7 @@ def main():
         epochs=cfg.EPOCHS,
         save_dir=cfg.SAVE_DIR_SEMANTICS_COLOR + "_weighted"
     )
-    print("Training finished for weighted color model")
+    print("Training finished for weighted color model \n ---------------------")
 
     channel_weighted_model = ChannelWeightedColorModel(cfg.NUM_BINS, cfg.CLASSES, device)
     channel_weighted_model = model_to_device(channel_weighted_model, device)
@@ -195,7 +210,7 @@ def main():
         epochs=cfg.EPOCHS,
         save_dir=cfg.SAVE_DIR_SEMANTICS_COLOR + "_channel_weighted"
     )
-    print("Training finished for channel weighted color model")
+    print("Training finished for channel weighted color model \n ---------------------")
 
 
     channel_bins_weighted_model = ChannelBinWeightedColorModel(cfg.NUM_BINS, cfg.CLASSES, device)
@@ -213,7 +228,7 @@ def main():
         epochs=cfg.EPOCHS,
         save_dir=cfg.SAVE_DIR_SEMANTICS_COLOR + "channel_bins_weighted"
     )
-    print("Training finished for channel and bins weighted color model")
+    print("Training finished for channel and bins weighted color model \n ---------------------")
 
     linear_model = LinearColorModel(cfg.NUM_BINS, cfg.CLASSES, device)
     linear_model = model_to_device(linear_model, device)
@@ -230,8 +245,14 @@ def main():
         epochs=cfg.EPOCHS,
         save_dir=cfg.SAVE_DIR_SEMANTICS_COLOR + "_linear"
     )
-    print("Training finished for linear color model")
+    print("Training finished for linear color model \n ---------------------")
 
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Train a expert model foucsed on color prediction")
+    parser.add_argument('--config', type=str, default='src.local_config',
+                        help='Path to the configuration module (src.local_config | src.aws_config)')
+    args = parser.parse_args()
+    cfg = importlib.import_module(args.config)
+
     main()

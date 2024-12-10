@@ -1,7 +1,7 @@
 import os
-from src.models.model_1 import MultiModalNetwork
+from src.models.base import WildFusionModel
 from src.models.experts import ColorExpertModel, SemanticExpertModel
-from src.models.color_1 import ColorModel, WeightedColorModel
+from src.models.color import ColorModel, WeightedColorModel
 import torch.nn as nn
 import torch
 import src.local_config as cfg
@@ -14,7 +14,7 @@ class ColorSemanticsModel(nn.Module):
         self.num_classes = num_classes
         self.device = device
 
-        self.base_model = MultiModalNetwork(num_bins, num_classes)
+        self.base_model = WildFusionModel(num_bins, num_classes)
         self.color_expert = ColorExpertModel(num_bins)
         self.semantics_expert = SemanticExpertModel(num_classes)
         self.base_model.load_state_dict(torch.load(os.path.join(cfg.SAVE_DIR_BASE, "best_model.pth"), map_location=device))

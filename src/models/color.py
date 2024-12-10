@@ -1,6 +1,5 @@
 import os
-
-from src.models.model_1 import MultiModalNetwork
+from src.models.base import WildFusionModel
 from src.models.experts import ColorExpertModel
 import torch.nn as nn
 import torch
@@ -14,7 +13,7 @@ class ColorModel(nn.Module):
         self.num_classes = num_classes
         self.device = device
 
-        self.base_model = MultiModalNetwork(num_bins, num_classes)
+        self.base_model = WildFusionModel(num_bins, num_classes)
         self.color_expert = ColorExpertModel(num_bins)
         self.base_model.load_state_dict(torch.load(os.path.join(cfg.SAVE_DIR_BASE, "best_model.pth"), map_location=device))
         self.color_expert.load_state_dict(torch.load(os.path.join(cfg.SAVE_DIR_COLOR_EXPERT, "best_model.pth"), map_location=device))

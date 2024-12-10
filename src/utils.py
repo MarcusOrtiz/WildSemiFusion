@@ -21,7 +21,6 @@ def generate_normalized_locations() -> np.array:
 def model_to_device(model, device):
     # Must return model in case of DataParallel
     model.to(device)
-    print(f"Initialized model and moved to {device}")
     if torch.cuda.is_available():
         torch.cuda.empty_cache()
         print("Cleared CUDA cache")

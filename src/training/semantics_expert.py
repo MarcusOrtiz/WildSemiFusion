@@ -6,26 +6,16 @@ from torch.utils.data import DataLoader
 from src.data.utils.data_processing import image_to_array, load_sequential_data
 from src.models.experts import SemanticExpertModel
 from src.data.rellis_2D_dataset import Rellis2DDataset
-from src.plotting import plot_color_losses, plot_times
+from src.plotting import plot_semantics_loss, plot_times
 from src.utils import generate_normalized_locations, populate_random_seeds, model_to_device
 import argparse
 import importlib
 
-parser = argparse.ArgumentParser(description="Train a expert model foucsed on color prediction")
-parser.add_argument('--config', type=str, default='src.local_config',
-                    help='Path to the configuration module (src.local_config | src.aws_config)')
-args = parser.parse_args()
-cfg = importlib.import_module(args.config)
 
-# Initialize loss trackers
-training_losses = []
-validation_losses = []
-times = []
-
-
-def generate_plots(epoch, save_dir):
+# this is printing the wrong one
+def generate_plots(epoch, training_losses, validation_losses, times, save_dir):
     if (epoch + 1) % cfg.PLOT_INTERVAL == 0:
-        plot_color_losses(training_losses, validation_losses, save_dir)
+        plot_semantics_loss(training_losses, validation_losses, save_dir)
         plot_times(times, save_dir)
 
 
@@ -48,12 +38,13 @@ def train_val(model, device, dataloader, val_dataloader, epochs, lr, save_dir: s
     criterion_ce_semantics = nn.CrossEntropyLoss(ignore_index=0)
     best_semantics_val_loss = float('inf')
     epochs_no_improve_semantics = 0
+    training_losses, validation_losses, times = [], [], []
 
     normalized_locations = generate_normalized_locations()
     normalized_locations_tensor = torch.from_numpy(normalized_locations).to(device)
 
     for epoch in range(start_epoch, epochs):
-        generate_plots(epoch, save_dir)
+        generate_plots(epoch, training_losses, validation_losses, times, save_dir)
 
         model.train()
         epoch_start_time = time.time()
@@ -120,7 +111,8 @@ def train_val(model, device, dataloader, val_dataloader, epochs, lr, save_dir: s
         validation_losses.append(average_val_loss.item())
         times.append(time.time() - epoch_start_time)
 
-        print(f"Validation Loss: {average_val_loss.item()}, total train time: {sum(times)}")
+        print(f"Validation Loss: {average_val_loss.item()}")
+        print(f"Total Time: {sum(times)}")
 
         if semantics_val_loss < best_semantics_val_loss:
             best_semantics_val_loss = semantics_val_loss
@@ -189,8 +181,14 @@ def main():
         lr=cfg.LR,
         save_dir=cfg.SAVE_DIR_SEMANTICS_EXPERT
     )
-    print("Training complete for semantics expert")
+    print("Training complete for semantics expert model \n ---------------------")
 
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Train a expert model foucsed on color prediction")
+    parser.add_argument('--config', type=str, default='src.local_config',
+                        help='Path to the configuration module (src.local_config | src.aws_config)')
+    args = parser.parse_args()
+    cfg = importlib.import_module(args.config)
+
     main()

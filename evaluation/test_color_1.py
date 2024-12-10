@@ -65,12 +65,13 @@ with torch.no_grad():
         print("Model forward pass successful")
         print(f"Predicted Color Logits Shape: {preds_color_logits.shape}")
 
-        preds_colors = torch.argmax(preds_color_logits, dim=-1)  # Shape: (batchsize, H, W, 3)
+        preds_color_probabilities = torch.softmax(preds_color_logits, dim=-1)  # Shape: (batchsize, H, W, 3, NUM_BINS)
+        preds_color = torch.argmax(preds_color_logits, dim=-1)  # Shape: (batchsize, H, W, 3)
 
         # Convert to NumPy array and translate to rgb
-        preds_colors_np = preds_colors.cpu().numpy()
-        preds_colors_rgb = lab_discretized_to_rgb(preds_colors_np[0], cfg.NUM_BINS, void_bin=True)
-        print("After reshaping preds shape: ", preds_colors_np.shape)
+        preds_color_np = preds_color.cpu().numpy()
+        preds_color_rgb = lab_discretized_to_rgb(preds_color_np[0], cfg.NUM_BINS, void_bin=True)
+        print("After reshaping preds shape: ", preds_color_np.shape)
 
         # Ground truth color
         gt_colors_np = gt_color_tensor.cpu().numpy()
@@ -80,7 +81,7 @@ with torch.no_grad():
         fig, axs = plt.subplots(1, 2, figsize=(10, 5))
         axs[0].imshow(gt_colors_rgb)
         axs[0].set_title('Ground Truth Color')
-        axs[1].imshow(preds_colors_rgb)
+        axs[1].imshow(preds_color_rgb)
         axs[1].set_title('Predicted Color')
         plt.show()
 
