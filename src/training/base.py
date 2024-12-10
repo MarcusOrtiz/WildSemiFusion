@@ -239,6 +239,6 @@ if __name__ == "__main__":
     args = parser.parse_args()
     cfg = importlib.import_module(args.config)
 
-    torch.set_float32_matmul_precision('highest')
+    torch.set_float32_matmul_precision('high')
 
     main()
