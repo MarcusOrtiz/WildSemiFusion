@@ -28,8 +28,8 @@ def model_to_device(model, device):
         model = nn.DataParallel(model)
         print(f"Using {torch.cuda.device_count()} GPUs!")
     # backend = "cudagraphs" if torch.cuda.is_available() else "inductor"
-    # backend = "inductor"
-    # model = torch.compile(model=model, backend=backend)
+    backend = "inductor"
+    model = torch.compile(model=model, backend=backend)
     return model
 
 
