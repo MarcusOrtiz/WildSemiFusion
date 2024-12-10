@@ -13,12 +13,12 @@ import argparse
 import importlib
 
 
-def load_embeddings(model, embeddings_dir: str):
+def load_embeddings(model, device, embeddings_dir: str):
     fourier_layer_path = os.path.join(embeddings_dir, "fourier_layer_model.pth")
     lab_cnn_path = os.path.join(embeddings_dir, "lab_cnn_model.pth")
 
-    model.fourier_layer.load_state_dict(torch.load(fourier_layer_path))
-    model.lab_cnn.load_state_dict(torch.load(lab_cnn_path))
+    model.fourier_layer.load_state_dict(torch.load(fourier_layer_path, map_location=device))
+    model.lab_cnn.load_state_dict(torch.load(lab_cnn_path, map_location=device))
 
 
 def freeze_embeddings(model):
@@ -42,7 +42,7 @@ def train_val(model, device, train_dataloader, val_dataloader, epochs, lr, save_
 
     model_module = model.module if isinstance(model, nn.DataParallel) else model
 
-    load_embeddings(model_module, cfg.EMBEDDINGS_DIR)
+    load_embeddings(model_module, device, os.path.join(cfg.AWS_SAVE_DIR, 'base'))
     freeze_embeddings(model_module)
     script_embeddings_inplace(model_module)
 
@@ -50,7 +50,7 @@ def train_val(model, device, train_dataloader, val_dataloader, epochs, lr, save_
 
     optimizer = torch.optim.Adam([
         {'params': model_module.color_fcn.parameters(), 'weight_decay': 1e-4},
-        {'params': model_module.compression_layer()}
+        {'params': model_module.compression_layer.parameters()}
     ], lr=lr)
 
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'min', factor=cfg.LR_DECAY_FACTOR, patience=cfg.PATIENCE)
@@ -66,7 +66,7 @@ def train_val(model, device, train_dataloader, val_dataloader, epochs, lr, save_
     best_loss = float('inf')
     if use_checkpoint and os.path.exists(checkpoint_path):
         print(f"Checkpoint at {checkpoint_path} being used")
-        checkpoint = torch.load(checkpoint_path)
+        checkpoint = torch.load(checkpoint_path, map_location=device)
         model.load_state_dict(checkpoint['model_state_dict'])
         optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
         scheduler.load_state_dict(checkpoint['scheduler_state_dict'])
@@ -162,13 +162,6 @@ def train_val(model, device, train_dataloader, val_dataloader, epochs, lr, save_
         else:
             epochs_no_improve_color += 1
 
-        if (epochs_no_improve_color >= cfg.EARLY_STOP_EPOCHS) and (epoch >= 200):
-            print(
-                f"Early stopping triggered at epoch {epoch + 1}. SDF validation loss did not improve for {cfg.EARLY_STOP_EPOCHS} consecutive epochs.")
-            torch.save(model.state_dict(), best_model_path)
-            print(f"Model saved at early stopping point with validation loss: {best_color_val_loss}")
-            break
-
         if average_val_loss < best_loss:
             best_loss = average_val_loss
             torch.save(model.state_dict(), best_model_path)
@@ -185,6 +178,12 @@ def train_val(model, device, train_dataloader, val_dataloader, epochs, lr, save_
             'validation_losses': validation_losses,
             'times': times
         }, checkpoint_path)
+
+        if (epochs_no_improve_color >= cfg.EARLY_STOP_EPOCHS) and (epoch >= 200):
+            print(
+                f"Early stopping triggered at epoch {epoch + 1}. SDF validation loss did not improve for {cfg.EARLY_STOP_EPOCHS} consecutive epochs.")
+            print(f"Model saved at early stopping point with validation loss: {best_color_val_loss}")
+            break
 
         if torch.cuda.is_available() and not hasattr(model, "_torchdynamo_orig_callable"):
             torch.cuda.empty_cache()

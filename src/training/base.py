@@ -47,7 +47,7 @@ def train_val(model, device, train_dataloader, val_dataloader, epochs, lr, save_
     best_loss = float('inf')
     if use_checkpoint and os.path.exists(checkpoint_path):
         print(f"Checkpoint at {checkpoint_path} being used")
-        checkpoint = torch.load(checkpoint_path)
+        checkpoint = torch.load(checkpoint_path, map_location=device)
         model.load_state_dict(checkpoint['model_state_dict'])
         optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
         scheduler.load_state_dict(checkpoint['scheduler_state_dict'])
@@ -155,12 +155,6 @@ def train_val(model, device, train_dataloader, val_dataloader, epochs, lr, save_
         else:
             epochs_no_improve_color += 1
 
-        if (epochs_no_improve_color >= cfg.EARLY_STOP_EPOCHS) and (epoch >= 150):
-            print(f"Early stop at epoch {epoch + 1}. Color validation loss did not improve for {cfg.EARLY_STOP_EPOCHS} consecutive epochs.")
-            save_best_model(model, save_dir)
-            print(f"Model saved at early stopping point with validation loss: {best_color_val_loss}")
-            break
-
         if average_val_loss.item() < best_loss:
             best_loss = average_val_loss
             save_best_model(model, save_dir)
@@ -177,6 +171,11 @@ def train_val(model, device, train_dataloader, val_dataloader, epochs, lr, save_
             'validation_losses': validation_losses,
             'times': times
         }, checkpoint_path)
+
+        if (epochs_no_improve_color >= cfg.EARLY_STOP_EPOCHS) and (epoch >= 150):
+            print(f"Early stop at epoch {epoch + 1}. Color validation loss did not improve for {cfg.EARLY_STOP_EPOCHS} consecutive epochs.")
+            print(f"Model saved at early stopping point with validation loss: {best_color_val_loss}")
+            break
 
         if torch.cuda.is_available() and not hasattr(model, "_torchdynamo_orig_callable"):
             torch.cuda.empty_cache()
