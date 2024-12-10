@@ -129,7 +129,7 @@ def train_val(model, device, train_dataloader, val_dataloader, epochs, lr, save_
         with torch.no_grad():
             for idx, batch in enumerate(val_dataloader):
                 # if (idx < 2 or idx % 100 == 0): print(f"Loading validation batch {idx}", flush=True)
-                with autocast:
+                with autocast():
                     gt_color = batch['gt_color'].to(device)
                     lab_images = batch['lab_image'].to(device)
 
