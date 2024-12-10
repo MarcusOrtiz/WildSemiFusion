@@ -83,6 +83,7 @@ def train_val(model, device, train_dataloader, val_dataloader, epochs, lr, save_
 
             locations.requires_grad_(True)
 
+            if torch.cuda.is_available(): torch.compiler.cudagraph_mark_step_begin()
             optimizer.zero_grad()
 
             preds_semantics, preds_color_logits = model(locations, gray_images, lab_images)
@@ -126,6 +127,9 @@ def train_val(model, device, train_dataloader, val_dataloader, epochs, lr, save_
                 # Repeat locations along batch dimension
                 batch_size = gt_semantics.shape[0]
                 locations = normalized_locations_tensor.unsqueeze(0).expand(batch_size, -1, -1)
+
+                if torch.cuda.is_available():
+                    torch.compiler.cudagraph_mark_step_begin()
 
                 preds_semantics, preds_color_logits = model(locations, gray_images, lab_images)
                 del locations, gray_images, lab_images
@@ -206,7 +210,6 @@ def main():
                                     image_noise=cfg.IMAGE_NOISE, image_mask_rate=cfg.IMAGE_MASK_RATE)
     val_dataset = Rellis2DDataset(preloaded_data=val_preloaded_data, num_bins=cfg.NUM_BINS, image_size=cfg.IMAGE_SIZE,
                                   image_noise=cfg.IMAGE_NOISE, image_mask_rate=cfg.IMAGE_MASK_RATE)
-
     train_dataloader = DataLoader(train_dataset, batch_size=cfg.BATCH_SIZE, shuffle=True, num_workers=cfg.NUM_WORKERS,
                                   pin_memory=cfg.PIN_MEMORY, drop_last=True)
     val_dataloader = DataLoader(val_dataset, batch_size=cfg.BATCH_SIZE, shuffle=False, num_workers=cfg.NUM_WORKERS,
