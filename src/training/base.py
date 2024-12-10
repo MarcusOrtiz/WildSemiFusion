@@ -162,7 +162,7 @@ def train_val(model, device, train_dataloader, val_dataloader, epochs, lr, save_
             print(f"Model saved at early stopping point with validation loss: {best_color_val_loss}")
             break
 
-        if average_val_loss < best_loss:
+        if average_val_loss.item() < best_loss:
             best_loss = average_val_loss
             save_best_model(model, save_dir)
             print(f"New best model saved with validation loss: {best_loss}")
