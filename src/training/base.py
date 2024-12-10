@@ -27,6 +27,7 @@ def save_best_model(model, save_dir):
 
 
 def train_val(model, device, train_dataloader, val_dataloader, epochs, lr, save_dir: str, use_checkpoint: bool):
+    os.makedirs(save_dir, exist_ok=True)
     checkpoint_path = os.path.join(save_dir, "checkpoint.pth")
 
     model_module = model.module if isinstance(model, nn.DataParallel) else model
@@ -194,9 +195,6 @@ def train_val(model, device, train_dataloader, val_dataloader, epochs, lr, save_
 
 def main():
     populate_random_seeds()
-
-    if not os.path.exists(cfg.SAVE_DIR_BASE):
-        os.makedirs(cfg.SAVE_DIR_BASE)
 
     model = BaseModel(cfg.NUM_BINS, cfg.CLASSES)
     device = torch.device("cuda" if torch.cuda.is_available() else "mps")

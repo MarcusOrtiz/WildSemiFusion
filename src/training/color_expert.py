@@ -3,7 +3,7 @@ import time
 import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
-from src.data.utils.data_processing import image_to_array, load_sequential_data
+from src.data.utils.data_processing import load_sequential_data
 from src.models.experts import ColorExpertModel
 from src.data.rellis_2D_dataset import Rellis2DDataset
 from src.plotting import plot_color_loss, plot_times
@@ -18,14 +18,41 @@ def generate_plots(epoch, training_losses, validation_losses, times, save_dir):
         plot_times(times, save_dir)
 
 
+def load_embeddings(model, embeddings_dir: str):
+    fourier_layer_path = os.path.join(embeddings_dir, "fourier_layer_model.pth")
+    lab_cnn_path = os.path.join(embeddings_dir, "lab_cnn_model.pth")
+
+    model.fourier_layer.load_state_dict(torch.load(fourier_layer_path))
+    model.lab_cnn.load_state_dict(torch.load(lab_cnn_path))
+
+
+def freeze_embeddings(model):
+    model.fourier_layer.eval()
+    model.lab_cnn.eval()
+    for param in model.fourier_layer.parameters():
+        param.requires_grad = False
+    for param in model.lab_cnn.parameters():
+        param.requires_grad = False
+
+
+def script_embeddings_inplace(model):
+    model.fourier_layer = torch.jit.script(model.fourier_layer)
+    model.lab_cnn = torch.jit.script(model.lab_cnn)
+
+
 def train_val(model, device, train_dataloader, val_dataloader, epochs, lr, save_dir: str):
     os.makedirs(save_dir, exist_ok=True)
     checkpoint_path = os.path.join(save_dir, "checkpoint.pth")
     best_model_path = os.path.join(save_dir, "best_model.pth")
 
     model_module = model.module if isinstance(model, nn.DataParallel) else model
+    load_embeddings(model_module, cfg.EMBEDDINGS_DIR)
+    freeze_embeddings(model_module)
+    script_embeddings_inplace(model_module)
+
     optimizer = torch.optim.Adam([
         {'params': model_module.color_fcn.parameters(), 'weight_decay': 1e-4},
+        {'params': model_module.compression_layer()}
     ], lr=lr)
 
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'min', factor=cfg.LR_DECAY_FACTOR,

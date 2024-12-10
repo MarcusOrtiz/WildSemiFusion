@@ -4,15 +4,29 @@ from src.models.common_models import FourierFeatureLayer, ResidualBlock, Semanti
     CompressionLayer
 
 
+class ComplexColorNet(ColorNet):
+    def __init__(self, in_features, hidden_dim, num_bins):
+        super(ComplexColorNet, self).__init__(in_features, hidden_dim, num_bins)
+        self.fc3 = nn.Linear(hidden_dim, 2 * 3 * num_bins)
+
+
+
+    def forward(self, x):
+        x = self.complex_fc(x)
+        x = torch.cat([torch.sin(x), torch.cos(x)], dim=-1)
+        x = self.fc1(x)
+        x = self.fc2(x)
+        return x
+
 class ColorExpertModel(nn.Module):
     def __init__(self, num_bins):
         super(ColorExpertModel, self).__init__()
         self.fourier_layer = FourierFeatureLayer(in_dim=2, out_dim=128)
-        self.lab_cnn = LABCNN(image_size=(224, 224), out_dim=256)
+        self.lab_cnn = LABCNN(image_size=(224, 224), out_dim=128)
 
-        self.compression_layer = CompressionLayer(in_dim=384, out_dim=192)
+        self.compression_layer = CompressionLayer(in_dim=256, out_dim=128)
 
-        self.color_fcn = ColorNet(in_features=192, hidden_dim=96, num_bins=num_bins)
+        self.color_fcn = ColorNet(in_features=128, hidden_dim=64, num_bins=num_bins)
 
     def forward(self, locations, lab_images):
         '''

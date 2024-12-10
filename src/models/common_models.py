@@ -67,17 +67,7 @@ class CompressionLayer(nn.Module):
 
 
 class ColorNet(nn.Module):
-    """
-    Labnet is used to quantize the RGB
-
-    Why does this use layernorm instead of batchnorm? Batchnorm is better on CNNs
-
-    Design Question: Should the expert be trained on logits or softmax? If logits then we can produce a bigger weight
-    which may make more sense. It can also be trained on softmax and then in the end to end it will not be connected
-    with the softmax layer
-    """
-
-    def __init__(self, in_features=256, hidden_dim=128, num_bins=313):
+    def __init__(self, in_features, hidden_dim, num_bins):
         super(ColorNet, self).__init__()
         self.num_bins = num_bins
         self.fc1 = nn.Linear(in_features, hidden_dim)
@@ -88,8 +78,6 @@ class ColorNet(nn.Module):
         self.bn2 = nn.LayerNorm(hidden_dim)
         self.dropout2 = nn.Dropout(0.1)
 
-        self.fc3 = nn.Linear(hidden_dim, 3 * num_bins)
-
     def forward(self, x):
         if len(x.shape) > 2:
             x = x.view(-1, x.shape[-1])  # Flatten for LayerNorm
@@ -97,9 +85,37 @@ class ColorNet(nn.Module):
         x = self.dropout1(x)
         x = F.leaky_relu(self.bn2(self.fc2(x)), negative_slope=0.01)
         x = self.dropout2(x)
+        return x
+
+
+class SimpleColorNet(ColorNet):
+    def __init__(self, in_features, hidden_dim, num_bins):
+        super(SimpleColorNet, self).__init__(in_features, hidden_dim, num_bins)
+        self.fc3 = nn.Linear(hidden_dim, 3 * num_bins)
+
+    def forward(self, x):
+        x = super(SimpleColorNet, self).forward(x)
         x = self.fc3(x)
         x = x.view(-1, 3, self.num_bins)
-        # x = F.softmax(x, dim=-1)  # Apply Softmax to color bins
+        return x
+
+
+class ComplexColorNet(ColorNet):
+    def __init__(self, in_features, hidden_dim_1, hidden_dim_2, num_bins):
+        super(ComplexColorNet, self).__init__(in_features, hidden_dim_1, num_bins)
+
+        self.fc3 = nn.Linear(hidden_dim_2, hidden_dim_2)
+        self.bn3 = nn.LayerNorm(hidden_dim_2)
+        self.dropout3 = nn.Dropout(0.1)
+
+        self.fc4 = nn.Linear(hidden_dim_2, 3 * num_bins)
+
+    def forward(self, x):
+        x = super(ComplexColorNet, self).forward(x)
+        x = F.leaky_relu(self.bn3(self.fc3(x)), negative_slope=0.01)
+        x = self.dropout3(x)
+        x = self.fc4(x)
+        x = x.view(-1, 3, self.num_bins)
         return x
 
 
@@ -164,12 +180,11 @@ class ResidualBlock(nn.Module):
         return x
 
 
-
 class CombineLABColor(nn.Module):
     def __init__(self, in_dim, out_dim):
         super(CombineLABColor, self).__init__()
         self.fc1 = nn.Linear(in_dim, 64)
-        self.fc2 = nn.Linear(64,  out_dim)
+        self.fc2 = nn.Linear(64, out_dim)
 
     def forward(self, lab1, lab2):
         pass
@@ -177,4 +192,3 @@ class CombineLABColor(nn.Module):
 #       Split up the lab images to l, a, b
 #       Pass through small nueral network to combine each channel
 #       Remake the image and return
-
