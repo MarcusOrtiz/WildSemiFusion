@@ -56,7 +56,7 @@ def train_val(model, device, train_dataloader, val_dataloader, epochs, lr, save_
     model = compile_model(model)
 
     optimizer = torch.optim.Adam([
-        {'params': model_module.color_fcn.parameters(), 'lr': 0.0001, 'weight_decay': 8e-4},
+        {'params': model_module.color_fcn.parameters(), 'lr': 0.0003, 'weight_decay': 1e-3},
         {'params': model_module.compression_layer.parameters()}
     ], lr=lr)
 
@@ -152,7 +152,9 @@ def train_val(model, device, train_dataloader, val_dataloader, epochs, lr, save_
                     loss_color_val = cfg.WEIGHT_COLOR * criterion_ce_color(preds_color_logits, gt_color)
                     del preds_color_logits, gt_color
 
-                    val_loss += loss_color_val
+                    total_loss = loss_color_val
+
+                val_loss += total_loss
 
         average_val_loss = val_loss / len(val_dataloader)
         color_val_loss = loss_color_val.item()

@@ -145,9 +145,9 @@ def train_val(model, device, dataloader, val_dataloader, epochs, lr, save_dir: s
         average_val_loss = val_loss / len(val_dataloader)
         semantics_val_loss = loss_semantics_val.item()
 
-        validation_losses.append(average_val_loss.item())
+        validation_losses['total'].append(average_val_loss.item())
+        validation_losses['semantics'].append(semantics_val_loss)
         times.append(time.time() - epoch_start_time)
-
         print(f"Validation Loss: {average_val_loss.item()}")
         print(f"Total Time: {sum(times)}")
 
@@ -191,10 +191,10 @@ def train_val(model, device, dataloader, val_dataloader, epochs, lr, save_dir: s
 def main():
     populate_random_seeds()
 
-    device = torch.device("cuda" if torch.cuda.is_available() else "mps")
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model = SemanticExpertModel(cfg.NUM_BINS)
     model = model_to_device(model, device)
-    print(f"Semantics expert model successfully initialized and mvoed to {device}")
+    print(f"Semantics expert model successfully initialized and moved to {device}")
 
     # Create and load datasets
     train_preloaded_data = load_sequential_data(cfg.TRAIN_DIR, cfg.TRAIN_FILES_LIMIT)
