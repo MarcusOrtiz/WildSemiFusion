@@ -108,7 +108,11 @@ class ComplexColorNet(ColorNet):
         self.bn3 = nn.LayerNorm(hidden_dim_2)
         self.dropout3 = nn.Dropout(0.1)
 
-        self.fc4 = nn.Linear(hidden_dim_2, 3 * num_bins)
+        self.fc4 = nn.Linear(hidden_dim_2, hidden_dim_2)
+        self.bn4 = nn.LayerNorm(hidden_dim_2)
+        self.dropout4 = nn.Dropout(0.1)
+
+        self.fc5 = nn.Linear(hidden_dim_2, 3 * num_bins)
 
     def forward(self, x):
         x = super(ComplexColorNet, self).forward(x)
