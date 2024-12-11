@@ -101,7 +101,7 @@ class SimpleColorNet(ColorNet):
 
 
 class ComplexColorNet(ColorNet):
-    def __init__(self, in_features, hidden_dim_1, hidden_dim_2, num_bins):
+    def __init__(self, in_features, hidden_dim_1, hidden_dim_2, hidden_dim_3, num_bins):
         super(ComplexColorNet, self).__init__(in_features, hidden_dim_1, num_bins)
 
         self.fc3 = nn.Linear(hidden_dim_1, hidden_dim_2)
@@ -111,12 +111,15 @@ class ComplexColorNet(ColorNet):
         self.fc4 = nn.Linear(hidden_dim_2, hidden_dim_2)
         self.bn4 = nn.LayerNorm(hidden_dim_2)
         self.dropout4 = nn.Dropout(0.1)
-
         self.fc5 = nn.Linear(hidden_dim_2, hidden_dim_2)
         self.bn5 = nn.LayerNorm(hidden_dim_2)
         self.dropout5 = nn.Dropout(0.1)
 
-        self.fc6 = nn.Linear(hidden_dim_2, 3 * num_bins)
+        self.fc6 = nn.Linear(hidden_dim_2, hidden_dim_3)
+        self.bn6 = nn.LayerNorm(3 * num_bins)
+        self.dropout6 = nn.Dropout(0.1)
+
+        self.fc7 = nn.Linear(hidden_dim_3, 3 * num_bins)
 
     def forward(self, x):
         x = super(ComplexColorNet, self).forward(x)
@@ -124,11 +127,12 @@ class ComplexColorNet(ColorNet):
         x = self.dropout3(x)
         x = F.leaky_relu(self.bn4(self.fc4(x)), negative_slope=0.01)
         x = self.dropout4(x)
-
         x = F.leaky_relu(self.bn5(self.fc5(x)), negative_slope=0.01)
         x = self.dropout5(x)
+        x = F.leaky_relu(self.bn6(self.fc6(x)), negative_slope=0.01)
+        x = self.dropout6(x)
 
-        x = self.fc6(x)
+        x = self.fc7(x)
         x = x.view(-1, 3, self.num_bins)
         return x
 
