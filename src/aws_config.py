@@ -31,7 +31,7 @@ LR = 0.00002
 EARLY_STOP_EPOCHS = 15
 WEIGHT_SEMANTICS = 1
 WEIGHT_COLOR = 1
-PATIENCE = 5
+PATIENCE = 3
 LR_DECAY_FACTOR = 0.6
 
 # Dataset and preprocessing parameters
