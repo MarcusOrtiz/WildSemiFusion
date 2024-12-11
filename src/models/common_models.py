@@ -126,6 +126,9 @@ class ComplexColorNet(ColorNet):
         x = F.leaky_relu(self.bn4(x), negative_slope=0.01)
         x = self.dropout4(x)
         x = self.fc5(x)
+        x = F.leaky_relu(self.bn5(x), negative_slope=0.01)
+        x = self.dropout5(x)
+        x = self.fc6(x)
         x = x.view(-1, 3, self.num_bins)
         return x
 
