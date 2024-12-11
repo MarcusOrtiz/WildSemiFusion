@@ -106,18 +106,18 @@ class ComplexColorNet(ColorNet):
 
         self.fc3 = nn.Linear(hidden_dim_1, hidden_dim_2)
         self.bn3 = nn.LayerNorm(hidden_dim_2)
-        self.dropout3 = nn.Dropout(0.1)
+        self.dropout3 = nn.Dropout(0.2)
 
         self.fc4 = nn.Linear(hidden_dim_2, hidden_dim_2)
         self.bn4 = nn.LayerNorm(hidden_dim_2)
-        self.dropout4 = nn.Dropout(0.1)
+        self.dropout4 = nn.Dropout(0.2)
         self.fc5 = nn.Linear(hidden_dim_2, hidden_dim_2)
         self.bn5 = nn.LayerNorm(hidden_dim_2)
-        self.dropout5 = nn.Dropout(0.1)
+        self.dropout5 = nn.Dropout(0.2)
 
         self.fc6 = nn.Linear(hidden_dim_2, hidden_dim_3)
         self.bn6 = nn.LayerNorm(hidden_dim_3)
-        self.dropout6 = nn.Dropout(0.1)
+        self.dropout6 = nn.Dropout(0.2)
 
         self.fc7 = nn.Linear(hidden_dim_3, 3 * num_bins)
 
