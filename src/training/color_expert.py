@@ -13,6 +13,14 @@ import argparse
 import importlib
 
 
+def save_best_model(model, save_dir):
+    torch.save(model.state_dict(), os.path.join(save_dir, "best_model.pth"))
+    torch.save(model.lab_cnn.state_dict(), os.path.join(save_dir, "lab_cnn_model.pth"))
+    torch.save(model.fourier_layer.state_dict(), os.path.join(save_dir, "fourier_layer_model.pth"))
+    torch.save(model.compression_layer.state_dict(), os.path.join(save_dir, "compression_layer_model.pth"))
+    torch.save(model.color_fcn.state_dict(), os.path.join(save_dir, "color_fcn_model.pth"))
+
+
 def load_embeddings(model, device, embeddings_dir: str):
     fourier_layer_path = os.path.join(embeddings_dir, "fourier_layer_model.pth")
     lab_cnn_path = os.path.join(embeddings_dir, "lab_cnn_model.pth")
@@ -38,7 +46,6 @@ def script_embeddings_inplace(model):
 def train_val(model, device, train_dataloader, val_dataloader, epochs, lr, save_dir: str, use_checkpoint: bool):
     os.makedirs(save_dir, exist_ok=True)
     checkpoint_path = os.path.join(save_dir, "checkpoint.pth")
-    best_model_path = os.path.join(save_dir, "best_model.pth")
 
     model_module = model.module if isinstance(model, nn.DataParallel) else model
 
@@ -164,7 +171,7 @@ def train_val(model, device, train_dataloader, val_dataloader, epochs, lr, save_
 
         if average_val_loss < best_loss:
             best_loss = average_val_loss
-            torch.save(model.state_dict(), best_model_path)
+            save_best_model(model, save_dir)
             print(f"New best model saved with validation loss: {best_loss}")
 
         torch.save({

@@ -6,17 +6,20 @@ from torch.utils.data import DataLoader
 from src.data.utils.data_processing import image_to_array, load_sequential_data
 from src.models.experts import SemanticExpertModel
 from src.data.rellis_2D_dataset import Rellis2DDataset
-from src.plotting import plot_semantics_loss, plot_times
+from src.plotting import generate_plots
 from src.utils import generate_normalized_locations, populate_random_seeds, model_to_device
 import argparse
 import importlib
 
 
 # this is printing the wrong one
-def generate_plots(epoch, training_losses, validation_losses, times, save_dir):
-    if (epoch + 1) % cfg.PLOT_INTERVAL == 0:
-        plot_semantics_loss(training_losses, validation_losses, save_dir)
-        plot_times(times, save_dir)
+
+def load_embeddings(model, device, embeddings_dir: str):
+    fourier_layer_path = os.path.join(embeddings_dir, "fourier_layer_model.pth")
+    lab_cnn_path = os.path.join(embeddings_dir, "lab_cnn_model.pth")
+
+    model.fourier_layer.load_state_dict(torch.load(fourier_layer_path, map_location=device))
+    model.lab_cnn.load_state_dict(torch.load(lab_cnn_path, map_location=device))
 
 
 def train_val(model, device, dataloader, val_dataloader, epochs, lr, save_dir: str):
