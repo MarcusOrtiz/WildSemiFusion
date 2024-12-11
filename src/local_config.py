@@ -11,7 +11,7 @@ SAVE_DIR_SEMANTICS_EXPERT = os.path.join(SAVE_DIR, "semantics_expert")
 SAVE_DIR_COLOR = os.path.join(SAVE_DIR, "color")
 SAVE_DIR_COLOR_SEMANTICS = os.path.join(SAVE_DIR, "color_semantics")
 
-# Data Directories
+# Data Directorie
 INPUT_DIR = os.path.join(SRC_DIR, "../input")
 TRAIN_DIR = os.path.join(INPUT_DIR, "rellis_2d_preprocessed/train")
 VAL_DIR = os.path.join(INPUT_DIR, "rellis_2d_preprocessed/val")

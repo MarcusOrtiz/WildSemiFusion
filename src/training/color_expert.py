@@ -56,7 +56,7 @@ def train_val(model, device, train_dataloader, val_dataloader, epochs, lr, save_
     model = compile_model(model)
 
     optimizer = torch.optim.Adam([
-        {'params': model_module.color_fcn.parameters(), 'weight_decay': 5e-4},
+        {'params': model_module.color_fcn.parameters(), 'lr': 0.00004, 'weight_decay': 8e-4},
         {'params': model_module.compression_layer.parameters()}
     ], lr=lr)
 
@@ -72,7 +72,7 @@ def train_val(model, device, train_dataloader, val_dataloader, epochs, lr, save_
     start_epoch = 0
     best_loss = float('inf')
     if use_checkpoint and os.path.exists(checkpoint_path):
-        print(f"Checkpoint at {checkpoint_path} being used")
+        print(f"Loading checkpoint from {checkpoint_path} being used")
         checkpoint = torch.load(checkpoint_path, map_location=device)
         model.load_state_dict(checkpoint['model_state_dict'])
         optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
@@ -187,8 +187,7 @@ def train_val(model, device, train_dataloader, val_dataloader, epochs, lr, save_
         }, checkpoint_path)
 
         if (epochs_no_improve_color >= cfg.EARLY_STOP_EPOCHS) and (epoch >= 200):
-            print(
-                f"Early stopping triggered at epoch {epoch + 1}. SDF validation loss did not improve for {cfg.EARLY_STOP_EPOCHS} consecutive epochs.")
+            print(f"Early stopping triggered at epoch {epoch + 1}. SDF validation loss did not improve for {cfg.EARLY_STOP_EPOCHS} consecutive epochs.")
             print(f"Model saved at early stopping point with validation loss: {best_color_val_loss}")
             break
 
@@ -205,7 +204,7 @@ def train_val(model, device, train_dataloader, val_dataloader, epochs, lr, save_
 def main():
     populate_random_seeds()
 
-    device = torch.device("cuda" if torch.cuda.is_available() else "mps")
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model = ColorExpertModel(cfg.NUM_BINS)
     model = model_to_device(model, device)
     print(f"Color expert model successfully initialized and mvoed to {device}")
@@ -222,7 +221,7 @@ def main():
                                   pin_memory=cfg.PIN_MEMORY, drop_last=True)
     val_dataloader = DataLoader(val_dataset, batch_size=cfg.BATCH_SIZE, shuffle=False, num_workers=cfg.NUM_WORKERS,
                                 pin_memory=cfg.PIN_MEMORY, drop_last=True)
-    print("Created training and validation dataloaders")
+    print(f"Created training dataloader with {len(train_dataset)} files and validation dataloader with {len(val_dataset)} files")
 
     # Train and validate the model
     trained_model = train_val(

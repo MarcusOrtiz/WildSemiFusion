@@ -3,6 +3,7 @@ import time
 import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
+from torch.cuda.amp import autocast, GradScaler
 from src.data.utils.data_processing import image_to_array, load_sequential_data
 from src.models.experts import SemanticExpertModel
 from src.data.rellis_2D_dataset import Rellis2DDataset
@@ -12,36 +13,64 @@ import argparse
 import importlib
 
 
-# this is printing the wrong one
+def save_best_model(model, save_dir):
+    torch.save(model.state_dict(), os.path.join(save_dir, "best_model.pth"))
+    torch.save(model.gray_cnn.state_dict(), os.path.join(save_dir, "gray_cnn_model.pth"))
+    torch.save(model.fourier_layer.state_dict(), os.path.join(save_dir, "fourier_layer_model.pth"))
+    torch.save(model.compression_layer.state_dict(), os.path.join(save_dir, "compression_layer_model.pth"))
+    torch.save(model.semantic_fcn.state_dict(), os.path.join(save_dir, "semantic_fcn_model.pth"))
 
 def load_embeddings(model, device, embeddings_dir: str):
     fourier_layer_path = os.path.join(embeddings_dir, "fourier_layer_model.pth")
-    lab_cnn_path = os.path.join(embeddings_dir, "lab_cnn_model.pth")
-
+    gray_cnn_path = os.path.join(embeddings_dir, "gray_cnn_model.pth")
     model.fourier_layer.load_state_dict(torch.load(fourier_layer_path, map_location=device))
-    model.lab_cnn.load_state_dict(torch.load(lab_cnn_path, map_location=device))
+    model.gray_cnn.load_state_dict(torch.load(gray_cnn_path, map_location=device))
 
+def freeze_embeddings(model):
+    model.fourier_layer.eval()
+    model.lab_cnn.eval()
+    for param in model.fourier_layer.parameters():
+        param.requires_grad = False
+    for param in model.lab_cnn.parameters():
+        param.requires_grad = False
+def script_embeddings(model):
+    model.fourier_layer = torch.jit.script(model.fourier_layer)
+    model.lab_cnn = torch.jit.script(model.lab_cnn)
 
-def train_val(model, device, dataloader, val_dataloader, epochs, lr, save_dir: str):
+def train_val(model, device, dataloader, val_dataloader, epochs, lr, save_dir: str, use_checkpoint:bool):
     if not os.path.exists(save_dir):
         os.makedirs(save_dir)
     checkpoint_path = os.path.join(save_dir, "checkpoint.pth")
-    best_model_path = os.path.join(save_dir, "best_model.pth")
 
     model_module = model.module if isinstance(model, nn.DataParallel) else model
     optimizer = torch.optim.Adam([
         {'params': model_module.semantic_fcn.parameters(), 'lr': 5e-6, 'weight_decay': 1e-5},
+        {'params': model_module.compression_layer.parameters()}
     ], lr=lr)
 
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'min', factor=cfg.LR_DECAY_FACTOR,
                                                            patience=cfg.PATIENCE)
+    scaler = GradScaler()
 
-    start_epoch = 0
-    best_loss = float('inf')
     criterion_ce_semantics = nn.CrossEntropyLoss(ignore_index=0)
     best_semantics_val_loss = float('inf')
     epochs_no_improve_semantics = 0
-    training_losses, validation_losses, times = [], [], []
+    training_losses = {'total': [], 'semantics': [], 'color': []}
+    validation_losses = {'total': [], 'semantics': [], 'color': []}
+    times = []
+    start_epoch = 0
+    best_loss = float('inf')
+    if use_checkpoint and os.path.exists(checkpoint_path):
+        print(f"Loading checkpoint from {checkpoint_path} ")
+        checkpoint = torch.load(checkpoint_path, map_location=device)
+        model.load_state_dict(checkpoint['model_state_dict'])
+        optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
+        scheduler.load_state_dict(checkpoint['scheduler_state_dict'])
+        start_epoch = checkpoint['epoch']
+        best_loss = checkpoint.get('best_loss', best_loss)
+        training_losses = checkpoint.get('training_losses', training_losses)
+        validation_losses = checkpoint.get('validation_losses', validation_losses)
+        times = checkpoint.get('times', times)
 
     normalized_locations = generate_normalized_locations()
     normalized_locations_tensor = torch.from_numpy(normalized_locations).to(device)
@@ -54,36 +83,41 @@ def train_val(model, device, dataloader, val_dataloader, epochs, lr, save_dir: s
         epoch_loss = 0.0
         for idx, batch in enumerate(dataloader):
             # if (idx < 2 or idx % 100 == 0): print(f"Loading training batch {idx}", flush=True)
-
-            gt_semantics = batch['gt_semantics'].to(device)
-            gray_images = batch['gray_image'].to(device)
-
-            # Repeat locations along batch dimension
-            batch_size = gt_semantics.shape[0]
-            locations = normalized_locations_tensor.unsqueeze(0).expand(batch_size, -1, -1)
-
             optimizer.zero_grad()
+            with autocast():
+                gt_semantics = batch['gt_semantics'].to(device)
+                gray_images = batch['gray_image'].to(device)
 
-            preds_semantics = model(locations, gray_images)
-            del locations, gray_images
+                # Repeat locations along batch dimension
+                batch_size = gt_semantics.shape[0]
+                locations = normalized_locations_tensor.unsqueeze(0).expand(batch_size, -1, -1)
 
-            gt_semantics = gt_semantics.long().view(-1)
-            loss_semantics = cfg.WEIGHT_SEMANTICS * criterion_ce_semantics(preds_semantics, gt_semantics)
-            del preds_semantics, gt_semantics
+                optimizer.zero_grad()
 
-            total_loss = loss_semantics
-            total_loss.backward()
-            optimizer.step()
+                preds_semantics = model(locations, gray_images)
+                del locations, gray_images
+
+                gt_semantics = gt_semantics.long().view(-1)
+                loss_semantics = cfg.WEIGHT_SEMANTICS * criterion_ce_semantics(preds_semantics, gt_semantics)
+                del preds_semantics, gt_semantics
+
+                total_loss = loss_semantics
+
             epoch_loss += total_loss.item()
+            scaler.scale(total_loss).backward()
+            scaler.step(optimizer)
+            scaler.update()
 
         average_epoch_loss = epoch_loss / len(dataloader)
 
-        training_losses.append(average_epoch_loss)
+        training_losses['total'].append(average_epoch_loss)
+        training_losses['semantics'].append(loss_semantics.item())
 
         print(f"Epoch {epoch + 1}/{epochs})")
         print(f"Training Loss: {average_epoch_loss}")
 
-        if torch.cuda.is_available(): torch.cuda.empty_cache()
+        if torch.cuda.is_available() and not hasattr(model, "_torchdynamo_orig_callable"):
+            torch.cuda.empty_cache()
 
         model.eval()
         val_loss = 0.0
@@ -123,15 +157,9 @@ def train_val(model, device, dataloader, val_dataloader, epochs, lr, save_dir: s
         else:
             epochs_no_improve_semantics += 1
 
-        if (epochs_no_improve_semantics >= cfg.EARLY_STOP_EPOCHS) and (epoch >= 200):
-            print(f"Early stop at epoch {epoch + 1}. Semantics val loss did not improve for {cfg.EARLY_STOP_EPOCHS} consecutive epochs.")
-            torch.save(model.state_dict(), best_model_path)
-            print(f"Model saved at early stopping point with validation loss: {best_semantics_val_loss}")
-            break
-
         if average_val_loss < best_loss:
             best_loss = average_val_loss
-            torch.save(model.state_dict(), best_model_path)
+            save_best_model(model, save_dir)
             print(f"New best model saved with validation loss: {best_loss}")
 
         torch.save({
@@ -140,8 +168,16 @@ def train_val(model, device, dataloader, val_dataloader, epochs, lr, save_dir: s
             'optimizer_state_dict': optimizer.state_dict(),
             'scheduler_state_dict': scheduler.state_dict(),
             'loss': average_epoch_loss,
-            'best_loss': best_loss
+            'best_loss': best_loss,
+            'training_losses': training_losses,
+            'validation_losses': validation_losses,
+            'times': times
         }, checkpoint_path)
+
+        if (epochs_no_improve_semantics >= cfg.EARLY_STOP_EPOCHS) and (epoch >= 200):
+            print(f"Early stop at epoch {epoch + 1}. Semantics val loss did not improve for {cfg.EARLY_STOP_EPOCHS} consecutive epochs.")
+            print(f"Model saved at early stopping point with validation loss: {best_semantics_val_loss}")
+            break
 
         if torch.cuda.is_available(): torch.cuda.empty_cache()
         scheduler.step(average_val_loss)
@@ -183,7 +219,8 @@ def main():
         val_dataloader,
         epochs=cfg.EPOCHS,
         lr=cfg.LR,
-        save_dir=cfg.SAVE_DIR_SEMANTICS_EXPERT
+        save_dir=cfg.SAVE_DIR_SEMANTICS_EXPERT,
+        use_checkpoint=not args.scratch
     )
     print("Training complete for semantics expert model \n ---------------------")
 
@@ -192,6 +229,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Train a expert model foucsed on color prediction")
     parser.add_argument('--config', type=str, default='src.local_config',
                         help='Path to the configuration module (src.local_config | src.aws_config)')
+    parser.add_argument('--scratch', action='store_true', help='If not specified and checkpoint is stored, it will be used')
     args = parser.parse_args()
     cfg = importlib.import_module(args.config)
 
