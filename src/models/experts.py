@@ -25,10 +25,12 @@ class ColorExpertModel(nn.Module):
         batch_size, num_locations, _ = locations.shape
 
         locations = locations.reshape(-1, 2)
-        location_features = self.fourier_layer(locations)  # (batch_size, num_locations, locations_dim) -> (batch_size * num_locations, 2) -> (batch_size * num_locations, 256)
-        del locations
-        lab_features = self.lab_cnn(lab_images)  # (batch_size, 3, image_size[0], image_size[1]) -> (batch_size, 256)
-        del lab_images
+
+        with torch.inference_mode():
+            location_features = self.fourier_layer(locations)  # (batch_size, num_locations, locations_dim) -> (batch_size * num_locations, 2) -> (batch_size * num_locations, 256)
+            del locations
+            lab_features = self.lab_cnn(lab_images)  # (batch_size, 3, image_size[0], image_size[1]) -> (batch_size, 256)
+            del lab_images
 
         lab_features = lab_features[:, None, :].expand(-1, num_locations, -1).reshape(-1, lab_features.size(-1))
 
