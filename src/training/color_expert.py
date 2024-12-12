@@ -191,7 +191,7 @@ def train_val(model, device, train_dataloader, val_dataloader, epochs, lr, save_
             'times': times
         }, checkpoint_path)
 
-        if (epochs_no_improve_color >= cfg.EARLY_STOP_EPOCHS) and (epoch >= 200):
+        if (epochs_no_improve_color >= cfg.EARLY_STOP_EPOCHS) and (epoch >= 100):
             print(f"Early stopping triggered at epoch {epoch + 1}. SDF validation loss did not improve for {cfg.EARLY_STOP_EPOCHS} consecutive epochs.")
             print(f"Model saved at early stopping point with validation loss: {best_color_val_loss}")
             break
