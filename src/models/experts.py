@@ -19,10 +19,13 @@ class ColorExpertModel(nn.Module):
         # Concatenation and compression of encoding features
         # print(f"Location Features Shape: {location_features.shape}, Lab Features Shape: {lab_features.shape}")
         combining_features = torch.cat([location_features, lab_features], dim=-1)  # (batch_size * num_locations, 768)
+        del location_features, lab_features
         compressed_features = self.compression_layer(combining_features)  # (batch_size * num_locations, 256)
+        del combining_features
 
         # Generate predictions
         raw_color_logits = self.color_fcn(compressed_features)  # (batch_size * num_locations, 3, num_bins) of type
+        del compressed_features
 
         return raw_color_logits
 
