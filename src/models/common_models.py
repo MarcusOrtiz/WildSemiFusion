@@ -105,7 +105,7 @@ class ComplexColorNet(ColorNet):
         super(ComplexColorNet, self).__init__(in_features, hidden_dim_1, num_bins)
 
         self.residual1 = nn.Linear(in_features, hidden_dim_1)
-        self.residual2 = nn.Linear(hidden_dim_1, hidden_dim_2)
+        self.residual2 = nn.Linear(hidden_dim_2, hidden_dim_2)
 
         self.fc3 = nn.Linear(hidden_dim_1 + in_features, hidden_dim_2)
         self.bn3 = nn.LayerNorm(hidden_dim_2)
