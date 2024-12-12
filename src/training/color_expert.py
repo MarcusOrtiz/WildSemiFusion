@@ -51,7 +51,7 @@ def train_val(model, device, train_dataloader, val_dataloader, epochs, lr, save_
 
     model_module = model.module if isinstance(model, nn.DataParallel) else model
 
-    model = compile_model(model)
+    # model = compile_model(model)
 
     optimizer = torch.optim.AdamW([
         {'params': model_module.color_fcn.parameters(), 'lr': 0.0005, 'weight_decay': 5e-3},
