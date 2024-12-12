@@ -50,7 +50,7 @@ class EmbeddingsDataset(Dataset):
         normalized_locations_tensor = torch.from_numpy(normalized_locations).to(device)
         locations_tensor = normalized_locations_tensor.reshape(-1, 2)
         with torch.inference_mode():
-            locations_features = fourier_feature_layer(locations_tensor).detach()
+            locations_features = fourier_feature_layer(locations_tensor).detach().cpu()
         print(f"Locations Features Shape: {locations_features.shape}")
 
         gt_lab_images = []
@@ -77,7 +77,7 @@ class EmbeddingsDataset(Dataset):
 
             lab_tensors_batch = torch.stack(lab_tensors_batch)
             with torch.inference_mode():
-                lab_features_batch = lab_cnn(lab_tensors_batch).detach()
+                lab_features_batch = lab_cnn(lab_tensors_batch).detach().cpu()
 
             lab_features.extend(lab_features_batch)
         
