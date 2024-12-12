@@ -153,6 +153,7 @@ def train_val(model_simple, model_linear, model_mlp, device, train_dataloader, v
                 gt_color = batch['gt_color'].to(device)
 
                 simple_start_time = time.time()
+                preds_semantics_simple, preds_color_simple = model_simple(preds_semantics_base, preds_color_base, preds_color_expert)
                 loss_semantics_simple = cfg.WEIGHT_SEMANTICS * criterion_ce_semantics(preds_semantics_simple, gt_semantics.long().view(-1))
                 loss_color_simple = cfg.WEIGHT_COLOR * criterion_ce_color(preds_color_simple.view(-1, cfg.NUM_BINS), gt_color.view(-1))
                 del preds_semantics_simple, preds_color_simple
