@@ -26,14 +26,14 @@ TEST_DIR = os.path.join(INPUT_DIR, "rellis_2d_preprocessed/test")
 # Pytorch data processing parameters (limits should be None for full dataset)
 NUM_WORKERS = 3
 PIN_MEMORY = True
-TRAIN_FILES_LIMIT = 32
-VAL_FILES_LIMIT = 32
+TRAIN_FILES_LIMIT = None
+VAL_FILES_LIMIT = None
 
 # Training parameters
 BATCH_SIZE = 32
 BATCH_SIZE_COLOR = 12
 BATCH_SIZE_COLOR_EXPERT = 16
-EPOCHS = 225
+EPOCHS = 200
 LR = 0.00002
 EARLY_STOP_EPOCHS = 15
 WEIGHT_SEMANTICS = 1
