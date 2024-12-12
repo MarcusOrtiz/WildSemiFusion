@@ -36,7 +36,7 @@ def freeze_embeddings(model):
 
 def script_embeddings(model):
     model.fourier_layer = torch.jit.script(model.fourier_layer)
-    model.lab_cnn = torch.jit.script(model.gray_cnn)
+    model.gray_cnn = torch.jit.script(model.gray_cnn)
 
 def train_val(model, device, dataloader, val_dataloader, epochs, lr, save_dir: str, use_checkpoint:bool):
     if not os.path.exists(save_dir):
