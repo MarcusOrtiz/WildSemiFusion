@@ -126,7 +126,6 @@ def train_val(model_simple, model_linear, model_mlp, device, train_dataloader, v
         generate_plots(epoch, training_losses_linear, validation_losses_linear, times_linear, save_dir_linear)
         generate_plots(epoch, training_losses_mlp, validation_losses_mlp, times_mlp, save_dir_mlp)
 
-        epoch_start_time = time.time()
         model_simple.train()
         model_linear.train()
         model_mlp.train()
@@ -153,20 +152,25 @@ def train_val(model_simple, model_linear, model_mlp, device, train_dataloader, v
                 gt_semantics = batch['gt_semantics'].to(device)
                 gt_color = batch['gt_color'].to(device)
 
-                preds_semantics_simple, preds_color_simple = model_simple(preds_semantics_base, preds_color_base, preds_color_expert)
+                simple_start_time = time.time()
                 loss_semantics_simple = cfg.WEIGHT_SEMANTICS * criterion_ce_semantics(preds_semantics_simple, gt_semantics.long().view(-1))
                 loss_color_simple = cfg.WEIGHT_COLOR * criterion_ce_color(preds_color_simple.view(-1, cfg.NUM_BINS), gt_color.view(-1))
                 del preds_semantics_simple, preds_color_simple
+                times_simple.append(time.time() - simple_start_time)
 
+                linear_start_time = time.time()
                 preds_semantics_linear, preds_color_linear = model_linear(preds_semantics_base, preds_color_base, preds_color_expert)
                 loss_semantics_linear = cfg.WEIGHT_SEMANTICS * criterion_ce_semantics(preds_semantics_linear, gt_semantics.long().view(-1))
                 loss_color_linear = cfg.WEIGHT_COLOR * criterion_ce_color(preds_color_linear.view(-1, cfg.NUM_BINS), gt_color.view(-1))
                 del preds_semantics_linear, preds_color_linear
+                times_linear.append(time.time() - linear_start_time)
 
+                mlp_start_time = time.time()
                 preds_semantics_mlp, preds_color_mlp = model_mlp(preds_semantics_base, preds_color_base, preds_color_expert)
                 loss_semantics_mlp = cfg.WEIGHT_SEMANTICS * criterion_ce_semantics(preds_semantics_mlp, gt_semantics.long().view(-1))
                 loss_color_mlp = cfg.WEIGHT_COLOR * criterion_ce_color(preds_color_mlp.view(-1, cfg.NUM_BINS), gt_color.view(-1))
                 del preds_semantics_mlp, preds_color_mlp
+                times_mlp.append(time.time() - mlp_start_time)
 
                 del preds_semantics_base, preds_color_base, preds_color_expert, gt_semantics, gt_color
 
@@ -174,18 +178,27 @@ def train_val(model_simple, model_linear, model_mlp, device, train_dataloader, v
                 total_loss_linear = loss_semantics_linear + loss_color_linear
                 total_loss_mlp = loss_semantics_mlp + loss_color_mlp
 
+            simple_start_time = time.time()
             epoch_loss_simple += total_loss_simple.item()
-            epoch_loss_linear += total_loss_linear.item()
-            epoch_loss_mlp += total_loss_mlp.item()
             scaler_simple.scale(total_loss_simple).backward()
-            scaler_linear.scale(total_loss_linear).backward()
-            scaler_mlp.scale(total_loss_mlp).backward()
             scaler_simple.step(optimizer_simple)
-            scaler_linear.step(optimizer_linear)
-            scaler_mlp.step(optimizer_mlp)
             scaler_simple.update()
+            times_simple[-1] += time.time() - simple_start_time
+
+            linear_start_time = time.time()
+            times_simple.append(time.time() - simple_start_time)
+            epoch_loss_linear += total_loss_linear.item()
+            scaler_linear.scale(total_loss_linear).backward()
+            scaler_linear.step(optimizer_linear)
             scaler_linear.update()
+            times_linear[-1] += time.time() - linear_start_time
+
+            mlp_start_time = time.time()
+            epoch_loss_mlp += total_loss_mlp.item()
+            scaler_mlp.scale(total_loss_mlp).backward()
+            scaler_mlp.step(optimizer_mlp)
             scaler_mlp.update()
+            times_mlp[-1] += time.time() - mlp_start_time
 
         average_epoch_loss_simple = epoch_loss_simple / len(train_dataloader)
         average_epoch_loss_linear = epoch_loss_linear / len(train_dataloader)
@@ -226,20 +239,26 @@ def train_val(model_simple, model_linear, model_mlp, device, train_dataloader, v
                     gt_semantics = batch['gt_semantics'].to(device)
                     gt_color = batch['gt_color'].to(device)
 
+                    simple_start_time = time.time()
                     preds_semantics_simple, preds_color_simple = model_simple(preds_semantics_base, preds_color_base, preds_color_expert)
                     loss_semantics_val_simple = cfg.WEIGHT_SEMANTICS * criterion_ce_semantics(preds_semantics_simple, gt_semantics.long().view(-1))
                     loss_color_val_simple = cfg.WEIGHT_COLOR * criterion_ce_color(preds_color_simple.view(-1, cfg.NUM_BINS), gt_color.view(-1))
                     del preds_semantics_simple, preds_color_simple
+                    times_simple.append(time.time() - simple_start_time)
 
+                    linear_start_time = time.time()
                     preds_semantics_linear, preds_color_linear = model_linear(preds_semantics_base, preds_color_base, preds_color_expert)
                     loss_semantics_val_linear = cfg.WEIGHT_SEMANTICS * criterion_ce_semantics(preds_semantics_linear, gt_semantics.long().view(-1))
                     loss_color_val_linear = cfg.WEIGHT_COLOR * criterion_ce_color(preds_color_linear.view(-1, cfg.NUM_BINS), gt_color.view(-1))
                     del preds_semantics_linear, preds_color_linear
+                    times_linear.append(time.time() - linear_start_time)
 
+                    mlp_start_time = time.time()
                     preds_semantics_mlp, preds_color_mlp = model_mlp(preds_semantics_base, preds_color_base, preds_color_expert)
                     loss_semantics_val_mlp = cfg.WEIGHT_SEMANTICS * criterion_ce_semantics(preds_semantics_mlp, gt_semantics.long().view(-1))
                     loss_color_val_mlp = cfg.WEIGHT_COLOR * criterion_ce_color(preds_color_mlp.view(-1, cfg.NUM_BINS), gt_color.view(-1))
                     del preds_semantics_mlp, preds_color_mlp
+                    times_mlp.append(time.time() - mlp_start_time)
 
                     del preds_semantics_base, preds_color_base, preds_color_expert, gt_semantics, gt_color
 
@@ -247,6 +266,7 @@ def train_val(model_simple, model_linear, model_mlp, device, train_dataloader, v
                     val_loss_linear += loss_semantics_linear + loss_color_linear
                     val_loss_mlp += loss_semantics_mlp + loss_color_mlp
 
+            start_time = time.time()
             average_val_loss_simple = val_loss_simple / len(val_dataloader)
             average_val_loss_linear = val_loss_linear / len(val_dataloader)
             average_val_loss_mlp = val_loss_mlp / len(val_dataloader)
@@ -260,12 +280,16 @@ def train_val(model_simple, model_linear, model_mlp, device, train_dataloader, v
             update_loss_trackers(validation_losses_simple, average_val_loss_simple, semantics_val_loss_simple, color_val_loss_simple)
             update_loss_trackers(validation_losses_linear, average_val_loss_linear, semantics_val_loss_linear, color_val_loss_linear)
             update_loss_trackers(validation_losses_mlp, average_val_loss_mlp, semantics_val_loss_mlp, color_val_loss_mlp)
+            times_simple[-1] += time.time() - start_time
+            times_linear[-1] += time.time() - start_time
+            times_mlp[-1] += time.time() - start_time
 
             print(f"Validation Loss Simple: {average_val_loss_simple}")
             print(f"Validation Loss Linear: {average_val_loss_linear}")
             print(f"Validation Loss MLP: {average_val_loss_mlp}")
-            print(f"Training Time Simple: TODO")
-            print(f"Training Time Linear: TODO")
+            print(f"Training Time Simple: {sum(times_simple)}")
+            print(f"Training Time Linear: {sum(times_linear)}")
+            print(f"Training Time MLP: {sum(times_mlp)}")
 
         if color_val_loss_simple < best_color_val_loss_simple:
             best_color_val_loss_simple = color_val_loss_simple
