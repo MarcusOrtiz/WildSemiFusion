@@ -278,9 +278,9 @@ def train_val(model_simple, model_linear, model_mlp, device, train_dataloader, v
             semantics_val_loss_linear = loss_semantics_val_linear.item()
             semantics_val_loss_mlp = loss_semantics_val_mlp.item()
 
-            update_loss_trackers(validation_losses_simple, average_val_loss_simple, semantics_val_loss_simple, color_val_loss_simple)
-            update_loss_trackers(validation_losses_linear, average_val_loss_linear, semantics_val_loss_linear, color_val_loss_linear)
-            update_loss_trackers(validation_losses_mlp, average_val_loss_mlp, semantics_val_loss_mlp, color_val_loss_mlp)
+            update_loss_trackers(validation_losses_simple.item(), average_val_loss_simple, semantics_val_loss_simple, color_val_loss_simple)
+            update_loss_trackers(validation_losses_linear.item(), average_val_loss_linear, semantics_val_loss_linear, color_val_loss_linear)
+            update_loss_trackers(validation_losses_mlp.item(), average_val_loss_mlp, semantics_val_loss_mlp, color_val_loss_mlp)
             times_simple[-1] += time.time() - start_time
             times_linear[-1] += time.time() - start_time
             times_mlp[-1] += time.time() - start_time

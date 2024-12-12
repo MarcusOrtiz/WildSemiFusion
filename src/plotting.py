@@ -26,8 +26,8 @@ def plot_times(times: List[float], save_dir: str):
     print(f"Time plot saved to: {save_path}")
 
 def plot_losses(training_losses: Dict[str, any], validation_losses: Dict[str, any], save_dir: str):
-    LOSS_PLOT_PATH_BASE = os.path.join(save_dir, "loss_plot.png")
-    INDIVIDUAL_LOSS_PLOT_PATH_BASE = os.path.join(save_dir, "losses_plot.png")
+    LOSS_PLOT_PATH = os.path.join(save_dir, "loss_plot.png")
+    INDIVIDUAL_LOSS_PLOT = os.path.join(save_dir, "losses_plot.png")
 
     plt.figure(figsize=(12, 6))  # Set figure size
     plt.subplot(1, 2, 1)
@@ -47,9 +47,13 @@ def plot_losses(training_losses: Dict[str, any], validation_losses: Dict[str, an
     plt.title("Loss for Color")
 
     plt.tight_layout()  # Ensure no overlap
-    plt.savefig(INDIVIDUAL_LOSS_PLOT_PATH_BASE)
+    plt.savefig(INDIVIDUAL_LOSS_PLOT)
     plt.close()
-    print(f"Individual loss plot saved to: {INDIVIDUAL_LOSS_PLOT_PATH_BASE}")
+    print(f"Individual loss plot saved to: {INDIVIDUAL_LOSS_PLOT}")
+
+    print(f"Loss Plot path: {LOSS_PLOT_PATH}")
+    print(f"Training Losses: {training_losses['total']}")
+    print(f"Validation Losses: {validation_losses['total']}")
 
     plt.figure(figsize=(10, 5))
     plt.plot(training_losses['total'], label="Training Loss")
@@ -59,9 +63,9 @@ def plot_losses(training_losses: Dict[str, any], validation_losses: Dict[str, an
     plt.legend(loc="upper right")
     plt.title("Training and Validation Losses")
 
-    plt.savefig(LOSS_PLOT_PATH_BASE)
+    plt.savefig(LOSS_PLOT_PATH)
     plt.close()
-    print(f"Plot saved to: {LOSS_PLOT_PATH_BASE}")
+    print(f"Plot saved to: {LOSS_PLOT_PATH}")
 
 
 # from src.data.utils.data_processing import lab_discretized_to_rgb
