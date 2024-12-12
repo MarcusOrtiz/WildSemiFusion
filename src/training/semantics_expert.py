@@ -202,7 +202,7 @@ def main():
     populate_random_seeds()
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    model = SemanticExpertModel(cfg.NUM_CLASSES)
+    model = SemanticExpertModel(cfg.CLASSES)
     model = model_to_device(model, device)
     print(f"Semantics expert model successfully initialized and moved to {device}")
 
