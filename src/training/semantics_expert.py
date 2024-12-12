@@ -100,6 +100,8 @@ def train_val(model, device, dataloader, val_dataloader, epochs, lr, save_dir: s
                 batch_size = gt_semantics.shape[0]
                 locations = normalized_locations_tensor.unsqueeze(0).expand(batch_size, -1, -1)
 
+                locations.requires_grad_(True)
+
                 preds_semantics = model(locations, gray_images)
                 del locations, gray_images
 
@@ -130,23 +132,23 @@ def train_val(model, device, dataloader, val_dataloader, epochs, lr, save_dir: s
         with torch.no_grad():
             for batch_idx, batch in enumerate(val_dataloader):
                 # if (idx < 2 or idx % 100 == 0): print(f"Loading validation batch {idx}", flush=True)
+                with autocast():
+                    gt_semantics = batch['gt_semantics'].to(device)
+                    gray_images = batch['gray_image'].to(device)
 
-                gt_semantics = batch['gt_semantics'].to(device)
-                gray_images = batch['gray_image'].to(device)
+                    # Repeat locations along batch dimension
+                    batch_size = gt_semantics.shape[0]
+                    locations = normalized_locations_tensor.unsqueeze(0).expand(batch_size, -1, -1)
 
-                # Repeat locations along batch dimension
-                batch_size = gt_semantics.shape[0]
-                locations = normalized_locations_tensor.unsqueeze(0).expand(batch_size, -1, -1)
+                    preds_semantics = model(locations, gray_images)
+                    del locations, gray_images
 
-                preds_semantics = model(locations, gray_images)
-                del locations, gray_images
+                    preds_semantics = preds_semantics
+                    gt_semantics = gt_semantics.long().view(-1)
+                    loss_semantics_val = cfg.WEIGHT_SEMANTICS * criterion_ce_semantics(preds_semantics, gt_semantics)
+                    del preds_semantics, gt_semantics
 
-                preds_semantics = preds_semantics
-                gt_semantics = gt_semantics.long().view(-1)
-                loss_semantics_val = cfg.WEIGHT_SEMANTICS * criterion_ce_semantics(preds_semantics, gt_semantics)
-                del preds_semantics, gt_semantics
-
-                val_loss += loss_semantics_val
+                    val_loss += loss_semantics_val
 
         average_val_loss = val_loss / len(val_dataloader)
         semantics_val_loss = loss_semantics_val.item()
@@ -185,7 +187,9 @@ def train_val(model, device, dataloader, val_dataloader, epochs, lr, save_dir: s
             print(f"Model saved at early stopping point with validation loss: {best_semantics_val_loss}")
             break
 
-        if torch.cuda.is_available(): torch.cuda.empty_cache()
+        if torch.cuda.is_available() and not hasattr(model, "_torchdynamo_orig_callable"):
+            torch.cuda.empty_cache()
+
         scheduler.step(average_val_loss)
 
     total_time = sum(times)
@@ -198,7 +202,7 @@ def main():
     populate_random_seeds()
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    model = SemanticExpertModel(cfg.NUM_BINS)
+    model = SemanticExpertModel(cfg.NUM_CLASSES)
     model = model_to_device(model, device)
     print(f"Semantics expert model successfully initialized and moved to {device}")
 
