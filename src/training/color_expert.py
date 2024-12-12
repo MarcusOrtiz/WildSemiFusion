@@ -47,7 +47,7 @@ def train_val(model, device, train_dataloader, val_dataloader, epochs, lr, save_
     os.makedirs(save_dir, exist_ok=True)
     checkpoint_path = os.path.join(save_dir, "checkpoint.pth")
 
-    load_embeddings(model, device, os.path.join(cfg.AWS_SAVE_DIR, 'base'))
+    load_embeddings(model, device, cfg.SAVE_DIR_BASE)
     freeze_embeddings(model)
     script_embeddings_inplace(model)
 
