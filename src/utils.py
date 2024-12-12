@@ -43,6 +43,16 @@ def populate_random_seeds():
     torch.manual_seed(cfg.SEED)
     torch.cuda.manual_seed(cfg.SEED)
 
+def generate_loss_trackers():
+    training_losses = {'total': [], 'semantics': [], 'color': []}
+    validation_losses = {'total': [], 'semantics': [], 'color': []}
+    times = []
+    return training_losses, validation_losses, times
+
+def update_loss_trackers(losses, total_loss, semantics_loss, color_loss):
+    losses['total'].append(total_loss)
+    losses['semantics'].append(semantics_loss)
+    losses['color'].append(color_loss)
 
 def print_color_prediction_shapes(preds, gt):
     print(f"Preds Color Shape: {preds.view(-1, cfg.NUM_BINS).shape}")
