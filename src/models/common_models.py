@@ -13,7 +13,7 @@ class FourierFeatureLayer(nn.Module):
 
 
 class GrayscaleCNN(nn.Module):
-    def __init__(self, image_size=(224, 224), out_dim=256):
+    def __init__(self, image_size, out_dim):
         super(GrayscaleCNN, self).__init__()
         self.conv1 = nn.Conv2d(1, 16, kernel_size=3, padding=1)
         self.bn1 = nn.BatchNorm2d(16)
@@ -106,18 +106,18 @@ class ComplexColorNet(ColorNet):
 
         self.fc3 = nn.Linear(hidden_dim_1, hidden_dim_2)
         self.bn3 = nn.LayerNorm(hidden_dim_2)
-        self.dropout3 = nn.Dropout(0.3)
+        self.dropout3 = nn.Dropout(0.5)
 
         self.fc4 = nn.Linear(hidden_dim_2, hidden_dim_2)
         self.bn4 = nn.LayerNorm(hidden_dim_2)
-        self.dropout4 = nn.Dropout(0.3)
+        self.dropout4 = nn.Dropout(0.5)
         self.fc5 = nn.Linear(hidden_dim_2, hidden_dim_2)
         self.bn5 = nn.LayerNorm(hidden_dim_2)
-        self.dropout5 = nn.Dropout(0.3)
+        self.dropout5 = nn.Dropout(0.5)
 
         self.fc6 = nn.Linear(hidden_dim_2, hidden_dim_3)
         self.bn6 = nn.LayerNorm(hidden_dim_3)
-        self.dropout6 = nn.Dropout(0.3)
+        self.dropout6 = nn.Dropout(0.5)
 
         self.fc7 = nn.Linear(hidden_dim_3, 3 * num_bins)
 
@@ -169,9 +169,6 @@ class SimpleSemanticNet(SemanticNet):
         self.fc3 = nn.Linear(hidden_dim, num_classes)
 
     def forward(self, x):
-        with torch.inference_mode():
-            x = super(SimpleSemanticNet, self).forward(x)
-
         x = self.fc3(x)
         return x
 
@@ -182,7 +179,9 @@ class ComplexSemanticNet(SemanticNet):
         super(ComplexSemanticNet, self).__init__(input_dim, hidden_dim, num_classes)
 
         self.fc3 = nn.Linear(hidden_dim, hidden_dim)
+        self.bn3 = nn.BatchNorm1d(hidden_dim)
         self.fc4 = nn.Linear(hidden_dim, hidden_dim)
+        self.bn4 = nn.BatchNorm1d(hidden_dim)
         self.fc5 = nn.Linear(hidden_dim, num_classes)
 
         self.dropout = nn.Dropout(0.3)
@@ -190,12 +189,9 @@ class ComplexSemanticNet(SemanticNet):
 
 
     def forward(self, x):
-        with torch.inference_mode():
-            x = super(ComplexSemanticNet, self).forward(x)
-
-        x = self.relu(self.fc3(x))
+        x = self.relu(self.bn3(self.fc3(x)))
         x = self.dropout(x)
-        x = self.relu(self.fc4(x))
+        x = self.relu(self.bn4(self.fc4(x)))
         x = self.dropout(x)
 
         x = self.fc5(x)

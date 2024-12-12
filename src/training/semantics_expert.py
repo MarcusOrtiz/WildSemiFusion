@@ -4,11 +4,11 @@ import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
 from torch.cuda.amp import autocast, GradScaler
-from src.data.utils.data_processing import image_to_array, load_sequential_data
+from src.data.utils.data_processing import load_sequential_data
 from src.models.experts import SemanticExpertModel
 from src.data.rellis_2D_dataset import Rellis2DDataset
 from src.plotting import generate_plots
-from src.utils import generate_normalized_locations, populate_random_seeds, model_to_device
+from src.utils import generate_normalized_locations, populate_random_seeds, model_to_device, compile_model
 import argparse
 import importlib
 
@@ -28,14 +28,15 @@ def load_embeddings(model, device, embeddings_dir: str):
 
 def freeze_embeddings(model):
     model.fourier_layer.eval()
-    model.lab_cnn.eval()
+    model.gray_cnn.eval()
     for param in model.fourier_layer.parameters():
         param.requires_grad = False
-    for param in model.lab_cnn.parameters():
+    for param in model.gray_cnn.parameters():
         param.requires_grad = False
+
 def script_embeddings(model):
     model.fourier_layer = torch.jit.script(model.fourier_layer)
-    model.lab_cnn = torch.jit.script(model.lab_cnn)
+    model.lab_cnn = torch.jit.script(model.gray_cnn)
 
 def train_val(model, device, dataloader, val_dataloader, epochs, lr, save_dir: str, use_checkpoint:bool):
     if not os.path.exists(save_dir):
@@ -43,6 +44,13 @@ def train_val(model, device, dataloader, val_dataloader, epochs, lr, save_dir: s
     checkpoint_path = os.path.join(save_dir, "checkpoint.pth")
 
     model_module = model.module if isinstance(model, nn.DataParallel) else model
+
+    load_embeddings(model_module, device, os.path.join(cfg.AWS_SAVE_DIR, "base"))
+    freeze_embeddings(model_module)
+    script_embeddings(model_module)
+
+    model = compile_model(model)
+
     optimizer = torch.optim.Adam([
         {'params': model_module.semantic_fcn.parameters(), 'lr': 5e-6, 'weight_decay': 1e-5},
         {'params': model_module.compression_layer.parameters()}

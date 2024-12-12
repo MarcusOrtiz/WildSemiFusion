@@ -1,6 +1,6 @@
 import torch
 import torch.nn as nn
-from src.models.common_models import FourierFeatureLayer, ResidualBlock, SemanticNet, SimpleColorNet, LABCNN, GrayscaleCNN, \
+from src.models.common_models import FourierFeatureLayer, ResidualBlock, SimpleSemanticNet, SimpleColorNet, LABCNN, GrayscaleCNN, \
     CompressionLayer
 
 
@@ -13,7 +13,7 @@ class BaseModel(nn.Module):
 
         self.compression_layer = CompressionLayer(in_dim=384, out_dim=128)
 
-        self.semantic_fcn = SemanticNet(input_dim=128, hidden_dim=64, num_classes=num_classes)
+        self.semantic_fcn = SimpleSemanticNet(input_dim=128, hidden_dim=64, num_classes=num_classes)
         self.color_fcn = SimpleColorNet(in_features=128, hidden_dim=64, num_bins=num_bins)
 
     def forward(self, locations, gray_images, lab_images):

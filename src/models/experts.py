@@ -1,6 +1,6 @@
 import torch
 import torch.nn as nn
-from src.models.common_models import FourierFeatureLayer, ResidualBlock, SemanticNet, ComplexColorNet, LABCNN, GrayscaleCNN, \
+from src.models.common_models import FourierFeatureLayer, ResidualBlock, ComplexSemanticNet, ComplexColorNet, LABCNN, GrayscaleCNN, \
     CompressionLayer
 
 
@@ -50,11 +50,11 @@ class SemanticExpertModel(nn.Module):
     def __init__(self, num_classes):
         super(SemanticExpertModel, self).__init__()
         self.fourier_layer = FourierFeatureLayer(in_dim=2, out_dim=128)
-        self.gray_cnn = GrayscaleCNN(image_size=(224, 224), out_dim=256)
+        self.gray_cnn = GrayscaleCNN(image_size=(224, 224), out_dim=128)
 
-        self.compression_layer = CompressionLayer(in_dim=384, out_dim=192)
+        self.compression_layer = CompressionLayer(in_dim=256, out_dim=128)
 
-        self.semantic_fcn = SemanticNet(input_dim=192, hidden_dim=96, num_classes=num_classes)
+        self.semantic_fcn = ComplexSemanticNet(input_dim=128, hidden_dim=64, num_classes=num_classes)
 
     def forward(self, locations, gray_images):
         '''
@@ -67,11 +67,13 @@ class SemanticExpertModel(nn.Module):
         batch_size, num_locations, _ = locations.shape
 
         locations = locations.reshape(-1, 2)
-        location_features = self.fourier_layer(
-            locations)  # (batch_size, num_locations, locations_dim) -> (batch_size * num_locations, 2) -> (batch_size * num_locations, 256)
-        del locations
-        gray_features = self.gray_cnn(gray_images)  # (batch_size, 1, image_size[0], image_size[1]) -> (batch_size, 256)
-        del gray_images
+
+        with torch.inference_mode():
+            location_features = self.fourier_layer(
+                locations)  # (batch_size, num_locations, locations_dim) -> (batch_size * num_locations, 2) -> (batch_size * num_locations, 256)
+            del locations
+            gray_features = self.gray_cnn(gray_images)  # (batch_size, 1, image_size[0], image_size[1]) -> (batch_size, 256)
+            del gray_images
 
         gray_features = gray_features[:, None, :].expand(-1, num_locations, -1).reshape(-1, gray_features.size(-1))
 
