@@ -325,7 +325,7 @@ def train_val(model_simple, model_linear, model_mlp, device, train_dataloader, v
             save_best_model(model_mlp, save_dir_mlp)
             print(f"New best model saved with validation loss: {best_loss_mlp}")
 
-        if running_simple:
+        if running_simple and (epoch + 1) % cfg.SAVE_INTERVAL == 0:
             torch.save({
                 'epoch': epoch + 1,
                 'model_state_dict': model_simple.state_dict(),
@@ -338,7 +338,7 @@ def train_val(model_simple, model_linear, model_mlp, device, train_dataloader, v
                 'times': times_simple
             }, os.path.join(save_dir_simple, "checkpoint.pth"))
 
-        if running_linear:
+        if running_linear and (epoch + 1) % cfg.SAVE_INTERVAL == 0:
             torch.save({
                 'epoch': epoch + 1,
                 'model_state_dict': model_linear.state_dict(),
@@ -351,7 +351,7 @@ def train_val(model_simple, model_linear, model_mlp, device, train_dataloader, v
                 'times': times_linear
             }, os.path.join(save_dir_linear, "checkpoint.pth"))
 
-        if running_mlp:
+        if running_mlp and (epoch + 1) % cfg.SAVE_INTERVAL == 0:
             torch.save({
                 'epoch': epoch + 1,
                 'model_state_dict': model_mlp.state_dict(),

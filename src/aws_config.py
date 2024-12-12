@@ -50,6 +50,7 @@ IMAGE_MASK_RATE = (.1, .25)
 
 # Plotting
 PLOT_INTERVAL = 5
+SAVE_INTERVAL = 5
 
 # Random seed for reproducibility
 SEED = 7
