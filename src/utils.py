@@ -9,6 +9,8 @@ Generate Locations (currently all pixels TODO: always consistent on number of lo
 Locations in original use as a metric of space, here it is pixel correlation
 Locations are normalized to [0, 1]
 """
+
+
 def generate_normalized_locations() -> np.array:
     y_coords, x_coords = np.meshgrid(np.arange(cfg.IMAGE_SIZE[0]), np.arange(cfg.IMAGE_SIZE[1]),
                                      indexing='ij')
@@ -17,6 +19,7 @@ def generate_normalized_locations() -> np.array:
     normalized_locations[:, 0] /= cfg.IMAGE_SIZE[0]
     normalized_locations[:, 1] /= cfg.IMAGE_SIZE[1]
     return normalized_locations
+
 
 def model_to_device(model, device):
     # Must return model in case of DataParallel
@@ -42,20 +45,24 @@ def populate_random_seeds():
     torch.manual_seed(cfg.SEED)
     torch.cuda.manual_seed(cfg.SEED)
 
+
 def generate_loss_trackers():
     training_losses = {'total': [], 'semantics': [], 'color': []}
     validation_losses = {'total': [], 'semantics': [], 'color': []}
     times = []
     return training_losses, validation_losses, times
 
+
 def update_loss_trackers(losses, total_loss, semantics_loss, color_loss):
     losses['total'].append(total_loss)
     losses['semantics'].append(semantics_loss)
     losses['color'].append(color_loss)
 
+
 def print_color_prediction_shapes(preds, gt):
     print(f"Preds Color Shape: {preds.view(-1, cfg.NUM_BINS).shape}")
     print(f"GT Color Shape: {gt.view(-1).shape}")
+
 
 def print_semantic_prediction_shapes(preds, gt):
     print(f"Preds Semantics Shape: {preds.shape}")

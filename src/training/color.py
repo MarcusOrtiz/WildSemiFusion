@@ -331,7 +331,10 @@ def train_val(model_simple, model_linear, model_mlp, device, train_dataloader, v
             'optimizer_state_dict': optimizer_simple.state_dict(),
             'scheduler_state_dict': scheduler_simple.state_dict(),
             'loss': average_epoch_loss_simple,
-            'best_loss': best_loss_simple
+            'best_loss': best_loss_simple,
+            'training_losses': training_losses_simple,
+            'validation_losses': validation_losses_simple,
+            'times': times_simple
         }, os.path.join(save_dir_simple, "checkpoint.pth"))
 
         torch.save({
@@ -340,7 +343,10 @@ def train_val(model_simple, model_linear, model_mlp, device, train_dataloader, v
             'optimizer_state_dict': optimizer_linear.state_dict(),
             'scheduler_state_dict': scheduler_linear.state_dict(),
             'loss': average_epoch_loss_linear,
-            'best_loss': best_loss_linear
+            'best_loss': best_loss_linear,
+            'training_losses': training_losses_linear,
+            'validation_losses': validation_losses_linear,
+            'times': times_linear
         }, os.path.join(save_dir_linear, "checkpoint.pth"))
 
         torch.save({
@@ -349,7 +355,10 @@ def train_val(model_simple, model_linear, model_mlp, device, train_dataloader, v
             'optimizer_state_dict': optimizer_mlp.state_dict(),
             'scheduler_state_dict': scheduler_mlp.state_dict(),
             'loss': average_epoch_loss_mlp,
-            'best_loss': best_loss_mlp
+            'best_loss': best_loss_mlp,
+            'training_losses': training_losses_mlp,
+            'validation_losses': validation_losses_mlp,
+            'times': times_mlp
         }, os.path.join(save_dir_mlp, "checkpoint.pth"))
 
         if (epochs_no_improve_color_simple >= cfg.EARLY_STOP_EPOCHS) and (epoch >= 75):
