@@ -90,8 +90,8 @@ def train_val(model_simple, model_linear, device, train_dataloader, val_dataload
     base_model = freeze_script_compile_sub_model(base_model)
     color_expert_model = freeze_script_compile_sub_model(color_expert_model)
 
-    model_simple = compile_model(model_simple)
-    model_linear = compile_model(model_linear)
+    # model_simple = compile_model(model_simple)
+    # model_linear = compile_model(model_linear)
 
     optimizer_simple, scheduler_simple, scaler_simple = create_optimization(model_simple, lr)
     optimizer_linear, scheduler_linear, scaler_linear = create_optimization(model_linear, lr)
