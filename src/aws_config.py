@@ -27,7 +27,7 @@ TEST_DIR = os.path.join(INPUT_DIR, "rellis_2d_preprocessed/test")
 NUM_WORKERS = 3
 PIN_MEMORY = True
 TRAIN_FILES_LIMIT = 32
-VAL_FILES_LIMIT = 16
+VAL_FILES_LIMIT = 32
 
 # Training parameters
 BATCH_SIZE = 32
