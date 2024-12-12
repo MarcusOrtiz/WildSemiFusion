@@ -27,18 +27,23 @@ class EmbeddingsDataset(Dataset):
         device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
         fourier_feature_layer = FourierFeatureLayer(in_dim=2, out_dim=128)
         lab_cnn = LABCNN(image_size=cfg.IMAGE_SIZE, out_dim=128)
-        fourier_feature_layer.load_state_dict(
-            torch.load(os.path.join(cfg.AWS_SAVE_DIR, 'base/fourier_layer_model.pth'), map_location=device)
-        )
-        lab_cnn.load_state_dict(
-            torch.load(os.path.join(cfg.AWS_SAVE_DIR, 'base/lab_cnn_model.pth'), map_location=device)
-        )
         self.fourier_feature_layer = model_to_device(fourier_feature_layer, device)
         self.lab_cnn = model_to_device(lab_cnn, device)
+        self.fourier_feature_layer.load_state_dict(
+            torch.load(os.path.join(cfg.AWS_SAVE_DIR, 'base/fourier_layer_model.pth'), map_location=device)
+        )
+        self.lab_cnn.load_state_dict(
+            torch.load(os.path.join(cfg.AWS_SAVE_DIR, 'base/lab_cnn_model.pth'), map_location=device)
+        )
+
         # self.fourier_feature_layer = compile_model(fourier_feature_layer)
         # self.lab_cnn = compile_model(lab_cnn)
 
         self.locations_features, self.lab_features, self.gt_lab_images = self._compute_embeddings(self.fourier_feature_layer, self.lab_cnn, preloaded_data['rgb_images'], device)
+        print(f"Locations features device: {self.locations_features.device}, Locations features attached: {self.locations_features.is_attached()}")
+        print(f"Lab features device: {self.lab_features[0].device}, Lab features attached: {self.lab_features[0].is_attached()}")
+        print(f"GT Lab images device: {self.gt_lab_images[0].device}, GT Lab images attached: {self.gt_lab_images[0].is_attached()}")
+
 
     def _compute_embeddings(self, fourier_feature_layer, lab_cnn, rgb_images, device):
         normalized_locations = generate_normalized_locations()

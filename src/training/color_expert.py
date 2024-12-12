@@ -207,11 +207,6 @@ def train_val(model, device, train_dataloader, val_dataloader, epochs, lr, save_
 def main():
     populate_random_seeds()
 
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    model = ColorExpertModel(cfg.NUM_BINS)
-    model = model_to_device(model, device)
-    print(f"Color expert model successfully initialized and moved to {device}")
-
     train_preloaded_data = load_sequential_data(cfg.TRAIN_DIR, cfg.TRAIN_FILES_LIMIT)
     val_preloaded_data = load_sequential_data(cfg.VAL_DIR, cfg.VAL_FILES_LIMIT)
     print("Successfully loaded preprocessed training and validation data")
@@ -225,6 +220,12 @@ def main():
     val_dataloader = DataLoader(val_dataset, batch_size=cfg.BATCH_SIZE, shuffle=False, num_workers=cfg.NUM_WORKERS,
                                 pin_memory=cfg.PIN_MEMORY, drop_last=True)
     print(f"Created training dataloader with {len(train_dataset)} files and validation dataloader with {len(val_dataset)} files")
+
+
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    model = ColorExpertModel(cfg.NUM_BINS)
+    model = model_to_device(model, device)
+    print(f"Color expert model successfully initialized and moved to {device}")
 
     # Train and validate the model
     trained_model = train_val(
