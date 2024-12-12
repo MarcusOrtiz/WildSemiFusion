@@ -61,7 +61,7 @@ def freeze_script_compile_sub_model(model):
     model.eval()
     for param in model.parameters():
         param.requires_grad = False
-    model = torch.jit.script(model)
+    # model = torch.jit.script(model)
     return compile_model(model)
 
 
