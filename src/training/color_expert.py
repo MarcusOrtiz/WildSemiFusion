@@ -55,12 +55,17 @@ def train_val(model, device, train_dataloader, val_dataloader, epochs, lr, save_
 
     model = compile_model(model)
 
-    optimizer = torch.optim.Adam([
-        {'params': model_module.color_fcn.parameters(), 'lr': 0.001, 'weight_decay': 5e-3},
+    optimizer = torch.optim.AdamW([
+        {'params': model_module.color_fcn.parameters(), 'lr': 0.0005, 'weight_decay': 5e-3},
         {'params': model_module.compression_layer.parameters()}
-    ], lr=lr)
+    ], lr=lr, betas=(0.9, 0.999), eps=1e-8)
 
-    scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'min', factor=cfg.LR_DECAY_FACTOR, patience=cfg.PATIENCE)
+    scheduler = torch.optim.lr_scheduler.CosineAnnealingWarmRestarts(
+        optimizer,
+        T_0=10,  # Initial restart period
+        T_mult=2,  # Multiply restart period each time
+        eta_min=1e-6  # Minimum learning rate
+    )
     scaler = GradScaler()
 
     criterion_ce_color = nn.CrossEntropyLoss(ignore_index=cfg.NUM_BINS - 1)
