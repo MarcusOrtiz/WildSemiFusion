@@ -59,6 +59,7 @@ class EmbeddingsDataset(Dataset):
                 gt_lab_image = lab_continuous_to_lab_discretized(lab_image, self.num_bins, void_bin=True)
                 mask = create_mask(self.image_size[0], self.image_size[1], self.image_mask_rate)
                 gt_lab_image[mask] = [self.num_bins - 1, self.num_bins - 1, self.num_bins - 1]
+                gt_lab_image = torch.tensor(gt_lab_image, dtype=torch.long).to('cpu')
                 gt_lab_images.append(gt_lab_image)
 
                 noisy_lab_image = image_gaussian_noise(lab_image, self.image_noise, space='lab')
