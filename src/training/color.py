@@ -245,21 +245,21 @@ def train_val(model_simple, model_linear, model_mlp, device, train_dataloader, v
                     loss_semantics_val_simple = cfg.WEIGHT_SEMANTICS * criterion_ce_semantics(preds_semantics_simple, gt_semantics.long().view(-1))
                     loss_color_val_simple = cfg.WEIGHT_COLOR * criterion_ce_color(preds_color_simple.view(-1, cfg.NUM_BINS), gt_color.view(-1))
                     del preds_semantics_simple, preds_color_simple
-                    times_simple.append(time.time() - simple_start_time)
+                    times_simple[-1] += time.time() - simple_start_time
 
                     linear_start_time = time.time()
                     preds_semantics_linear, preds_color_linear = model_linear(preds_semantics_base, preds_color_base, preds_color_expert)
                     loss_semantics_val_linear = cfg.WEIGHT_SEMANTICS * criterion_ce_semantics(preds_semantics_linear, gt_semantics.long().view(-1))
                     loss_color_val_linear = cfg.WEIGHT_COLOR * criterion_ce_color(preds_color_linear.view(-1, cfg.NUM_BINS), gt_color.view(-1))
                     del preds_semantics_linear, preds_color_linear
-                    times_linear.append(time.time() - linear_start_time)
+                    times_linear[-1] += time.time() - linear_start_time
 
                     mlp_start_time = time.time()
                     preds_semantics_mlp, preds_color_mlp = model_mlp(preds_semantics_base, preds_color_base, preds_color_expert)
                     loss_semantics_val_mlp = cfg.WEIGHT_SEMANTICS * criterion_ce_semantics(preds_semantics_mlp, gt_semantics.long().view(-1))
                     loss_color_val_mlp = cfg.WEIGHT_COLOR * criterion_ce_color(preds_color_mlp.view(-1, cfg.NUM_BINS), gt_color.view(-1))
                     del preds_semantics_mlp, preds_color_mlp
-                    times_mlp.append(time.time() - mlp_start_time)
+                    times_mlp[-1] += time.time() - mlp_start_time
 
                     del preds_semantics_base, preds_color_base, preds_color_expert, gt_semantics, gt_color
 
