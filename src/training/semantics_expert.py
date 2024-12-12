@@ -100,8 +100,6 @@ def train_val(model, device, dataloader, val_dataloader, epochs, lr, save_dir: s
                 batch_size = gt_semantics.shape[0]
                 locations = normalized_locations_tensor.unsqueeze(0).expand(batch_size, -1, -1)
 
-                optimizer.zero_grad()
-
                 preds_semantics = model(locations, gray_images)
                 del locations, gray_images
 

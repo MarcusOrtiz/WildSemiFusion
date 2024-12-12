@@ -177,6 +177,7 @@ class SimpleSemanticNet(SemanticNet):
         self.fc3 = nn.Linear(hidden_dim, num_classes)
 
     def forward(self, x):
+        x = super(SimpleSemanticNet, self).forward(x)
         x = self.fc3(x)
         return x
 
@@ -197,6 +198,7 @@ class ComplexSemanticNet(SemanticNet):
 
 
     def forward(self, x):
+        x = super(ComplexSemanticNet, self).forward(x)
         x = self.relu(self.bn3(self.fc3(x)))
         x = self.dropout(x)
         x = self.relu(self.bn4(self.fc4(x)))
