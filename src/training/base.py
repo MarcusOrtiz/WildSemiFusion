@@ -206,9 +206,9 @@ def main():
     val_dataset = Rellis2DDataset(preloaded_data=val_preloaded_data, num_bins=cfg.NUM_BINS, image_size=cfg.IMAGE_SIZE,
                                   image_noise=cfg.IMAGE_NOISE, image_mask_rate=cfg.IMAGE_MASK_RATE)
     train_dataloader = DataLoader(train_dataset, batch_size=cfg.BATCH_SIZE, shuffle=True, num_workers=cfg.NUM_WORKERS,
-                                  pin_memory=cfg.PIN_MEMORY, drop_last=True)
+                                  pin_memory=cfg.PIN_MEMORY, drop_last=True, prefetch_factor=4)
     val_dataloader = DataLoader(val_dataset, batch_size=cfg.BATCH_SIZE, shuffle=False, num_workers=cfg.NUM_WORKERS,
-                                pin_memory=cfg.PIN_MEMORY, drop_last=True)
+                                pin_memory=cfg.PIN_MEMORY, drop_last=True, prefetch_factor=4)
     print(f"Created training dataloader with {len(train_dataset)} files and validation dataloader with {len(val_dataset)} files")
 
     # Train and validate the model
