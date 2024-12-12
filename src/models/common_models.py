@@ -104,6 +104,9 @@ class ComplexColorNet(ColorNet):
     def __init__(self, in_features, hidden_dim_1, hidden_dim_2, hidden_dim_3, num_bins):
         super(ComplexColorNet, self).__init__(in_features, hidden_dim_1, num_bins)
 
+        self.residual1 = nn.Linear(in_features, hidden_dim_1)
+        self.residual2 = nn.Linear(hidden_dim_1, hidden_dim_2)
+
         self.fc3 = nn.Linear(hidden_dim_1, hidden_dim_2)
         self.bn3 = nn.LayerNorm(hidden_dim_2)
         self.dropout3 = nn.Dropout(0.2)
@@ -122,11 +125,18 @@ class ComplexColorNet(ColorNet):
         self.fc7 = nn.Linear(hidden_dim_3, 3 * num_bins)
 
     def forward(self, x):
+        residual1 = self.residual1(x)
         x = super(ComplexColorNet, self).forward(x)
+        x = torch.cat([x, residual1], dim=-1)
+
         x = F.leaky_relu(self.bn3(self.fc3(x)), negative_slope=0.01)
         x = self.dropout3(x)
+
+        residual2 = self.residual2(x)
         x = F.leaky_relu(self.bn4(self.fc4(x)), negative_slope=0.01)
         x = self.dropout4(x)
+        x = x + residual2
+
         x = F.leaky_relu(self.bn5(self.fc5(x)), negative_slope=0.01)
         x = self.dropout5(x)
         x = F.leaky_relu(self.bn6(self.fc6(x)), negative_slope=0.01)
