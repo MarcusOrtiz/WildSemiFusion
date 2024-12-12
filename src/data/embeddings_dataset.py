@@ -43,7 +43,7 @@ class EmbeddingsDataset(Dataset):
     def _compute_embeddings(self, fourier_feature_layer, lab_cnn, rgb_images, device):
         normalized_locations = generate_normalized_locations()
         normalized_locations_tensor = torch.from_numpy(normalized_locations).to(device)
-        locations_tensor = normalized_locations_tensor.reshape(-1, 2).to(device)
+        locations_tensor = normalized_locations_tensor.reshape(-1, 2)
         locations_features = fourier_feature_layer(locations_tensor).cpu().detach()
         print(f"Locations Features Shape: {locations_features.shape}")
 
@@ -68,7 +68,7 @@ class EmbeddingsDataset(Dataset):
                 lab_image_tensor = torch.tensor(masked_noisy_lab_image_discretized.transpose(2, 0, 1), dtype=torch.float32).to(device)
                 lab_tensors_batch.append(lab_image_tensor)
 
-            lab_tensors_batch = torch.stack(lab_tensors_batch).to(device)
+            lab_tensors_batch = torch.stack(lab_tensors_batch)
             with torch.inference_mode():
                 lab_features_batch = lab_cnn(lab_tensors_batch).cpu().detach()
 
