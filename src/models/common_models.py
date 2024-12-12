@@ -115,15 +115,11 @@ class ComplexColorNet(ColorNet):
         self.bn4 = nn.LayerNorm(hidden_dim_2)
         self.dropout4 = nn.Dropout(0.3)
 
-        self.fc5 = nn.Linear(hidden_dim_2, hidden_dim_2)
-        self.bn5 = nn.LayerNorm(hidden_dim_2)
-        self.dropout5 = nn.Dropout(0.4)
+        self.fc5 = nn.Linear(hidden_dim_2, hidden_dim_3)
+        self.bn5 = nn.LayerNorm(hidden_dim_3)
+        self.dropout5 = nn.Dropout(0.5)
 
-        self.fc6 = nn.Linear(hidden_dim_2, hidden_dim_3)
-        self.bn6 = nn.LayerNorm(hidden_dim_3)
-        self.dropout6 = nn.Dropout(0.5)
-
-        self.fc7 = nn.Linear(hidden_dim_3, 3 * num_bins)
+        self.fc6 = nn.Linear(hidden_dim_3, 3 * num_bins)
 
     def forward(self, x):
         if len(x.shape) > 2:
@@ -144,10 +140,7 @@ class ComplexColorNet(ColorNet):
         x = F.leaky_relu(self.bn5(self.fc5(x)), negative_slope=0.01)
         x = self.dropout5(x)
 
-        x = F.leaky_relu(self.bn6(self.fc6(x)), negative_slope=0.01)
-        x = self.dropout6(x)
-
-        x = self.fc7(x)
+        x = self.fc6(x)
         x = x.view(-1, 3, self.num_bins)
         return x
 
