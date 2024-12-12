@@ -127,22 +127,19 @@ class ComplexColorNet(ColorNet):
 
         x = F.leaky_relu(self.bn3(self.fc3(residual)), negative_slope=0.01)
         x = self.dropout3(x)
-        residual_3 = x # Store for residual connection
 
+        residual = x
         x = F.leaky_relu(self.bn4(self.fc4(x)), negative_slope=0.01)
         x = self.dropout4(x)
-        x = x + residual_3 # Residual connection
+        x = x + residual # Residual connection
 
-        residual_4 = x # Store for residual connection
+        residual = x # Store for residual connection
         x = F.leaky_relu(self.bn5(self.fc5(x)), negative_slope=0.01)
         x = self.dropout5(x)
+        x = x + residual
 
-        x = x + residual_4 # Residual connection
-
-        residual_5 = x
         x = F.leaky_relu(self.bn6(self.fc6(x)), negative_slope=0.01)
         x = self.dropout6(x)
-        x = x + residual_5
 
         x = self.fc7(x)
         x = x.view(-1, 3, self.num_bins)
