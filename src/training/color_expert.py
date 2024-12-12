@@ -106,7 +106,7 @@ def train_val(model, device, train_dataloader, val_dataloader, epochs, lr, save_
                 locations = locations.reshape(-1, lab_features.size(-1))
 
                 preds_color_logits = model(locations, lab_features)
-                del locations, lab_images
+                del locations, lab_features
 
                 preds_color_logits = preds_color_logits.view(-1, cfg.NUM_BINS)
                 gt_color = gt_color.view(-1)
