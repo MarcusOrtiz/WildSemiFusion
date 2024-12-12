@@ -136,7 +136,6 @@ class ComplexColorNet(ColorNet):
 
         x = F.leaky_relu(self.bn5(self.fc5(x)), negative_slope=0.01)
         x = self.dropout5(x)
-        x = x + residual
 
         x = F.leaky_relu(self.bn6(self.fc6(x)), negative_slope=0.01)
         x = self.dropout6(x)
