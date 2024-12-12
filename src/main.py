@@ -5,9 +5,9 @@ import importlib
 
 def main():
     training_scripts = [
-        "python -m src.training.base --config " + args.config,
-        "python -m src.training.color_expert --config " + args.config,
-        "python -m src.training.semantics_expert --config " + args.config,
+        "python -m src.training.base --scratch --config " + args.config,
+        "python -m src.training.color_expert --scratch --config " + args.config,
+        "python -m src.training.color --scratch --config " + args.config,
         # "python -m src.training.color --config " + args.config,
     ]
 
@@ -39,6 +39,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Sequentially train all available models")
     parser.add_argument('--config', type=str, default='src.local_config',
                         help='Path to the configuration module for scripts to use(src.local_config | src.aws_config)')
+    parser.add_argument('--scratch', action='store_true', help='Use AWS configuration')
     args = parser.parse_args()
 
     main()
