@@ -23,7 +23,6 @@ def model_to_device(model, device):
     model.to(device)
     if torch.cuda.is_available():
         torch.cuda.empty_cache()
-        print("Cleared CUDA cache")
     if torch.cuda.device_count() > 1:
         model = nn.DataParallel(model)
         print(f"Using {torch.cuda.device_count()} GPUs!")

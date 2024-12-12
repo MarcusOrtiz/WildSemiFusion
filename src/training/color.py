@@ -309,6 +309,8 @@ def main():
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model_simple = ColorModelSimple(cfg.NUM_BINS)
     model_linear = ColorModelLinear(cfg.NUM_BINS)
+    model_simple = model_to_device(model_simple, device)
+    model_linear = model_to_device(model_linear, device)
 
 
     trained_simple_model, trained_linear_model = train_val(
