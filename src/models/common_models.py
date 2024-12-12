@@ -104,16 +104,14 @@ class ComplexColorNet(ColorNet):
     def __init__(self, in_features, hidden_dim_1, hidden_dim_2, hidden_dim_3, num_bins):
         super(ComplexColorNet, self).__init__(in_features, hidden_dim_1, num_bins)
 
-        self.residual1 = nn.Linear(in_features, hidden_dim_1)
-        self.residual2 = nn.Linear(hidden_dim_2, hidden_dim_2)
-
-        self.fc3 = nn.Linear(hidden_dim_1 + in_features, hidden_dim_2)
+        self.fc3 = nn.Linear(hidden_dim_1, hidden_dim_2)
         self.bn3 = nn.LayerNorm(hidden_dim_2)
         self.dropout3 = nn.Dropout(0.2)
 
         self.fc4 = nn.Linear(hidden_dim_2, hidden_dim_2)
         self.bn4 = nn.LayerNorm(hidden_dim_2)
         self.dropout4 = nn.Dropout(0.3)
+
         self.fc5 = nn.Linear(hidden_dim_2, hidden_dim_2)
         self.bn5 = nn.LayerNorm(hidden_dim_2)
         self.dropout5 = nn.Dropout(0.4)
@@ -125,22 +123,26 @@ class ComplexColorNet(ColorNet):
         self.fc7 = nn.Linear(hidden_dim_3, 3 * num_bins)
 
     def forward(self, x):
-        residual1 = self.residual1(x)
-        x = super(ComplexColorNet, self).forward(x)
-        x = torch.cat([x, residual1], dim=-1)
+        residual = super(ComplexColorNet, self).forward(x) # Store output of the super call
 
-        x = F.leaky_relu(self.bn3(self.fc3(x)), negative_slope=0.01)
+        x = F.leaky_relu(self.bn3(self.fc3(residual)), negative_slope=0.01)
         x = self.dropout3(x)
+        residual_3 = x # Store for residual connection
 
-        residual2 = self.residual2(x)
         x = F.leaky_relu(self.bn4(self.fc4(x)), negative_slope=0.01)
         x = self.dropout4(x)
-        x = x + residual2
+        x = x + residual_3 # Residual connection
 
+        residual_4 = x # Store for residual connection
         x = F.leaky_relu(self.bn5(self.fc5(x)), negative_slope=0.01)
         x = self.dropout5(x)
+
+        x = x + residual_4 # Residual connection
+
+        residual_5 = x
         x = F.leaky_relu(self.bn6(self.fc6(x)), negative_slope=0.01)
         x = self.dropout6(x)
+        x = x + residual_5
 
         x = self.fc7(x)
         x = x.view(-1, 3, self.num_bins)
