@@ -40,6 +40,8 @@ class EmbeddingsDataset(Dataset):
         # self.lab_cnn = compile_model(lab_cnn)
 
         self.locations_features, self.lab_features, self.gt_lab_images = self._compute_embeddings(self.fourier_feature_layer, self.lab_cnn, preloaded_data['rgb_images'], device)
+
+        del fourier_feature_layer, lab_cnn
         print(f"Locations features device: {self.locations_features.device}, Locations features attached: {self.locations_features.requires_grad}")
         print(f"Lab features device: {self.lab_features[0].device}, Lab features attached: {self.lab_features[0].requires_grad}")
         print(f"GT Lab images device: {self.gt_lab_images[0].device}, GT Lab images attached: {self.gt_lab_images[0].requires_grad}")
@@ -50,7 +52,7 @@ class EmbeddingsDataset(Dataset):
         normalized_locations_tensor = torch.from_numpy(normalized_locations).to(device)
         locations_tensor = normalized_locations_tensor.reshape(-1, 2)
         with torch.inference_mode():
-            locations_features = fourier_feature_layer(locations_tensor).detach().cpu()
+            locations_features = fourier_feature_layer(locations_tensor).detach().to('cpu')
         print(f"Locations Features Shape: {locations_features.shape}")
 
         gt_lab_images = []
@@ -77,7 +79,7 @@ class EmbeddingsDataset(Dataset):
 
             lab_tensors_batch = torch.stack(lab_tensors_batch)
             with torch.inference_mode():
-                lab_features_batch = lab_cnn(lab_tensors_batch).detach().cpu()
+                lab_features_batch = lab_cnn(lab_tensors_batch).detach().to('cpu')
 
             lab_features.extend(lab_features_batch)
         
