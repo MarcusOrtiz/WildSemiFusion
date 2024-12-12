@@ -7,38 +7,19 @@ from src.models.common_models import FourierFeatureLayer, ResidualBlock, Complex
 class ColorExpertModel(nn.Module):
     def __init__(self, num_bins):
         super(ColorExpertModel, self).__init__()
-        self.fourier_layer = FourierFeatureLayer(in_dim=2, out_dim=128)
-        self.lab_cnn = LABCNN(image_size=(224, 224), out_dim=128)
 
         self.compression_layer = CompressionLayer(in_dim=256, out_dim=128)
 
         self.color_fcn = ComplexColorNet(in_features=128, hidden_dim_1=128, hidden_dim_2=num_bins, hidden_dim_3=2*num_bins, num_bins=num_bins)
 
-    def forward(self, locations, lab_images):
+    def forward(self, location_features, lab_features):
         '''
-
-        :param locations: (batch_size, num_locations, location_dim) or (batch_size, image_size[0] * image_size[1], 2)
-        :param gray_images: (batch_size, 1, image_size[0], image_size[1])
-        :param lab_images: (batch_size, 3, image_size[0], image_size[1])
-        :return:
         '''
-        batch_size, num_locations, _ = locations.shape
-
-        locations = locations.reshape(-1, 2)
-
-        with torch.inference_mode():
-            location_features = self.fourier_layer(locations)  # (batch_size, num_locations, locations_dim) -> (batch_size * num_locations, 2) -> (batch_size * num_locations, 256)
-            del locations
-            lab_features = self.lab_cnn(lab_images)  # (batch_size, 3, image_size[0], image_size[1]) -> (batch_size, 256)
-            del lab_images
-
-        lab_features = lab_features[:, None, :].expand(-1, num_locations, -1).reshape(-1, lab_features.size(-1))
 
         # Concatenation and compression of encoding features
+        # print(f"Location Features Shape: {location_features.shape}, Lab Features Shape: {lab_features.shape}")
         combining_features = torch.cat([location_features, lab_features], dim=-1)  # (batch_size * num_locations, 768)
-        del location_features, lab_features
         compressed_features = self.compression_layer(combining_features)  # (batch_size * num_locations, 256)
-        del combining_features
 
         # Generate predictions
         raw_color_logits = self.color_fcn(compressed_features)  # (batch_size * num_locations, 3, num_bins) of type

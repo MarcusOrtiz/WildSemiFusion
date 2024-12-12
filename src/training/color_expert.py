@@ -4,6 +4,8 @@ import torch
 import torch.nn as nn
 from torch.utils.data import DataLoader
 from torch.cuda.amp import autocast, GradScaler
+
+from src.data.embeddings_dataset import EmbeddingsDataset
 from src.data.utils.data_processing import load_sequential_data
 from src.models.experts import ColorExpertModel
 from src.data.rellis_2D_dataset import Rellis2DDataset
@@ -49,10 +51,6 @@ def train_val(model, device, train_dataloader, val_dataloader, epochs, lr, save_
 
     model_module = model.module if isinstance(model, nn.DataParallel) else model
 
-    load_embeddings(model_module, device, os.path.join(cfg.AWS_SAVE_DIR, 'base'))
-    freeze_embeddings(model_module)
-    script_embeddings_inplace(model_module)
-
     model = compile_model(model)
 
     optimizer = torch.optim.AdamW([
@@ -88,9 +86,6 @@ def train_val(model, device, train_dataloader, val_dataloader, epochs, lr, save_
         validation_losses = checkpoint.get('validation_losses', validation_losses)
         times = checkpoint.get('times', times)
 
-    normalized_locations = generate_normalized_locations()
-    normalized_locations_tensor = torch.from_numpy(normalized_locations).to(device)
-
     for epoch in range(start_epoch, epochs):
         generate_plots(epoch, training_losses, validation_losses, times, save_dir)
 
@@ -102,21 +97,19 @@ def train_val(model, device, train_dataloader, val_dataloader, epochs, lr, save_
             optimizer.zero_grad()
             with autocast():
                 gt_color = batch['gt_color'].to(device)
-                lab_images = batch['lab_image'].to(device)
+                lab_features = batch['lab_features'].to(device)
+                locations = batch['locations_features'].to(device)
 
-                # Repeat locations along batch dimension
-                batch_size = gt_color.shape[0]
-                locations = normalized_locations_tensor.unsqueeze(0).expand(batch_size, -1, -1)
+                num_locations = locations.size(1)
+                lab_features = lab_features[:, None, :].expand(-1, num_locations, -1).reshape(-1, lab_features.shape[-1])
 
-                locations.requires_grad_(True)
+                locations = locations.reshape(-1, lab_features.size(-1))
 
-                preds_color_logits = model(locations, lab_images)
-                del locations, lab_images
+                preds_color_logits = model(locations, lab_features)
 
                 preds_color_logits = preds_color_logits.view(-1, cfg.NUM_BINS)
                 gt_color = gt_color.view(-1)
                 loss_color = cfg.WEIGHT_COLOR * criterion_ce_color(preds_color_logits, gt_color)
-                del preds_color_logits, gt_color
 
                 total_loss = loss_color
 
@@ -136,6 +129,9 @@ def train_val(model, device, train_dataloader, val_dataloader, epochs, lr, save_
         if torch.cuda.is_available() and not hasattr(model, "_torchdynamo_orig_callable"):
             torch.cuda.empty_cache()
 
+        pritn(f"time taken for epoch {time.time() - epoch_start_time}")
+
+        quit()
         model.eval()
         val_loss = 0.0
         with torch.no_grad():
@@ -214,16 +210,16 @@ def main():
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model = ColorExpertModel(cfg.NUM_BINS)
     model = model_to_device(model, device)
-    print(f"Color expert model successfully initialized and mvoed to {device}")
+    print(f"Color expert model successfully initialized and moved to {device}")
 
     train_preloaded_data = load_sequential_data(cfg.TRAIN_DIR, cfg.TRAIN_FILES_LIMIT)
     val_preloaded_data = load_sequential_data(cfg.VAL_DIR, cfg.VAL_FILES_LIMIT)
     print("Successfully loaded preprocessed training and validation data")
 
-    train_dataset = Rellis2DDataset(preloaded_data=train_preloaded_data, num_bins=cfg.NUM_BINS, image_size=cfg.IMAGE_SIZE,
-                                    image_noise=cfg.IMAGE_NOISE, image_mask_rate=cfg.IMAGE_MASK_RATE)
-    val_dataset = Rellis2DDataset(preloaded_data=val_preloaded_data, num_bins=cfg.NUM_BINS, image_size=cfg.IMAGE_SIZE,
-                                  image_noise=cfg.IMAGE_NOISE, image_mask_rate=cfg.IMAGE_MASK_RATE)
+    train_dataset = EmbeddingsDataset(preloaded_data=train_preloaded_data, num_bins=cfg.NUM_BINS, image_size=cfg.IMAGE_SIZE,
+                                    image_noise=cfg.IMAGE_NOISE, image_mask_rate=cfg.IMAGE_MASK_RATE, batch_size=cfg.BATCH_SIZE)
+    val_dataset = EmbeddingsDataset(preloaded_data=val_preloaded_data, num_bins=cfg.NUM_BINS, image_size=cfg.IMAGE_SIZE,
+                                  image_noise=cfg.IMAGE_NOISE, image_mask_rate=cfg.IMAGE_MASK_RATE, batch_size = cfg.BATCH_SIZE)
     train_dataloader = DataLoader(train_dataset, batch_size=cfg.BATCH_SIZE, shuffle=True, num_workers=cfg.NUM_WORKERS,
                                   pin_memory=cfg.PIN_MEMORY, drop_last=True)
     val_dataloader = DataLoader(val_dataset, batch_size=cfg.BATCH_SIZE, shuffle=False, num_workers=cfg.NUM_WORKERS,
