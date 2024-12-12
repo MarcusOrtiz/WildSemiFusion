@@ -56,7 +56,7 @@ def train_val(model, device, train_dataloader, val_dataloader, epochs, lr, save_
     model = compile_model(model)
 
     optimizer = torch.optim.Adam([
-        {'params': model_module.color_fcn.parameters(), 'lr': 0.0003, 'weight_decay': 1e-3},
+        {'params': model_module.color_fcn.parameters(), 'lr': 0.001, 'weight_decay': 5e-3},
         {'params': model_module.compression_layer.parameters()}
     ], lr=lr)
 

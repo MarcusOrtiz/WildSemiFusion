@@ -18,6 +18,9 @@ def save_best_model(model, save_dir):
     torch.save(model.lab_cnn.state_dict(), os.path.join(save_dir, "lab_cnn_model.pth"))
     torch.save(model.gray_cnn.state_dict(), os.path.join(save_dir, "gray_cnn_model.pth"))
     torch.save(model.fourier_layer.state_dict(), os.path.join(save_dir, "fourier_layer_model.pth"))
+    torch.save(model.compression_layer.state_dict(), os.path.join(save_dir, "compression_layer_model.pth"))
+    torch.save(model.semantic_fcn.state_dict(), os.path.join(save_dir, "semantic_fcn_model.pth"))
+    torch.save(model.color_fcn.state_dict(), os.path.join(save_dir, "color_fcn_model.pth"))
 
 
 def train_val(model, device, train_dataloader, val_dataloader, epochs, lr, save_dir: str, use_checkpoint: bool):
