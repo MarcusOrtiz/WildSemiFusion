@@ -93,7 +93,7 @@ class ColorNet(nn.Module):
         return x
 
 
-class ComplexColorNet(ColorNet):
+class ComplexColorNet(nn.Module):
     def __init__(self, in_features, hidden_dim_1, hidden_dim_2, hidden_dim_3, num_bins):
         super(ComplexColorNet, self).__init__(in_features, hidden_dim_1, num_bins)
         self.residual1 = nn.Linear(in_features, hidden_dim_1)
