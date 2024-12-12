@@ -33,10 +33,10 @@ class EmbeddingsDataset(Dataset):
         lab_cnn.load_state_dict(
             torch.load(os.path.join(cfg.AWS_SAVE_DIR, 'base/lab_cnn_model.pth'), map_location=device)
         )
-        fourier_feature_layer = model_to_device(fourier_feature_layer, device)
-        lab_cnn = model_to_device(lab_cnn, device)
-        self.fourier_feature_layer = compile_model(fourier_feature_layer)
-        self.lab_cnn = compile_model(lab_cnn)
+        self.fourier_feature_layer = model_to_device(fourier_feature_layer, device)
+        self.lab_cnn = model_to_device(lab_cnn, device)
+        # self.fourier_feature_layer = compile_model(fourier_feature_layer)
+        # self.lab_cnn = compile_model(lab_cnn)
 
         self.locations_features, self.lab_features, self.gt_lab_images = self._compute_embeddings(self.fourier_feature_layer, self.lab_cnn, preloaded_data['rgb_images'], device)
 
