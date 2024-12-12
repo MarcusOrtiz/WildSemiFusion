@@ -59,7 +59,7 @@ def freeze_script_compile_sub_model(model):
     model.eval()
     for param in model.parameters():
         param.requires_grad = False
-    # scripted_model = torch.jit.script(model)
+    model = torch.jit.script(model)
     return compile_model(model)
 
 
@@ -84,9 +84,12 @@ def create_directories(save_dir: str):
 def train_val(model_simple, model_linear, device, train_dataloader, val_dataloader, epochs, lr, save_dir: str, use_checkpoint: bool):
     save_dir_simple, save_dir_linear, _ = create_directories(save_dir)
 
-    base_model, color_expert_model = load_sub_models(device, cfg.AWS_SAVE_DIR_BASE, cfg.AWS_SAVE_DIR_COLOR_EXPERT)
+    base_model, color_expert_model = load_sub_models(device, cfg.SAVE_DIR_BASE, cfg.SAVE_DIR_BASE)
     base_model = freeze_script_compile_sub_model(base_model)
     color_expert_model = freeze_script_compile_sub_model(color_expert_model)
+
+    model_simple = compile_model(model_simple)
+    model_linear = compile_model(model_linear)
 
     optimizer_simple, scheduler_simple, scaler_simple = create_optimization(model_simple, lr)
     optimizer_linear, scheduler_linear, scaler_linear = create_optimization(model_linear, lr)
