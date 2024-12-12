@@ -38,13 +38,21 @@ class EmbeddingsDataset(Dataset):
 
         # self.fourier_feature_layer = compile_model(fourier_feature_layer)
         # self.lab_cnn = compile_model(lab_cnn)
+        print("CUDA Memory Allocated after loading models: ", torch.cuda.memory_allocated())
+        print("CUDA Memory Reserved after loading models: ", torch.cuda.memory_reserved())
 
         self.locations_features, self.lab_features, self.gt_lab_images = self._compute_embeddings(self.fourier_feature_layer, self.lab_cnn, preloaded_data['rgb_images'], device)
 
+        print(f"CUDA Memory Allocated after computing embeddings: {torch.cuda.memory_allocated()}")
+        print(f"CUDA Memory Reserved after computing embeddings: {torch.cuda.memory_reserved()}")
         del fourier_feature_layer, lab_cnn
+        torch.cuda.empty_cache()
         print(f"Locations features device: {self.locations_features.device}, Locations features attached: {self.locations_features.requires_grad}")
         print(f"Lab features device: {self.lab_features[0].device}, Lab features attached: {self.lab_features[0].requires_grad}")
         print(f"GT Lab images device: {self.gt_lab_images[0].device}, GT Lab images attached: {self.gt_lab_images[0].requires_grad}")
+
+        print(f"CUDA Memory Allocated after deleting models: {torch.cuda.memory_allocated()}")
+        print(f"CUDA Memory Reserved after deleting models: {torch.cuda.memory_reserved()}")
 
 
     def _compute_embeddings(self, fourier_feature_layer, lab_cnn, rgb_images, device):
