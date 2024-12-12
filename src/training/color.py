@@ -104,7 +104,7 @@ def train_val(model_simple, model_linear, model_mlp, device, train_dataloader, v
     training_losses_simple, validation_losses_simple, times_simple = generate_loss_trackers()
     training_losses_linear, validation_losses_linear, times_linear = generate_loss_trackers()
     training_losses_mlp, validation_losses_mlp, times_mlp = generate_loss_trackers()
-
+    running_simple, running_linear, running_mlp = True, True, True
     best_loss_simple, best_loss_linear, best_loss_mlp = float('inf'), float('inf'), float('inf')
     start_epoch = 0
 
@@ -310,66 +310,72 @@ def train_val(model_simple, model_linear, model_mlp, device, train_dataloader, v
         else:
             epochs_no_improve_color_mlp += 1
 
-        if average_val_loss_simple.item() < best_loss_simple:
+        if average_val_loss_simple.item() < best_loss_simple and running_simple:
             best_loss_simple = average_val_loss_simple
             save_best_model(model_simple, save_dir_simple)
             print(f"New best model saved with validation loss: {best_loss_simple}")
 
-        if average_val_loss_linear.item() < best_loss_linear:
+        if average_val_loss_linear.item() < best_loss_linear and running_linear:
             best_loss_linear = average_val_loss_linear
             save_best_model(model_linear, save_dir_linear)
             print(f"New best model saved with validation loss: {best_loss_linear}")
 
-        if average_val_loss_mlp.item() < best_loss_mlp:
+        if average_val_loss_mlp.item() < best_loss_mlp and running_mlp:
             best_loss_mlp = average_val_loss_mlp
             save_best_model(model_mlp, save_dir_mlp)
             print(f"New best model saved with validation loss: {best_loss_mlp}")
 
-        torch.save({
-            'epoch': epoch + 1,
-            'model_state_dict': model_simple.state_dict(),
-            'optimizer_state_dict': optimizer_simple.state_dict(),
-            'scheduler_state_dict': scheduler_simple.state_dict(),
-            'loss': average_epoch_loss_simple,
-            'best_loss': best_loss_simple,
-            'training_losses': training_losses_simple,
-            'validation_losses': validation_losses_simple,
-            'times': times_simple
-        }, os.path.join(save_dir_simple, "checkpoint.pth"))
+        if running_simple:
+            torch.save({
+                'epoch': epoch + 1,
+                'model_state_dict': model_simple.state_dict(),
+                'optimizer_state_dict': optimizer_simple.state_dict(),
+                'scheduler_state_dict': scheduler_simple.state_dict(),
+                'loss': average_epoch_loss_simple,
+                'best_loss': best_loss_simple,
+                'training_losses': training_losses_simple,
+                'validation_losses': validation_losses_simple,
+                'times': times_simple
+            }, os.path.join(save_dir_simple, "checkpoint.pth"))
 
-        torch.save({
-            'epoch': epoch + 1,
-            'model_state_dict': model_linear.state_dict(),
-            'optimizer_state_dict': optimizer_linear.state_dict(),
-            'scheduler_state_dict': scheduler_linear.state_dict(),
-            'loss': average_epoch_loss_linear,
-            'best_loss': best_loss_linear,
-            'training_losses': training_losses_linear,
-            'validation_losses': validation_losses_linear,
-            'times': times_linear
-        }, os.path.join(save_dir_linear, "checkpoint.pth"))
+        if running_linear:
+            torch.save({
+                'epoch': epoch + 1,
+                'model_state_dict': model_linear.state_dict(),
+                'optimizer_state_dict': optimizer_linear.state_dict(),
+                'scheduler_state_dict': scheduler_linear.state_dict(),
+                'loss': average_epoch_loss_linear,
+                'best_loss': best_loss_linear,
+                'training_losses': training_losses_linear,
+                'validation_losses': validation_losses_linear,
+                'times': times_linear
+            }, os.path.join(save_dir_linear, "checkpoint.pth"))
 
-        torch.save({
-            'epoch': epoch + 1,
-            'model_state_dict': model_mlp.state_dict(),
-            'optimizer_state_dict': optimizer_mlp.state_dict(),
-            'scheduler_state_dict': scheduler_mlp.state_dict(),
-            'loss': average_epoch_loss_mlp,
-            'best_loss': best_loss_mlp,
-            'training_losses': training_losses_mlp,
-            'validation_losses': validation_losses_mlp,
-            'times': times_mlp
-        }, os.path.join(save_dir_mlp, "checkpoint.pth"))
+        if running_mlp:
+            torch.save({
+                'epoch': epoch + 1,
+                'model_state_dict': model_mlp.state_dict(),
+                'optimizer_state_dict': optimizer_mlp.state_dict(),
+                'scheduler_state_dict': scheduler_mlp.state_dict(),
+                'loss': average_epoch_loss_mlp,
+                'best_loss': best_loss_mlp,
+                'training_losses': training_losses_mlp,
+                'validation_losses': validation_losses_mlp,
+                'times': times_mlp
+            }, os.path.join(save_dir_mlp, "checkpoint.pth"))
 
         if (epochs_no_improve_color_simple >= cfg.EARLY_STOP_EPOCHS) and (epoch >= 75):
+            running_simple = False
             print(f"Early stop at epoch {epoch + 1}. Color validation loss did not improve for {cfg.EARLY_STOP_EPOCHS} consecutive epochs.")
             print(f"Model saved at early stopping point with validation loss: {best_color_val_loss_simple}")
 
         if (epochs_no_improve_color_linear >= cfg.EARLY_STOP_EPOCHS) and (epoch >= 75):
+            running_linear = False
             print(f"Early stop at epoch {epoch + 1}. Color validation loss did not improve for {cfg.EARLY_STOP_EPOCHS} consecutive epochs.")
             print(f"Model saved at early stopping point with validation loss: {best_color_val_loss_linear}")
 
         if (epochs_no_improve_color_mlp >= cfg.EARLY_STOP_EPOCHS) and (epoch >= 75):
+            running_mlp = False
             print(f"Early stop at epoch {epoch + 1}. Color validation loss did not improve for {cfg.EARLY_STOP_EPOCHS} consecutive epochs.")
             print(f"Model saved at early stopping point with validation loss: {best_color_val_loss_mlp}")
 
