@@ -38,7 +38,9 @@ def save_best_model(model, save_dir):
 
 def load_sub_models(device, base_dir: str, color_expert_dir: str):
     base_path = os.path.join(base_dir, "best_model.pth")
+    print(f"Loading base model from {base_path}")
     color_expert_path = os.path.join(color_expert_dir, "best_model.pth")
+    print(f"Loading color expert model from {color_expert_path}")
 
     base_model = BaseModel(cfg.NUM_BINS, cfg.CLASSES)
     color_expert_model = ColorExpertModel(cfg.NUM_BINS)
