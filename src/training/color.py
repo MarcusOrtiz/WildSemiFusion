@@ -86,7 +86,7 @@ def create_directories(save_dir: str):
 def train_val(model_simple, model_linear, device, train_dataloader, val_dataloader, epochs, lr, save_dir: str, use_checkpoint: bool):
     save_dir_simple, save_dir_linear, _ = create_directories(save_dir)
 
-    base_model, color_expert_model = load_sub_models(device, cfg.SAVE_DIR_BASE, cfg.SAVE_DIR_BASE)
+    base_model, color_expert_model = load_sub_models(device, cfg.SAVE_DIR_BASE, cfg.SAVE_DIR_COLOR_EXPERT)
     base_model = freeze_script_compile_sub_model(base_model)
     color_expert_model = freeze_script_compile_sub_model(color_expert_model)
 
