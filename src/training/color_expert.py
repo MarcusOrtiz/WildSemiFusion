@@ -47,17 +47,15 @@ def train_val(model, device, train_dataloader, val_dataloader, epochs, lr, save_
     os.makedirs(save_dir, exist_ok=True)
     checkpoint_path = os.path.join(save_dir, "checkpoint.pth")
 
-    model_module = model.module if isinstance(model, nn.DataParallel) else model
-
-    load_embeddings(model_module, device, os.path.join(cfg.AWS_SAVE_DIR, 'base'))
-    freeze_embeddings(model_module)
-    script_embeddings_inplace(model_module)
+    load_embeddings(model, device, os.path.join(cfg.AWS_SAVE_DIR, 'base'))
+    freeze_embeddings(model)
+    script_embeddings_inplace(model)
 
     model = compile_model(model)
 
     optimizer = torch.optim.AdamW([
-        {'params': model_module.color_fcn.parameters(), 'lr': 0.0005, 'weight_decay': 5e-3},
-        {'params': model_module.compression_layer.parameters()}
+        {'params': model.color_fcn.parameters(), 'lr': 0.0005, 'weight_decay': 5e-3},
+        {'params': model.compression_layer.parameters()}
     ], lr=lr, betas=(0.9, 0.999), eps=1e-8)
 
     scheduler = torch.optim.lr_scheduler.CosineAnnealingWarmRestarts(

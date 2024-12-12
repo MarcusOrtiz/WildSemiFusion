@@ -27,14 +27,13 @@ def train_val(model, device, train_dataloader, val_dataloader, epochs, lr, save_
     os.makedirs(save_dir, exist_ok=True)
     checkpoint_path = os.path.join(save_dir, "checkpoint.pth")
 
-    model_module = model.module if isinstance(model, nn.DataParallel) else model
     optimizer = torch.optim.Adam([
-        {'params': model_module.semantic_fcn.parameters(), 'lr': 5e-6, 'weight_decay': 1e-5},
-        {'params': model_module.color_fcn.parameters(), 'weight_decay': 1e-4},
-        {'params': model_module.lab_cnn.parameters()},
-        {'params': model_module.gray_cnn.parameters()},
-        {'params': model_module.fourier_layer.parameters()},
-        {'params': model_module.compression_layer.parameters()},
+        {'params': model.semantic_fcn.parameters(), 'lr': 5e-6, 'weight_decay': 1e-5},
+        {'params': model.color_fcn.parameters(), 'weight_decay': 1e-4},
+        {'params': model.lab_cnn.parameters()},
+        {'params': model.gray_cnn.parameters()},
+        {'params': model.fourier_layer.parameters()},
+        {'params': model.compression_layer.parameters()},
     ], lr=lr)
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'min', factor=cfg.LR_DECAY_FACTOR, patience=cfg.PATIENCE)
     scaler = GradScaler()
