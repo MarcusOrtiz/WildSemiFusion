@@ -12,7 +12,7 @@ class ColorExpertModel(nn.Module):
 
         self.compression_layer = CompressionLayer(in_dim=256, out_dim=128)
 
-        self.color_fcn = ComplexColorNet(in_features=128, hidden_dim_1=96, hidden_dim_2=96*2, hidden_dim_3=num_bins, num_bins=num_bins)
+        self.color_fcn = ComplexColorNet(in_features=128, hidden_dim_1=64, hidden_dim_2=96*2, hidden_dim_3=num_bins, num_bins=num_bins)
 
     def forward(self, locations, lab_images):
         '''
