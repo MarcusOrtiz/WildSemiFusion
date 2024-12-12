@@ -72,10 +72,10 @@ def train_val(model, device, train_dataloader, val_dataloader, epochs, lr, save_
             # if (idx < 2 or idx % 100 == 0): print(f"Loading training batch {idx}", flush=True)
             optimizer.zero_grad()
             with autocast():
-                gt_semantics = batch['gt_semantics'].to(device)
-                gt_color = batch['gt_color'].to(device)
-                gray_images = batch['gray_image'].to(device)
-                lab_images = batch['lab_image'].to(device)
+                gt_semantics = batch['gt_semantics'].to(device, non_blocking=True)
+                gt_color = batch['gt_color'].to(device, non_blocking=True)
+                gray_images = batch['gray_image'].to(device, non_blocking=True)
+                lab_images = batch['lab_image'].to(device, non_blocking=True)
 
                 # Repeat locations along batch dimension
                 batch_size = gt_semantics.shape[0]
@@ -119,10 +119,10 @@ def train_val(model, device, train_dataloader, val_dataloader, epochs, lr, save_
             for idx, batch in enumerate(val_dataloader):
                 # if (idx < 2 or idx % 100 == 0): print(f"Loading validation batch {idx}", flush=True)
                 with autocast():
-                    gt_semantics = batch['gt_semantics'].to(device)
-                    gt_color = batch['gt_color'].to(device)
-                    gray_images = batch['gray_image'].to(device)
-                    lab_images = batch['lab_image'].to(device)
+                    gt_semantics = batch['gt_semantics'].to(device, non_blocking=True)
+                    gt_color = batch['gt_color'].to(device, non_blocking=True)
+                    gray_images = batch['gray_image'].to(device, non_blocking=True)
+                    lab_images = batch['lab_image'].to(device, non_blocking=True)
 
                     # Repeat locations along batch dimension
                     batch_size = gt_semantics.shape[0]
