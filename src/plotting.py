@@ -50,10 +50,6 @@ def plot_losses(training_losses: Dict[str, any], validation_losses: Dict[str, an
     plt.close()
     print(f"Individual loss plot saved to: {INDIVIDUAL_LOSS_PLOT}")
 
-    print(f"Loss Plot path: {LOSS_PLOT_PATH}")
-    print(f"Training Losses: {training_losses['total']}")
-    print(f"Validation Losses: {validation_losses['total']}")
-
     plt.figure(figsize=(10, 5))
     plt.plot(training_losses['total'], label="Training Loss")
     plt.plot(validation_losses['total'], label="Validation Loss")
@@ -64,7 +60,7 @@ def plot_losses(training_losses: Dict[str, any], validation_losses: Dict[str, an
 
     plt.savefig(LOSS_PLOT_PATH)
     plt.close()
-    print(f"Plot saved to: {LOSS_PLOT_PATH}")
+    print(f"Loss plot saved to: {LOSS_PLOT_PATH}")
 
 
 # from src.data.utils.data_processing import lab_discretized_to_rgb
