@@ -131,6 +131,7 @@ def train_val(model_simple, model_linear, model_mlp, device, train_dataloader, v
         model_linear.train()
         model_mlp.train()
         epoch_start_time = time.time()
+        sub_model_time = 0
         epoch_loss_simple, epoch_loss_linear, epoch_loss_mlp = 0.0, 0.0, 0.0
         for idx, batch in enumerate(train_dataloader):
             # if (idx < 2 or idx % 100 == 0): print(f"Loading training batch {idx}", flush=True)
@@ -145,14 +146,17 @@ def train_val(model_simple, model_linear, model_mlp, device, train_dataloader, v
                 batch_size = gray_images.shape[0]
                 locations = normalized_locations_tensor.unsqueeze(0).expand(batch_size, -1, -1)
 
+                sub_model_start_time = time.time()
                 with torch.no_grad():
                     preds_semantics_base, preds_color_base = base_model(locations, gray_images, lab_images)
                     del gray_images
                     preds_color_expert = color_expert_model(locations, lab_images)
                     del lab_images, locations
+                sub_model_time = time.time() - sub_model_start_time
 
                 gt_semantics = batch['gt_semantics'].to(device)
                 gt_color = batch['gt_color'].to(device)
+
 
                 preds_semantics_simple, preds_color_simple = model_simple(preds_semantics_base, preds_color_base, preds_color_expert)
                 loss_semantics_simple = cfg.WEIGHT_SEMANTICS * criterion_ce_semantics(preds_semantics_simple, gt_semantics.long().view(-1))
@@ -220,11 +224,13 @@ def train_val(model_simple, model_linear, model_mlp, device, train_dataloader, v
                     batch_size = gray_images.shape[0]
                     locations = normalized_locations_tensor.unsqueeze(0).expand(batch_size, -1, -1)
 
+                    sub_model_start_time = time.time()
                     with torch.inference_mode():
                         preds_semantics_base, preds_color_base = base_model(locations, gray_images, lab_images)
                         del gray_images
                         preds_color_expert = color_expert_model(locations, lab_images)
                         del lab_images, locations
+                    sub_model_time += time.time() - sub_model_start_time
 
                     gt_semantics = batch['gt_semantics'].to(device)
                     gt_color = batch['gt_color'].to(device)
@@ -263,9 +269,9 @@ def train_val(model_simple, model_linear, model_mlp, device, train_dataloader, v
             update_loss_trackers(validation_losses_simple, average_val_loss_simple.item(), semantics_val_loss_simple, color_val_loss_simple)
             update_loss_trackers(validation_losses_linear, average_val_loss_linear.item(), semantics_val_loss_linear, color_val_loss_linear)
             update_loss_trackers(validation_losses_mlp, average_val_loss_mlp.item(), semantics_val_loss_mlp, color_val_loss_mlp)
-            times_simple.append((time.time() - epoch_start_time) / 3)
-            times_linear.append((time.time() - epoch_start_time) / 3)
-            times_mlp.append((time.time() - epoch_start_time) / 3)
+            times_simple.append((time.time() - epoch_start_time) / 3 - sub_model_time)
+            times_linear.append((time.time() - epoch_start_time) / 3 - sub_model_time)
+            times_mlp.append((time.time() - epoch_start_time) / 3 - sub_model_time)
 
             print(f"Validation Loss Simple: {average_val_loss_simple}")
             print(f"Validation Loss Linear: {average_val_loss_linear}")
