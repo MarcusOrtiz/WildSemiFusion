@@ -355,17 +355,17 @@ def train_val(model_simple, model_linear, model_mlp, device, train_dataloader, v
                 'times': times_mlp
             }, os.path.join(save_dir_mlp, "checkpoint.pth"))
 
-        if (epochs_no_improve_color_simple >= cfg.EARLY_STOP_EPOCHS) and (epoch >= 75) and running_simple:
+        if (epochs_no_improve_color_simple >= cfg.EARLY_STOP_EPOCHS) and (epoch >= 5) and running_simple:
             running_simple = False
             print(f"Early stop at epoch {epoch + 1}. Color validation loss did not improve for {cfg.EARLY_STOP_EPOCHS} consecutive epochs.")
             print(f"Model saved at early stopping point with validation loss: {best_color_val_loss_simple}")
 
-        if (epochs_no_improve_color_linear >= cfg.EARLY_STOP_EPOCHS) and (epoch >= 75) and running_linear:
+        if (epochs_no_improve_color_linear >= cfg.EARLY_STOP_EPOCHS) and (epoch >= 5) and running_linear:
             running_linear = False
             print(f"Early stop at epoch {epoch + 1}. Color validation loss did not improve for {cfg.EARLY_STOP_EPOCHS} consecutive epochs.")
             print(f"Model saved at early stopping point with validation loss: {best_color_val_loss_linear}")
 
-        if (epochs_no_improve_color_mlp >= cfg.EARLY_STOP_EPOCHS) and (epoch >= 75) and running_mlp:
+        if (epochs_no_improve_color_mlp >= cfg.EARLY_STOP_EPOCHS) and (epoch >= 5) and running_mlp:
             running_mlp = False
             print(f"Early stop at epoch {epoch + 1}. Color validation loss did not improve for {cfg.EARLY_STOP_EPOCHS} consecutive epochs.")
             print(f"Model saved at early stopping point with validation loss: {best_color_val_loss_mlp}")
