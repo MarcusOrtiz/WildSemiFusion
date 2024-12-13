@@ -252,26 +252,48 @@ def main():
     # Train and validate each color model
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model_simple = ColorModelSimple(cfg.NUM_BINS)
-    model_linear = ColorModelLinear(cfg.NUM_BINS)
-    model_mlp = ColorModelMLP(cfg.NUM_BINS)
     model_simple = model_to_device(model_simple, device)
-    model_linear = model_to_device(model_linear, device)
-    model_mlp = model_to_device(model_mlp, device)
-
-    trained_simple_model, trained_linear_model, trained_mlp_model = train_val(
-        model_simple=model_simple,
-        model_linear=model_linear,
-        model_mlp=model_mlp,
+    trained_simple_model = train_val(
+        model=model_simple,
         device=device,
         train_dataloader=train_dataloader,
         val_dataloader=val_dataloader,
         epochs=cfg.EPOCHS,
         lr=cfg.LR,
-        save_dir=cfg.SAVE_DIR_COLOR,
+        save_dir=cfg.SAVE_DIR_COLOR + "_simple",
         use_checkpoint=not args.scratch
     )
+    del trained_simple_model, model_simple
+    print("Training finished for SemanticsColorSimpleModel \n ---------------------")
 
-    print("Training finished for color models \n ---------------------")
+    model_linear = ColorModelLinear(cfg.NUM_BINS)
+    model_linear = model_to_device(model_linear, device)
+    trained_linear_model = train_val(
+        model=model_linear,
+        device=device,
+        train_dataloader=train_dataloader,
+        val_dataloader=val_dataloader,
+        epochs=cfg.EPOCHS,
+        lr=cfg.LR,
+        save_dir=cfg.SAVE_DIR_COLOR + "_linear",
+        use_checkpoint=not args.scratch
+    )
+    del trained_linear_model, model_linear
+    print("Training finished for SemanticsColorLinearModel \n ---------------------")
+
+    model_mlp = ColorModelMLP(cfg.NUM_BINS)
+    model_mlp = model_to_device(model_mlp, device)
+    trained_mlp_model = train_val(
+        model=model_mlp,
+        device=device,
+        train_dataloader=train_dataloader,
+        val_dataloader=val_dataloader,
+        epochs=cfg.EPOCHS,
+        lr=cfg.LR,
+        save_dir=cfg.SAVE_DIR_COLOR + "_mlp",
+        use_checkpoint=not args.scratch
+    )
+    print("Training finished for SemanticsColorMLPModel \n ---------------------")
 
 
 if __name__ == "__main__":
