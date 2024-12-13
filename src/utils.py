@@ -49,8 +49,7 @@ def populate_random_seeds(seed):
 def generate_loss_trackers():
     training_losses = {'total': [], 'semantics': [], 'color': []}
     validation_losses = {'total': [], 'semantics': [], 'color': []}
-    times = []
-    return training_losses, validation_losses, times
+    return training_losses, validation_losses
 
 
 def update_loss_trackers(losses, total_loss, semantics_loss, color_loss):
