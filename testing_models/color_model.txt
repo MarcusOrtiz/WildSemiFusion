@@ -1,0 +1,999 @@
+Successfully loaded preprocessed training and validation data
+Created training dataloader with 1650 files and validation dataloader with 450 files
+Loading base model from /home/ubuntu/WildSemiFusion/src/../saved_models_test/base/best_model.pth
+Loading color expert model from /home/ubuntu/WildSemiFusion/src/../saved_models_test/color_expert/best_model.pth
+Epoch 1/150)
+Training Loss Simple: 3.538768420254227
+Training Loss Linear: 5.982370933477026
+Training Loss MLP: 5.602016462896862
+Validation Loss Simple: 4.121270656585693
+Training Time Simple: 60.3653605779012
+Validation Loss Linear: 5.201104640960693
+Training Time Linear: 60.36536105473836
+Validation Loss MLP: 5.538366317749023
+Training Time MLP: 60.36536113421123
+New best simple model saved with validation loss: 4.121270656585693
+New best linear model saved with validation loss: 5.201104640960693
+New best mlp model saved with validation loss: 5.538366317749023
+Epoch 2/150)
+Training Loss Simple: 3.540125269089302
+Training Loss Linear: 4.484684300248641
+Training Loss MLP: 4.926851787706362
+Validation Loss Simple: 4.119041442871094
+Training Time Simple: 121.87755139668782
+Validation Loss Linear: 4.72115421295166
+Training Time Linear: 121.87755242983499
+Validation Loss MLP: 5.149485111236572
+Training Time MLP: 121.87755266825359
+New best simple model saved with validation loss: 4.119041442871094
+New best linear model saved with validation loss: 4.72115421295166
+New best mlp model saved with validation loss: 5.149485111236572
+Epoch 3/150)
+Training Loss Simple: 3.541725506747726
+Training Loss Linear: 4.1716568922474435
+Training Loss MLP: 4.544744098273507
+Validation Loss Simple: 4.120661735534668
+Training Time Simple: 183.65367968877155
+Validation Loss Linear: 4.544588565826416
+Training Time Linear: 183.6536811987559
+Validation Loss MLP: 4.906339645385742
+Training Time MLP: 183.65368151664734
+New best linear model saved with validation loss: 4.544588565826416
+New best mlp model saved with validation loss: 4.906339645385742
+Epoch 4/150)
+Training Loss Simple: 3.540856714666325
+Training Loss Linear: 4.021842427497362
+Training Loss MLP: 4.289929515253888
+Validation Loss Simple: 4.1211652755737305
+Training Time Simple: 245.3194049199422
+Validation Loss Linear: 4.43313455581665
+Training Time Linear: 245.31940682729083
+Validation Loss MLP: 4.727931022644043
+Training Time MLP: 245.31940722465515
+New best linear model saved with validation loss: 4.43313455581665
+New best mlp model saved with validation loss: 4.727931022644043
+Individual loss plot saved to: /home/ubuntu/WildSemiFusion/src/../saved_models_test/color_simple/losses_plot.png
+Loss plot saved to: /home/ubuntu/WildSemiFusion/src/../saved_models_test/color_simple/loss_plot.png
+Time plot saved to: /home/ubuntu/WildSemiFusion/src/../saved_models_test/color_simple/time_per_epoch.png
+Individual loss plot saved to: /home/ubuntu/WildSemiFusion/src/../saved_models_test/color_linear/losses_plot.png
+Loss plot saved to: /home/ubuntu/WildSemiFusion/src/../saved_models_test/color_linear/loss_plot.png
+Time plot saved to: /home/ubuntu/WildSemiFusion/src/../saved_models_test/color_linear/time_per_epoch.png
+Individual loss plot saved to: /home/ubuntu/WildSemiFusion/src/../saved_models_test/color_mlp/losses_plot.png
+Loss plot saved to: /home/ubuntu/WildSemiFusion/src/../saved_models_test/color_mlp/loss_plot.png
+Time plot saved to: /home/ubuntu/WildSemiFusion/src/../saved_models_test/color_mlp/time_per_epoch.png
+Epoch 5/150)
+Training Loss Simple: 3.5395850265113107
+Training Loss Linear: 3.9305025382633625
+Training Loss MLP: 4.115601713639976
+Validation Loss Simple: 4.12209415435791
+Training Time Simple: 307.12994798024494
+Validation Loss Linear: 4.376286506652832
+Training Time Linear: 307.129950205485
+Validation Loss MLP: 4.614896774291992
+Training Time MLP: 307.1299506823222
+New best linear model saved with validation loss: 4.376286506652832
+New best mlp model saved with validation loss: 4.614896774291992
+Epoch 6/150)
+Training Loss Simple: 3.540780236251163
+Training Loss Linear: 3.8694432895549022
+Training Loss MLP: 3.994430230481781
+Validation Loss Simple: 4.120115756988525
+Training Time Simple: 368.8630798657735
+Validation Loss Linear: 4.330178737640381
+Training Time Linear: 368.86308272679645
+Validation Loss MLP: 4.521475791931152
+Training Time MLP: 368.8630832831065
+New best linear model saved with validation loss: 4.330178737640381
+New best mlp model saved with validation loss: 4.521475791931152
+Epoch 7/150)
+Training Loss Simple: 3.541059805528961
+Training Loss Linear: 3.823323025320568
+Training Loss MLP: 3.9045832313760354
+Validation Loss Simple: 4.119894504547119
+Training Time Simple: 430.8705803553263
+Validation Loss Linear: 4.296919822692871
+Training Time Linear: 430.8705836931864
+Validation Loss MLP: 4.451535701751709
+Training Time MLP: 430.87058432896936
+New best linear model saved with validation loss: 4.296919822692871
+New best mlp model saved with validation loss: 4.451535701751709
+Epoch 8/150)
+Training Loss Simple: 3.540197147940197
+Training Loss Linear: 3.787827568332644
+Training Loss MLP: 3.836356540666009
+Validation Loss Simple: 4.120293140411377
+Training Time Simple: 492.444857597351
+Validation Loss Linear: 4.282928943634033
+Training Time Linear: 492.4448614120483
+Validation Loss MLP: 4.412509441375732
+Training Time MLP: 492.44486212730413
+New best linear model saved with validation loss: 4.282928943634033
+New best mlp model saved with validation loss: 4.412509441375732
+Epoch 9/150)
+Training Loss Simple: 3.538901906814018
+Training Loss Linear: 3.7589537001004185
+Training Loss MLP: 3.7814473096471635
+Validation Loss Simple: 4.119329929351807
+Training Time Simple: 554.2495603561401
+Validation Loss Linear: 4.259990215301514
+Training Time Linear: 554.2495646476746
+Validation Loss MLP: 4.367300987243652
+Training Time MLP: 554.2495655218761
+New best linear model saved with validation loss: 4.259990215301514
+New best mlp model saved with validation loss: 4.367300987243652
+Individual loss plot saved to: /home/ubuntu/WildSemiFusion/src/../saved_models_test/color_simple/losses_plot.png
+Loss plot saved to: /home/ubuntu/WildSemiFusion/src/../saved_models_test/color_simple/loss_plot.png
+Time plot saved to: /home/ubuntu/WildSemiFusion/src/../saved_models_test/color_simple/time_per_epoch.png
+Individual loss plot saved to: /home/ubuntu/WildSemiFusion/src/../saved_models_test/color_linear/losses_plot.png
+Loss plot saved to: /home/ubuntu/WildSemiFusion/src/../saved_models_test/color_linear/loss_plot.png
+Time plot saved to: /home/ubuntu/WildSemiFusion/src/../saved_models_test/color_linear/time_per_epoch.png
+Individual loss plot saved to: /home/ubuntu/WildSemiFusion/src/../saved_models_test/color_mlp/losses_plot.png
+Loss plot saved to: /home/ubuntu/WildSemiFusion/src/../saved_models_test/color_mlp/loss_plot.png
+Time plot saved to: /home/ubuntu/WildSemiFusion/src/../saved_models_test/color_mlp/time_per_epoch.png
+Epoch 10/150)
+Training Loss Simple: 3.540116339704416
+Training Loss Linear: 3.7370434694916663
+Training Loss MLP: 3.7421352793700504
+Validation Loss Simple: 4.122669696807861
+Training Time Simple: 615.8947595755259
+Validation Loss Linear: 4.248950958251953
+Training Time Linear: 615.8947641849518
+Validation Loss MLP: 4.34365177154541
+Training Time MLP: 615.894765218099
+New best linear model saved with validation loss: 4.248950958251953
+New best mlp model saved with validation loss: 4.34365177154541
+Epoch 11/150)
+Training Loss Simple: 3.540437402516386
+Training Loss Linear: 3.718552876562968
+Training Loss MLP: 3.7085887132769955
+Validation Loss Simple: 4.119036674499512
+Training Time Simple: 677.5367116928101
+Validation Loss Linear: 4.230352401733398
+Training Time Linear: 677.5367168585459
+Validation Loss MLP: 4.307941436767578
+Training Time MLP: 677.536717971166
+New best simple model saved with validation loss: 4.119036674499512
+New best linear model saved with validation loss: 4.230352401733398
+New best mlp model saved with validation loss: 4.307941436767578
+Epoch 12/150)
+Training Loss Simple: 3.539774275174106
+Training Loss Linear: 3.7023011176255496
+Training Loss MLP: 3.6815219691199976
+Validation Loss Simple: 4.119974613189697
+Training Time Simple: 738.7782011032104
+Validation Loss Linear: 4.22123908996582
+Training Time Linear: 738.7782065868378
+Validation Loss MLP: 4.288658618927002
+Training Time MLP: 738.7782077789307
+New best linear model saved with validation loss: 4.22123908996582
+New best mlp model saved with validation loss: 4.288658618927002
+Epoch 13/150)
+Training Loss Simple: 3.538342747375043
+Training Loss Linear: 3.687064866950042
+Training Loss MLP: 3.6577133384064164
+Validation Loss Simple: 4.1202874183654785
+Training Time Simple: 800.4124830563863
+Validation Loss Linear: 4.2118730545043945
+Training Time Linear: 800.4124890168508
+Validation Loss MLP: 4.271948337554932
+Training Time MLP: 800.4124902884165
+New best linear model saved with validation loss: 4.2118730545043945
+New best mlp model saved with validation loss: 4.271948337554932
+Epoch 14/150)
+Training Loss Simple: 3.5403229964040492
+Training Loss Linear: 3.67684476741039
+Training Loss MLP: 3.640813646525362
+Validation Loss Simple: 4.119734764099121
+Training Time Simple: 862.3209181626638
+Validation Loss Linear: 4.203461170196533
+Training Time Linear: 862.3209245999655
+Validation Loss MLP: 4.248989105224609
+Training Time MLP: 862.320925951004
+New best linear model saved with validation loss: 4.203461170196533
+New best mlp model saved with validation loss: 4.248989105224609
+Individual loss plot saved to: /home/ubuntu/WildSemiFusion/src/../saved_models_test/color_simple/losses_plot.png
+Loss plot saved to: /home/ubuntu/WildSemiFusion/src/../saved_models_test/color_simple/loss_plot.png
+Time plot saved to: /home/ubuntu/WildSemiFusion/src/../saved_models_test/color_simple/time_per_epoch.png
+Individual loss plot saved to: /home/ubuntu/WildSemiFusion/src/../saved_models_test/color_linear/losses_plot.png
+Loss plot saved to: /home/ubuntu/WildSemiFusion/src/../saved_models_test/color_linear/loss_plot.png
+Time plot saved to: /home/ubuntu/WildSemiFusion/src/../saved_models_test/color_linear/time_per_epoch.png
+Individual loss plot saved to: /home/ubuntu/WildSemiFusion/src/../saved_models_test/color_mlp/losses_plot.png
+Loss plot saved to: /home/ubuntu/WildSemiFusion/src/../saved_models_test/color_mlp/loss_plot.png
+Time plot saved to: /home/ubuntu/WildSemiFusion/src/../saved_models_test/color_mlp/time_per_epoch.png
+Epoch 15/150)
+Training Loss Simple: 3.540077688050096
+Training Loss Linear: 3.666028198534555
+Training Loss MLP: 3.6246692908071254
+Validation Loss Simple: 4.117733478546143
+Training Time Simple: 923.911535580953
+Validation Loss Linear: 4.19429349899292
+Training Time Linear: 923.9115424156189
+Validation Loss MLP: 4.237844467163086
+Training Time MLP: 923.9115439256033
+New best simple model saved with validation loss: 4.117733478546143
+New best linear model saved with validation loss: 4.19429349899292
+New best mlp model saved with validation loss: 4.237844467163086
+Epoch 16/150)
+Training Loss Simple: 3.5392473614128837
+Training Loss Linear: 3.655348786472404
+Training Loss MLP: 3.6092230125065266
+Validation Loss Simple: 4.120660305023193
+Training Time Simple: 985.1980539162954
+Validation Loss Linear: 4.189162254333496
+Training Time Linear: 985.1980610688528
+Validation Loss MLP: 4.228818893432617
+Training Time MLP: 985.1980628172557
+New best linear model saved with validation loss: 4.189162254333496
+New best mlp model saved with validation loss: 4.228818893432617
+Epoch 17/150)
+Training Loss Simple: 3.5386270728424516
+Training Loss Linear: 3.6461238861083984
+Training Loss MLP: 3.596597142463183
+Validation Loss Simple: 4.117769718170166
+Training Time Simple: 1047.078783273697
+Validation Loss Linear: 4.184718608856201
+Training Time Linear: 1047.0787909825644
+Validation Loss MLP: 4.221993923187256
+Training Time MLP: 1047.078792889913
+New best linear model saved with validation loss: 4.184718608856201
+New best mlp model saved with validation loss: 4.221993923187256
+Epoch 18/150)
+Training Loss Simple: 3.53955921465463
+Training Loss Linear: 3.639696900861977
+Training Loss MLP: 3.5876866935813516
+Validation Loss Simple: 4.119808197021484
+Training Time Simple: 1108.1556663513184
+Validation Loss Linear: 4.17914342880249
+Training Time Linear: 1108.1556742986045
+Validation Loss MLP: 4.212311267852783
+Training Time MLP: 1108.155676285426
+New best linear model saved with validation loss: 4.17914342880249
+New best mlp model saved with validation loss: 4.212311267852783
+Epoch 19/150)
+Training Loss Simple: 3.5399382131813217
+Training Loss Linear: 3.632493840516919
+Training Loss MLP: 3.577202384489296
+Validation Loss Simple: 4.1171112060546875
+Training Time Simple: 1169.9095056851704
+Validation Loss Linear: 4.173147678375244
+Training Time Linear: 1169.9095141092937
+Validation Loss MLP: 4.199408054351807
+Training Time MLP: 1169.9095161755881
+New best simple model saved with validation loss: 4.1171112060546875
+New best linear model saved with validation loss: 4.173147678375244
+New best mlp model saved with validation loss: 4.199408054351807
+Individual loss plot saved to: /home/ubuntu/WildSemiFusion/src/../saved_models_test/color_simple/losses_plot.png
+Loss plot saved to: /home/ubuntu/WildSemiFusion/src/../saved_models_test/color_simple/loss_plot.png
+Time plot saved to: /home/ubuntu/WildSemiFusion/src/../saved_models_test/color_simple/time_per_epoch.png
+Individual loss plot saved to: /home/ubuntu/WildSemiFusion/src/../saved_models_test/color_linear/losses_plot.png
+Loss plot saved to: /home/ubuntu/WildSemiFusion/src/../saved_models_test/color_linear/loss_plot.png
+Time plot saved to: /home/ubuntu/WildSemiFusion/src/../saved_models_test/color_linear/time_per_epoch.png
+Individual loss plot saved to: /home/ubuntu/WildSemiFusion/src/../saved_models_test/color_mlp/losses_plot.png
+Loss plot saved to: /home/ubuntu/WildSemiFusion/src/../saved_models_test/color_mlp/loss_plot.png
+Time plot saved to: /home/ubuntu/WildSemiFusion/src/../saved_models_test/color_mlp/time_per_epoch.png
+Epoch 20/150)
+Training Loss Simple: 3.539434036199194
+Training Loss Linear: 3.6259534620020513
+Training Loss MLP: 3.5689491303297727
+Validation Loss Simple: 4.118343830108643
+Training Time Simple: 1231.9599982102711
+Validation Loss Linear: 4.175429821014404
+Training Time Linear: 1231.9600069522858
+Validation Loss MLP: 4.194624423980713
+Training Time MLP: 1231.9600090980532
+New best mlp model saved with validation loss: 4.194624423980713
+Epoch 21/150)
+Training Loss Simple: 3.5391821582822036
+Training Loss Linear: 3.6198057989134407
+Training Loss MLP: 3.5607551153558883
+Validation Loss Simple: 4.117927551269531
+Training Time Simple: 1293.4985765616098
+Validation Loss Linear: 4.1710004806518555
+Training Time Linear: 1293.4985859394073
+Validation Loss MLP: 4.183571815490723
+Training Time MLP: 1293.4985881646476
+New best linear model saved with validation loss: 4.1710004806518555
+New best mlp model saved with validation loss: 4.183571815490723
+Epoch 22/150)
+Training Loss Simple: 3.5380864299996926
+Training Loss Linear: 3.6129685509813965
+Training Loss MLP: 3.551972307427956
+Validation Loss Simple: 4.119719505310059
+Training Time Simple: 1355.0019801457722
+Validation Loss Linear: 4.167855739593506
+Training Time Linear: 1355.0019900798798
+Validation Loss MLP: 4.181796073913574
+Training Time MLP: 1355.0019924640658
+New best linear model saved with validation loss: 4.167855739593506
+New best mlp model saved with validation loss: 4.181796073913574
+Epoch 23/150)
+Training Loss Simple: 3.538863135080268
+Training Loss Linear: 3.6089174382007907
+Training Loss MLP: 3.5469428396573033
+Validation Loss Simple: 4.118696689605713
+Training Time Simple: 1416.7240974108377
+Validation Loss Linear: 4.162322998046875
+Training Time Linear: 1416.7241076628368
+Validation Loss MLP: 4.17348575592041
+Training Time MLP: 1416.7241101264956
+New best linear model saved with validation loss: 4.162322998046875
+New best mlp model saved with validation loss: 4.17348575592041
+Epoch 24/150)
+Training Loss Simple: 3.5397783039260085
+Training Loss Linear: 3.604875009425365
+Training Loss MLP: 3.5418885902766766
+Validation Loss Simple: 4.117764949798584
+Training Time Simple: 1478.5206602414448
+Validation Loss Linear: 4.16534948348999
+Training Time Linear: 1478.5206707318625
+Validation Loss MLP: 4.167957782745361
+Training Time MLP: 1478.52067343394
+New best mlp model saved with validation loss: 4.167957782745361
+Individual loss plot saved to: /home/ubuntu/WildSemiFusion/src/../saved_models_test/color_simple/losses_plot.png
+Loss plot saved to: /home/ubuntu/WildSemiFusion/src/../saved_models_test/color_simple/loss_plot.png
+Time plot saved to: /home/ubuntu/WildSemiFusion/src/../saved_models_test/color_simple/time_per_epoch.png
+Individual loss plot saved to: /home/ubuntu/WildSemiFusion/src/../saved_models_test/color_linear/losses_plot.png
+Loss plot saved to: /home/ubuntu/WildSemiFusion/src/../saved_models_test/color_linear/loss_plot.png
+Time plot saved to: /home/ubuntu/WildSemiFusion/src/../saved_models_test/color_linear/time_per_epoch.png
+Individual loss plot saved to: /home/ubuntu/WildSemiFusion/src/../saved_models_test/color_mlp/losses_plot.png
+Loss plot saved to: /home/ubuntu/WildSemiFusion/src/../saved_models_test/color_mlp/loss_plot.png
+Time plot saved to: /home/ubuntu/WildSemiFusion/src/../saved_models_test/color_mlp/time_per_epoch.png
+Epoch 25/150)
+Training Loss Simple: 3.5385431390609186
+Training Loss Linear: 3.5994795151870616
+Training Loss MLP: 3.535219401338675
+Validation Loss Simple: 4.117891788482666
+Training Time Simple: 1540.444812297821
+Validation Loss Linear: 4.159605503082275
+Training Time Linear: 1540.4448231061301
+Validation Loss MLP: 4.173656463623047
+Training Time MLP: 1540.4448259671533
+New best linear model saved with validation loss: 4.159605503082275
+Epoch 26/150)
+Training Loss Simple: 3.5373581517351806
+Training Loss Linear: 3.594212093492494
+Training Loss MLP: 3.5301527315682737
+Validation Loss Simple: 4.119165897369385
+Training Time Simple: 1602.0994834899902
+Validation Loss Linear: 4.157985687255859
+Training Time Linear: 1602.0994946161907
+Validation Loss MLP: 4.160566806793213
+Training Time MLP: 1602.0994975566869
+New best linear model saved with validation loss: 4.157985687255859
+New best mlp model saved with validation loss: 4.160566806793213
+Epoch 27/150)
+Training Loss Simple: 3.5390170107792764
+Training Loss Linear: 3.5919960554498824
+Training Loss MLP: 3.5265752155415333
+Validation Loss Simple: 4.1173295974731445
+Training Time Simple: 1663.2367277940114
+Validation Loss Linear: 4.151507377624512
+Training Time Linear: 1663.2367390791576
+Validation Loss MLP: 4.161323547363281
+Training Time MLP: 1663.2367420991266
+New best linear model saved with validation loss: 4.151507377624512
+Epoch 28/150)
+Training Loss Simple: 3.5391435101084467
+Training Loss Linear: 3.588568800557269
+Training Loss MLP: 3.5223303276256925
+Validation Loss Simple: 4.118849277496338
+Training Time Simple: 1725.1070288817086
+Validation Loss Linear: 4.151919364929199
+Training Time Linear: 1725.1070404847464
+Validation Loss MLP: 4.158700466156006
+Training Time MLP: 1725.1070435841882
+New best mlp model saved with validation loss: 4.158700466156006
+Epoch 29/150)
+Training Loss Simple: 3.5396760275764185
+Training Loss Linear: 3.5857891705784484
+Training Loss MLP: 3.519943273850601
+Validation Loss Simple: 4.119616508483887
+Training Time Simple: 1786.9398226737974
+Validation Loss Linear: 4.152989864349365
+Training Time Linear: 1786.9398347536724
+Validation Loss MLP: 4.165698528289795
+Training Time MLP: 1786.9398379325871
+Individual loss plot saved to: /home/ubuntu/WildSemiFusion/src/../saved_models_test/color_simple/losses_plot.png
+Loss plot saved to: /home/ubuntu/WildSemiFusion/src/../saved_models_test/color_simple/loss_plot.png
+Time plot saved to: /home/ubuntu/WildSemiFusion/src/../saved_models_test/color_simple/time_per_epoch.png
+Individual loss plot saved to: /home/ubuntu/WildSemiFusion/src/../saved_models_test/color_linear/losses_plot.png
+Loss plot saved to: /home/ubuntu/WildSemiFusion/src/../saved_models_test/color_linear/loss_plot.png
+Time plot saved to: /home/ubuntu/WildSemiFusion/src/../saved_models_test/color_linear/time_per_epoch.png
+Individual loss plot saved to: /home/ubuntu/WildSemiFusion/src/../saved_models_test/color_mlp/losses_plot.png
+Loss plot saved to: /home/ubuntu/WildSemiFusion/src/../saved_models_test/color_mlp/loss_plot.png
+Time plot saved to: /home/ubuntu/WildSemiFusion/src/../saved_models_test/color_mlp/time_per_epoch.png
+Epoch 30/150)
+Training Loss Simple: 3.538172948099401
+Training Loss Linear: 3.581162348280858
+Training Loss MLP: 3.513901492975054
+Validation Loss Simple: 4.117740631103516
+Training Time Simple: 1848.3359136581419
+Validation Loss Linear: 4.150467872619629
+Training Time Linear: 1848.3359261353812
+Validation Loss MLP: 4.158563137054443
+Training Time MLP: 1848.3359293937688
+New best linear model saved with validation loss: 4.150467872619629
+New best mlp model saved with validation loss: 4.158563137054443
+Epoch 31/150)
+Training Loss Simple: 3.5376201981175557
+Training Loss Linear: 3.577759892401034
+Training Loss MLP: 3.5107615168077233
+Validation Loss Simple: 4.118964195251465
+Training Time Simple: 1910.1416600545244
+Validation Loss Linear: 4.151254177093506
+Training Time Linear: 1910.1416728496554
+Validation Loss MLP: 4.162872791290283
+Training Time MLP: 1910.1416761875157
+Epoch 32/150)
+Training Loss Simple: 3.538163614969184
+Training Loss Linear: 3.575596128937102
+Training Loss MLP: 3.507804531250557
+Validation Loss Simple: 4.117931365966797
+Training Time Simple: 1971.546951214472
+Validation Loss Linear: 4.148112773895264
+Training Time Linear: 1971.5469643274946
+Validation Loss MLP: 4.1531596183776855
+Training Time MLP: 1971.5469677448277
+New best linear model saved with validation loss: 4.148112773895264
+New best mlp model saved with validation loss: 4.1531596183776855
+Epoch 33/150)
+Training Loss Simple: 3.5379141264588294
+Training Loss Linear: 3.5725050303187684
+Training Loss MLP: 3.504247862057094
+Validation Loss Simple: 4.120500564575195
+Training Time Simple: 2033.2397534847255
+Validation Loss Linear: 4.1503119468688965
+Training Time Linear: 2033.2397668361666
+Validation Loss MLP: 4.150237560272217
+Training Time MLP: 2033.2397704919183
+New best mlp model saved with validation loss: 4.150237560272217
+Epoch 34/150)
+Training Loss Simple: 3.5382959198777693
+Training Loss Linear: 3.5703876470997384
+Training Loss MLP: 3.5020456087850307
+Validation Loss Simple: 4.11978006362915
+Training Time Simple: 2094.576267242431
+Validation Loss Linear: 4.148481369018555
+Training Time Linear: 2094.5762809912367
+Validation Loss MLP: 4.146622180938721
+Training Time MLP: 2094.576284805934
+New best mlp model saved with validation loss: 4.146622180938721
+Individual loss plot saved to: /home/ubuntu/WildSemiFusion/src/../saved_models_test/color_simple/losses_plot.png
+Loss plot saved to: /home/ubuntu/WildSemiFusion/src/../saved_models_test/color_simple/loss_plot.png
+Time plot saved to: /home/ubuntu/WildSemiFusion/src/../saved_models_test/color_simple/time_per_epoch.png
+Individual loss plot saved to: /home/ubuntu/WildSemiFusion/src/../saved_models_test/color_linear/losses_plot.png
+Loss plot saved to: /home/ubuntu/WildSemiFusion/src/../saved_models_test/color_linear/loss_plot.png
+Time plot saved to: /home/ubuntu/WildSemiFusion/src/../saved_models_test/color_linear/time_per_epoch.png
+Individual loss plot saved to: /home/ubuntu/WildSemiFusion/src/../saved_models_test/color_mlp/losses_plot.png
+Loss plot saved to: /home/ubuntu/WildSemiFusion/src/../saved_models_test/color_mlp/loss_plot.png
+Time plot saved to: /home/ubuntu/WildSemiFusion/src/../saved_models_test/color_mlp/time_per_epoch.png
+Epoch 35/150)
+Training Loss Simple: 3.5389285592267115
+Training Loss Linear: 3.5687525167952487
+Training Loss MLP: 3.499550626225715
+Validation Loss Simple: 4.11850643157959
+Training Time Simple: 2156.526457548141
+Validation Loss Linear: 4.1485466957092285
+Training Time Linear: 2156.5264716943107
+Validation Loss MLP: 4.152810096740723
+Training Time MLP: 2156.526475588481
+Epoch 36/150)
+Training Loss Simple: 3.539798063083287
+Training Loss Linear: 3.567535048853742
+Training Loss MLP: 3.498265066286073
+Validation Loss Simple: 4.120133399963379
+Training Time Simple: 2218.1978152592974
+Validation Loss Linear: 4.147211074829102
+Training Time Linear: 2218.197829802831
+Validation Loss MLP: 4.1595892906188965
+Training Time MLP: 2218.1978337764745
+New best linear model saved with validation loss: 4.147211074829102
+Epoch 37/150)
+Training Loss Simple: 3.5384747633968825
+Training Loss Linear: 3.564076235694607
+Training Loss MLP: 3.4941028817726747
+Validation Loss Simple: 4.120208740234375
+Training Time Simple: 2280.086813131968
+Validation Loss Linear: 4.146702289581299
+Training Time Linear: 2280.0868279139204
+Validation Loss MLP: 4.145844459533691
+Training Time MLP: 2280.0868319670362
+New best linear model saved with validation loss: 4.146702289581299
+New best mlp model saved with validation loss: 4.145844459533691
+Epoch 38/150)
+Training Loss Simple: 3.537589729267315
+Training Loss Linear: 3.5613006936372633
+Training Loss MLP: 3.490941326113513
+Validation Loss Simple: 4.118600845336914
+Training Time Simple: 2341.9088587760925
+Validation Loss Linear: 4.145365238189697
+Training Time Linear: 2341.908873875936
+Validation Loss MLP: 4.158182621002197
+Training Time MLP: 2341.908878008525
+New best linear model saved with validation loss: 4.145365238189697
+Epoch 39/150)
+Training Loss Simple: 3.5393772560314543
+Training Loss Linear: 3.56116367952667
+Training Loss MLP: 3.490922325719012
+Validation Loss Simple: 4.119666576385498
+Training Time Simple: 2403.907391389211
+Validation Loss Linear: 4.148323059082031
+Training Time Linear: 2403.907406806946
+Validation Loss MLP: 4.152293682098389
+Training Time MLP: 2403.9074110984807
+Individual loss plot saved to: /home/ubuntu/WildSemiFusion/src/../saved_models_test/color_simple/losses_plot.png
+Loss plot saved to: /home/ubuntu/WildSemiFusion/src/../saved_models_test/color_simple/loss_plot.png
+Time plot saved to: /home/ubuntu/WildSemiFusion/src/../saved_models_test/color_simple/time_per_epoch.png
+Individual loss plot saved to: /home/ubuntu/WildSemiFusion/src/../saved_models_test/color_linear/losses_plot.png
+Loss plot saved to: /home/ubuntu/WildSemiFusion/src/../saved_models_test/color_linear/loss_plot.png
+Time plot saved to: /home/ubuntu/WildSemiFusion/src/../saved_models_test/color_linear/time_per_epoch.png
+Individual loss plot saved to: /home/ubuntu/WildSemiFusion/src/../saved_models_test/color_mlp/losses_plot.png
+Loss plot saved to: /home/ubuntu/WildSemiFusion/src/../saved_models_test/color_mlp/loss_plot.png
+Time plot saved to: /home/ubuntu/WildSemiFusion/src/../saved_models_test/color_mlp/time_per_epoch.png
+Epoch 40/150)
+Training Loss Simple: 3.5387656079591627
+Training Loss Linear: 3.5586579281048185
+Training Loss MLP: 3.4876566472714834
+Validation Loss Simple: 4.117692470550537
+Training Time Simple: 2465.5295256773634
+Validation Loss Linear: 4.140529632568359
+Training Time Linear: 2465.529541492462
+Validation Loss MLP: 4.147407531738281
+Training Time MLP: 2465.52954586347
+New best linear model saved with validation loss: 4.140529632568359
+Epoch 41/150)
+Training Loss Simple: 3.539554347086997
+Training Loss Linear: 3.557616106785127
+Training Loss MLP: 3.4866354987569097
+Validation Loss Simple: 4.118861675262451
+Training Time Simple: 2527.040628751119
+Validation Loss Linear: 4.1476149559021
+Training Time Linear: 2527.0406448841095
+Validation Loss MLP: 4.160304546356201
+Training Time MLP: 2527.040649414063
+Epoch 42/150)
+Training Loss Simple: 3.538027164709829
+Training Loss Linear: 3.5546834834300687
+Training Loss MLP: 3.4830951238200614
+Validation Loss Simple: 4.120455265045166
+Training Time Simple: 2588.87930782636
+Validation Loss Linear: 4.141014575958252
+Training Time Linear: 2588.8793244361877
+Validation Loss MLP: 4.143787860870361
+Training Time MLP: 2588.879329045614
+New best mlp model saved with validation loss: 4.143787860870361
+Epoch 43/150)
+Training Loss Simple: 3.5392015223955586
+Training Loss Linear: 3.554424407708384
+Training Loss MLP: 3.4831098587843625
+Validation Loss Simple: 4.120081424713135
+Training Time Simple: 2650.3372379144034
+Validation Loss Linear: 4.141223430633545
+Training Time Linear: 2650.337254921595
+Validation Loss MLP: 4.148874759674072
+Training Time MLP: 2650.3372596104946
+Epoch 44/150)
+Training Loss Simple: 3.5391740711936115
+Training Loss Linear: 3.55280978488226
+Training Loss MLP: 3.4808833390256786
+Validation Loss Simple: 4.119230270385742
+Training Time Simple: 2712.053481737773
+Validation Loss Linear: 4.139919281005859
+Training Time Linear: 2712.0534992218018
+Validation Loss MLP: 4.160577297210693
+Training Time MLP: 2712.053503990174
+New best linear model saved with validation loss: 4.139919281005859
+Individual loss plot saved to: /home/ubuntu/WildSemiFusion/src/../saved_models_test/color_simple/losses_plot.png
+Loss plot saved to: /home/ubuntu/WildSemiFusion/src/../saved_models_test/color_simple/loss_plot.png
+Time plot saved to: /home/ubuntu/WildSemiFusion/src/../saved_models_test/color_simple/time_per_epoch.png
+Individual loss plot saved to: /home/ubuntu/WildSemiFusion/src/../saved_models_test/color_linear/losses_plot.png
+Loss plot saved to: /home/ubuntu/WildSemiFusion/src/../saved_models_test/color_linear/loss_plot.png
+Time plot saved to: /home/ubuntu/WildSemiFusion/src/../saved_models_test/color_linear/time_per_epoch.png
+Individual loss plot saved to: /home/ubuntu/WildSemiFusion/src/../saved_models_test/color_mlp/losses_plot.png
+Loss plot saved to: /home/ubuntu/WildSemiFusion/src/../saved_models_test/color_mlp/loss_plot.png
+Time plot saved to: /home/ubuntu/WildSemiFusion/src/../saved_models_test/color_mlp/time_per_epoch.png
+Epoch 45/150)
+Training Loss Simple: 3.5384647376345892
+Training Loss Linear: 3.550752331740665
+Training Loss MLP: 3.4787056724520493
+Validation Loss Simple: 4.118584632873535
+Training Time Simple: 2773.7726563612623
+Validation Loss Linear: 4.1422600746154785
+Training Time Linear: 2773.7726740837097
+Validation Loss MLP: 4.141148090362549
+Training Time MLP: 2773.7726789315548
+New best mlp model saved with validation loss: 4.141148090362549
+Epoch 46/150)
+Training Loss Simple: 3.5388251186287314
+Training Loss Linear: 3.5498324415109455
+Training Loss MLP: 3.4768450991080626
+Validation Loss Simple: 4.118824005126953
+Training Time Simple: 2835.462643782298
+Validation Loss Linear: 4.1403985023498535
+Training Time Linear: 2835.4626619021096
+Validation Loss MLP: 4.159809589385986
+Training Time MLP: 2835.4626669883733
+Epoch 47/150)
+Training Loss Simple: 3.5386481772374063
+Training Loss Linear: 3.5485028942136
+Training Loss MLP: 3.4753213085397316
+Validation Loss Simple: 4.119331359863281
+Training Time Simple: 2897.259801944097
+Validation Loss Linear: 4.139699935913086
+Training Time Linear: 2897.2598205407457
+Validation Loss MLP: 4.148407459259033
+Training Time MLP: 2897.2598257859554
+New best linear model saved with validation loss: 4.139699935913086
+Epoch 48/150)
+Training Loss Simple: 3.540210715175545
+Training Loss Linear: 3.5490709969597143
+Training Loss MLP: 3.47535410414647
+Validation Loss Simple: 4.119354724884033
+Training Time Simple: 2959.378213485082
+Validation Loss Linear: 4.139259338378906
+Training Time Linear: 2959.3782327175136
+Validation Loss MLP: 4.146288871765137
+Training Time MLP: 2959.3782381216693
+New best linear model saved with validation loss: 4.139259338378906
+Epoch 49/150)
+Training Loss Simple: 3.5389804230989332
+Training Loss Linear: 3.5464654282061723
+Training Loss MLP: 3.4723318684710205
+Validation Loss Simple: 4.117837905883789
+Training Time Simple: 3021.025477250417
+Validation Loss Linear: 4.135197162628174
+Training Time Linear: 3021.0254968007403
+Validation Loss MLP: 4.1505560874938965
+Training Time MLP: 3021.0255022843685
+New best linear model saved with validation loss: 4.135197162628174
+Individual loss plot saved to: /home/ubuntu/WildSemiFusion/src/../saved_models_test/color_simple/losses_plot.png
+Loss plot saved to: /home/ubuntu/WildSemiFusion/src/../saved_models_test/color_simple/loss_plot.png
+Time plot saved to: /home/ubuntu/WildSemiFusion/src/../saved_models_test/color_simple/time_per_epoch.png
+Individual loss plot saved to: /home/ubuntu/WildSemiFusion/src/../saved_models_test/color_linear/losses_plot.png
+Loss plot saved to: /home/ubuntu/WildSemiFusion/src/../saved_models_test/color_linear/loss_plot.png
+Time plot saved to: /home/ubuntu/WildSemiFusion/src/../saved_models_test/color_linear/time_per_epoch.png
+Individual loss plot saved to: /home/ubuntu/WildSemiFusion/src/../saved_models_test/color_mlp/losses_plot.png
+Loss plot saved to: /home/ubuntu/WildSemiFusion/src/../saved_models_test/color_mlp/loss_plot.png
+Time plot saved to: /home/ubuntu/WildSemiFusion/src/../saved_models_test/color_mlp/time_per_epoch.png
+Epoch 50/150)
+Training Loss Simple: 3.539217962835827
+Training Loss Linear: 3.5455519892003413
+Training Loss MLP: 3.4704216849194824
+Validation Loss Simple: 4.1201348304748535
+Training Time Simple: 3082.5054508845014
+Validation Loss Linear: 4.14068078994751
+Training Time Linear: 3082.5054708321886
+Validation Loss MLP: 4.14311408996582
+Training Time MLP: 3082.50547639529
+Epoch 51/150)
+Training Loss Simple: 3.5387429912594985
+Training Loss Linear: 3.544091464829271
+Training Loss MLP: 3.469459251765787
+Validation Loss Simple: 4.119631290435791
+Training Time Simple: 3144.407050530116
+Validation Loss Linear: 4.140803337097168
+Training Time Linear: 3144.4070708751674
+Validation Loss MLP: 4.152000427246094
+Training Time MLP: 3144.4070765177416
+Epoch 52/150)
+Training Loss Simple: 3.5378339899717455
+Training Loss Linear: 3.5421911643369355
+Training Loss MLP: 3.4666496993851488
+Validation Loss Simple: 4.119102954864502
+Training Time Simple: 3206.262875636419
+Validation Loss Linear: 4.137120246887207
+Training Time Linear: 3206.262896776199
+Validation Loss MLP: 4.158499717712402
+Training Time MLP: 3206.262902498246
+Epoch 53/150)
+Training Loss Simple: 3.5387005527524185
+Training Loss Linear: 3.5422616509625513
+Training Loss MLP: 3.466864937413348
+Validation Loss Simple: 4.119081497192383
+Training Time Simple: 3267.5569411118827
+Validation Loss Linear: 4.137821197509766
+Training Time Linear: 3267.5569625695543
+Validation Loss MLP: 4.147206783294678
+Training Time MLP: 3267.556968371074
+Epoch 54/150)
+Training Loss Simple: 3.53930151549569
+Training Loss Linear: 3.541879380706453
+Training Loss MLP: 3.466813526014342
+Validation Loss Simple: 4.121297359466553
+Training Time Simple: 3329.589560667674
+Validation Loss Linear: 4.146240234375
+Training Time Linear: 3329.58958252271
+Validation Loss MLP: 4.148457050323486
+Training Time MLP: 3329.5895884037027
+Individual loss plot saved to: /home/ubuntu/WildSemiFusion/src/../saved_models_test/color_simple/losses_plot.png
+Loss plot saved to: /home/ubuntu/WildSemiFusion/src/../saved_models_test/color_simple/loss_plot.png
+Time plot saved to: /home/ubuntu/WildSemiFusion/src/../saved_models_test/color_simple/time_per_epoch.png
+Individual loss plot saved to: /home/ubuntu/WildSemiFusion/src/../saved_models_test/color_linear/losses_plot.png
+Loss plot saved to: /home/ubuntu/WildSemiFusion/src/../saved_models_test/color_linear/loss_plot.png
+Time plot saved to: /home/ubuntu/WildSemiFusion/src/../saved_models_test/color_linear/time_per_epoch.png
+Individual loss plot saved to: /home/ubuntu/WildSemiFusion/src/../saved_models_test/color_mlp/losses_plot.png
+Loss plot saved to: /home/ubuntu/WildSemiFusion/src/../saved_models_test/color_mlp/loss_plot.png
+Time plot saved to: /home/ubuntu/WildSemiFusion/src/../saved_models_test/color_mlp/time_per_epoch.png
+Epoch 55/150)
+Training Loss Simple: 3.540209933789107
+Training Loss Linear: 3.541971735710645
+Training Loss MLP: 3.466172352324437
+Validation Loss Simple: 4.1187238693237305
+Training Time Simple: 3391.21333138148
+Validation Loss Linear: 4.135519981384277
+Training Time Linear: 3391.21335363388
+Validation Loss MLP: 4.15196418762207
+Training Time MLP: 3391.213359594346
+Epoch 56/150)
+Training Loss Simple: 3.538181395426284
+Training Loss Linear: 3.5389889452579246
+Training Loss MLP: 3.4640519810419015
+Validation Loss Simple: 4.1201605796813965
+Training Time Simple: 3452.9537309805555
+Validation Loss Linear: 4.134899139404297
+Training Time Linear: 3452.9537537097926
+Validation Loss MLP: 4.146076679229736
+Training Time MLP: 3452.9537597497315
+New best linear model saved with validation loss: 4.134899139404297
+Epoch 57/150)
+Training Loss Simple: 3.5386645480664107
+Training Loss Linear: 3.53917157737008
+Training Loss MLP: 3.463418682126233
+Validation Loss Simple: 4.118069648742676
+Training Time Simple: 3514.61008532842
+Validation Loss Linear: 4.132987976074219
+Training Time Linear: 3514.610108296076
+Validation Loss MLP: 4.142557621002197
+Training Time MLP: 3514.6101144154877
+New best linear model saved with validation loss: 4.132987976074219
+Epoch 58/150)
+Training Loss Simple: 3.5392050656088947
+Training Loss Linear: 3.539093508337536
+Training Loss MLP: 3.4628453306908153
+Validation Loss Simple: 4.120639324188232
+Training Time Simple: 3576.3055760065718
+Validation Loss Linear: 4.138299942016602
+Training Time Linear: 3576.3055992921186
+Validation Loss MLP: 4.15340518951416
+Training Time MLP: 3576.3056055704765
+Epoch 59/150)
+Training Loss Simple: 3.5397890432037578
+Training Loss Linear: 3.5391977494650515
+Training Loss MLP: 3.4632495633006966
+Validation Loss Simple: 4.118163108825684
+Training Time Simple: 3638.127289295197
+Validation Loss Linear: 4.1363983154296875
+Training Time Linear: 3638.127312898635
+Validation Loss MLP: 4.147773742675781
+Training Time MLP: 3638.127319256466
+Individual loss plot saved to: /home/ubuntu/WildSemiFusion/src/../saved_models_test/color_simple/losses_plot.png
+Loss plot saved to: /home/ubuntu/WildSemiFusion/src/../saved_models_test/color_simple/loss_plot.png
+Time plot saved to: /home/ubuntu/WildSemiFusion/src/../saved_models_test/color_simple/time_per_epoch.png
+Individual loss plot saved to: /home/ubuntu/WildSemiFusion/src/../saved_models_test/color_linear/losses_plot.png
+Loss plot saved to: /home/ubuntu/WildSemiFusion/src/../saved_models_test/color_linear/loss_plot.png
+Time plot saved to: /home/ubuntu/WildSemiFusion/src/../saved_models_test/color_linear/time_per_epoch.png
+Individual loss plot saved to: /home/ubuntu/WildSemiFusion/src/../saved_models_test/color_mlp/losses_plot.png
+Loss plot saved to: /home/ubuntu/WildSemiFusion/src/../saved_models_test/color_mlp/loss_plot.png
+Time plot saved to: /home/ubuntu/WildSemiFusion/src/../saved_models_test/color_mlp/time_per_epoch.png
+Epoch 60/150)
+Training Loss Simple: 3.539114532679537
+Training Loss Linear: 3.5380844965468357
+Training Loss MLP: 3.4617133836676603
+Validation Loss Simple: 4.118525505065918
+Training Time Simple: 3699.9273156325025
+Validation Loss Linear: 4.133449554443359
+Training Time Linear: 3699.927339474359
+Validation Loss MLP: 4.148914337158203
+Training Time MLP: 3699.927345991136
+Epoch 61/150)
+Training Loss Simple: 3.538132484811936
+Training Loss Linear: 3.53655984105855
+Training Loss MLP: 3.460107138557156
+Validation Loss Simple: 4.1200151443481445
+Training Time Simple: 3761.4850540955863
+Validation Loss Linear: 4.136384963989258
+Training Time Linear: 3761.4850782553344
+Validation Loss MLP: 4.146724224090576
+Training Time MLP: 3761.4850848515844
+Epoch 62/150)
+Training Loss Simple: 3.5374901764584283
+Training Loss Linear: 3.535748071044031
+Training Loss MLP: 3.4596361348228735
+Validation Loss Simple: 4.119029998779297
+Training Time Simple: 3823.4060324033103
+Validation Loss Linear: 4.133090972900391
+Training Time Linear: 3823.4060571193686
+Validation Loss MLP: 4.145381927490234
+Training Time MLP: 3823.4060637156185
+Epoch 63/150)
+Training Loss Simple: 3.5392707925643365
+Training Loss Linear: 3.53695424629824
+Training Loss MLP: 3.460520836558655
+Validation Loss Simple: 4.119118690490723
+Training Time Simple: 3885.414710521698
+Validation Loss Linear: 4.136364459991455
+Training Time Linear: 3885.414735476175
+Validation Loss MLP: 4.15596342086792
+Training Time MLP: 3885.414742151898
+Epoch 64/150)
+Training Loss Simple: 3.5394080189892847
+Training Loss Linear: 3.536694260409279
+Training Loss MLP: 3.460335134589759
+Validation Loss Simple: 4.119461536407471
+Training Time Simple: 3947.1734376748404
+Validation Loss Linear: 4.132768630981445
+Training Time Linear: 3947.1734629472085
+Validation Loss MLP: 4.142253398895264
+Training Time MLP: 3947.1734697818774
+New best linear model saved with validation loss: 4.132768630981445
+Individual loss plot saved to: /home/ubuntu/WildSemiFusion/src/../saved_models_test/color_simple/losses_plot.png
+Loss plot saved to: /home/ubuntu/WildSemiFusion/src/../saved_models_test/color_simple/loss_plot.png
+Time plot saved to: /home/ubuntu/WildSemiFusion/src/../saved_models_test/color_simple/time_per_epoch.png
+Individual loss plot saved to: /home/ubuntu/WildSemiFusion/src/../saved_models_test/color_linear/losses_plot.png
+Loss plot saved to: /home/ubuntu/WildSemiFusion/src/../saved_models_test/color_linear/loss_plot.png
+Time plot saved to: /home/ubuntu/WildSemiFusion/src/../saved_models_test/color_linear/time_per_epoch.png
+Individual loss plot saved to: /home/ubuntu/WildSemiFusion/src/../saved_models_test/color_mlp/losses_plot.png
+Loss plot saved to: /home/ubuntu/WildSemiFusion/src/../saved_models_test/color_mlp/loss_plot.png
+Time plot saved to: /home/ubuntu/WildSemiFusion/src/../saved_models_test/color_mlp/time_per_epoch.png
+Epoch 65/150)
+Training Loss Simple: 3.538452625274658
+Training Loss Linear: 3.535459422717129
+Training Loss MLP: 3.4587507717800836
+Validation Loss Simple: 4.118203163146973
+Training Time Simple: 4009.0392231941223
+Validation Loss Linear: 4.133655071258545
+Training Time Linear: 4009.039248863855
+Validation Loss MLP: 4.145232200622559
+Training Time MLP: 4009.0392557779965
+Epoch 66/150)
+Training Loss Simple: 3.539769155265641
+Training Loss Linear: 3.536578129677877
+Training Loss MLP: 3.459569207073128
+Validation Loss Simple: 4.117730140686035
+Training Time Simple: 4070.959869146347
+Validation Loss Linear: 4.132514476776123
+Training Time Linear: 4070.959895292917
+Validation Loss MLP: 4.15304708480835
+Training Time MLP: 4070.9599022865314
+New best linear model saved with validation loss: 4.132514476776123
+Epoch 67/150)
+Training Loss Simple: 3.53865561346068
+Training Loss Linear: 3.535214650369909
+Training Loss MLP: 3.458550011154509
+Validation Loss Simple: 4.119261741638184
+Training Time Simple: 4132.6477729479475
+Validation Loss Linear: 4.133769989013672
+Training Time Linear: 4132.647799332935
+Validation Loss MLP: 4.148292064666748
+Training Time MLP: 4132.647806406023
+Epoch 68/150)
+Training Loss Simple: 3.5384516820420315
+Training Loss Linear: 3.5346685169387038
+Training Loss MLP: 3.4580597947113705
+Validation Loss Simple: 4.116420745849609
+Training Time Simple: 4193.766080697378
+Validation Loss Linear: 4.130919933319092
+Training Time Linear: 4193.766107638676
+Validation Loss MLP: 4.145050048828125
+Training Time MLP: 4193.766114791236
+New best simple model saved with validation loss: 4.116420745849609
+New best linear model saved with validation loss: 4.130919933319092
+Epoch 69/150)
+Training Loss Simple: 3.5369112578621746
+Training Loss Linear: 3.5330243476115872
+Training Loss MLP: 3.4565112695206692
+Validation Loss Simple: 4.12180757522583
+Training Time Simple: 4255.310827652614
+Validation Loss Linear: 4.1375627517700195
+Training Time Linear: 4255.310854991276
+Validation Loss MLP: 4.157344341278076
+Training Time MLP: 4255.3108622233085
+Individual loss plot saved to: /home/ubuntu/WildSemiFusion/src/../saved_models_test/color_simple/losses_plot.png
+Loss plot saved to: /home/ubuntu/WildSemiFusion/src/../saved_models_test/color_simple/loss_plot.png
+Time plot saved to: /home/ubuntu/WildSemiFusion/src/../saved_models_test/color_simple/time_per_epoch.png
+Individual loss plot saved to: /home/ubuntu/WildSemiFusion/src/../saved_models_test/color_linear/losses_plot.png
+Loss plot saved to: /home/ubuntu/WildSemiFusion/src/../saved_models_test/color_linear/loss_plot.png
+Time plot saved to: /home/ubuntu/WildSemiFusion/src/../saved_models_test/color_linear/time_per_epoch.png
+Individual loss plot saved to: /home/ubuntu/WildSemiFusion/src/../saved_models_test/color_mlp/losses_plot.png
+Loss plot saved to: /home/ubuntu/WildSemiFusion/src/../saved_models_test/color_mlp/loss_plot.png
+Time plot saved to: /home/ubuntu/WildSemiFusion/src/../saved_models_test/color_mlp/time_per_epoch.png
+Epoch 70/150)
+Training Loss Simple: 3.5369017037161945
+Training Loss Linear: 3.5325866424254255
+Training Loss MLP: 3.4558717926053237
+Validation Loss Simple: 4.119687080383301
+Training Time Simple: 4316.899034659068
+Validation Loss Linear: 4.13536262512207
+Training Time Linear: 4316.899062395095
+Validation Loss MLP: 4.1465959548950195
+Training Time MLP: 4316.8990697066
+Epoch 71/150)
+Training Loss Simple: 3.537565466261258
+Training Loss Linear: 3.533242107307824
+Training Loss MLP: 3.456619360151082
+Validation Loss Simple: 4.119875431060791
+Training Time Simple: 4378.7537799676265
+Validation Loss Linear: 4.134407997131348
+Training Time Linear: 4378.7538081804905
+Validation Loss MLP: 4.153058052062988
+Training Time MLP: 4378.753815650941
+Epoch 72/150)
+Training Loss Simple: 3.5387875198447794
+Training Loss Linear: 3.5341892294640087
+Training Loss MLP: 3.4567860913102644
+Validation Loss Simple: 4.1193108558654785
+Training Time Simple: 4440.051187435786
+Validation Loss Linear: 4.132095813751221
+Training Time Linear: 4440.051216125487
+Validation Loss MLP: 4.146080493927002
+Training Time MLP: 4440.051223675411
+Epoch 73/150)
+Training Loss Simple: 3.539944495597895
+Training Loss Linear: 3.535063921100032
+Training Loss MLP: 3.458482556099439
+Validation Loss Simple: 4.118133068084717
+Training Time Simple: 4501.976269721985
+Validation Loss Linear: 4.13294792175293
+Training Time Linear: 4501.976298967997
+Validation Loss MLP: 4.1467509269714355
+Training Time MLP: 4501.976306597393
+Epoch 74/150)
+Training Loss Simple: 3.53949443615266
+Training Loss Linear: 3.5345019197812046
+Training Loss MLP: 3.4578362294357188
+Validation Loss Simple: 4.11654806137085
+Training Time Simple: 4563.682539065679
+Validation Loss Linear: 4.131982326507568
+Training Time Linear: 4563.682568629582
+Validation Loss MLP: 4.141529083251953
+Training Time MLP: 4563.682576417924
+Individual loss plot saved to: /home/ubuntu/WildSemiFusion/src/../saved_models_test/color_simple/losses_plot.png
+Loss plot saved to: /home/ubuntu/WildSemiFusion/src/../saved_models_test/color_simple/loss_plot.png
+Time plot saved to: /home/ubuntu/WildSemiFusion/src/../saved_models_test/color_simple/time_per_epoch.png
+Individual loss plot saved to: /home/ubuntu/WildSemiFusion/src/../saved_models_test/color_linear/losses_plot.png
+Loss plot saved to: /home/ubuntu/WildSemiFusion/src/../saved_models_test/color_linear/loss_plot.png
+Time plot saved to: /home/ubuntu/WildSemiFusion/src/../saved_models_test/color_linear/time_per_epoch.png
+Individual loss plot saved to: /home/ubuntu/WildSemiFusion/src/../saved_models_test/color_mlp/losses_plot.png
+Loss plot saved to: /home/ubuntu/WildSemiFusion/src/../saved_models_test/color_mlp/loss_plot.png
+Time plot saved to: /home/ubuntu/WildSemiFusion/src/../saved_models_test/color_mlp/time_per_epoch.png
+Epoch 75/150)
+Training Loss Simple: 3.538025036345433
+Training Loss Linear: 3.532636532818314
+Training Loss MLP: 3.4558642571859988
+Validation Loss Simple: 4.117852210998535
+Training Time Simple: 4625.157689968744
+Validation Loss Linear: 4.131218910217285
+Training Time Linear: 4625.15771985054
+Validation Loss MLP: 4.14484977722168
+Training Time MLP: 4625.157727718354
+Epoch 76/150)
+Training Loss Simple: 3.5386487062830123
+Training Loss Linear: 3.533112259676857
+Training Loss MLP: 3.45621824960639
+Validation Loss Simple: 4.119155406951904
+Training Time Simple: 4686.574564297994
+Validation Loss Linear: 4.132603168487549
+Training Time Linear: 4686.574594577153
+Validation Loss MLP: 4.14680814743042
+Training Time MLP: 4686.574602524441
+Early stop at epoch 76. Color validation loss did not improve for 10 consecutive epochs.
+Model saved at early stopping point with validation loss: 3.3971004486083984
+Early stop at epoch 76. Color validation loss did not improve for 10 consecutive epochs.
+Model saved at early stopping point with validation loss: 3.4744865894317627
+Early stop at epoch 76. Color validation loss did not improve for 10 consecutive epochs.
+Model saved at early stopping point with validation loss: 3.465898275375366
+Epoch 77/150)
+Training Loss Simple: 3.5378559697283447
+Training Loss Linear: 3.532181701520934
+Training Loss MLP: 3.455259526733064
+Epoch 78/150)
+Training Loss Simple: 3.537218911804422
+Training Loss Linear: 3.5315038740199847
+Training Loss MLP: 3.455148919655459
+Epoch 79/150)
+Training Loss Simple: 3.5385025887593735
+Training Loss Linear: 3.5326777322448955
+Training Loss MLP: 3.4557223389618588
+Individual loss plot saved to: /home/ubuntu/WildSemiFusion/src/../saved_models_test/color_simple/losses_plot.png
+Loss plot saved to: /home/ubuntu/WildSemiFusion/src/../saved_models_test/color_simple/loss_plot.png
+Time plot saved to: /home/ubuntu/WildSemiFusion/src/../saved_models_test/color_simple/time_per_epoch.png
