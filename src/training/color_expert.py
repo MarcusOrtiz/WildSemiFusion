@@ -86,7 +86,7 @@ def train_val(model, device, train_dataloader, val_dataloader, epochs, lr, save_
         validation_losses = checkpoint.get('validation_losses', validation_losses)
         times = checkpoint.get('times', times)
 
-    normalized_locations = generate_normalized_locations()
+    normalized_locations = generate_normalized_locations(cfg.IMAGE_SIZE)
     normalized_locations_tensor = torch.from_numpy(normalized_locations).to(device)
 
     for epoch in range(start_epoch, epochs):
@@ -207,7 +207,7 @@ def train_val(model, device, train_dataloader, val_dataloader, epochs, lr, save_
 
 
 def main():
-    populate_random_seeds()
+    populate_random_seeds(cfg.SEED)
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model = ColorExpertModel(cfg.NUM_BINS)

@@ -118,7 +118,7 @@ def train_val(model_simple, model_linear, model_mlp, device, train_dataloader, v
         _, best_loss_mlp, training_losses_mlp, validation_losses_mlp, times_mlp = load_checkpoint(model_mlp, device, optimizer_mlp,
                                                                                                   scheduler_mlp, save_dir_mlp)
 
-    normalized_locations = generate_normalized_locations()
+    normalized_locations = generate_normalized_locations(cfg.IMAGE_SIZE)
     normalized_locations_tensor = torch.from_numpy(normalized_locations).to(device)
 
     for epoch in range(start_epoch, epochs):
@@ -392,7 +392,7 @@ def train_val(model_simple, model_linear, model_mlp, device, train_dataloader, v
 
 
 def main():
-    populate_random_seeds()
+    populate_random_seeds(cfg.SEED)
 
     train_preloaded_data = load_sequential_data(cfg.TRAIN_DIR, cfg.TRAIN_FILES_LIMIT)
     val_preloaded_data = load_sequential_data(cfg.VAL_DIR, cfg.VAL_FILES_LIMIT)

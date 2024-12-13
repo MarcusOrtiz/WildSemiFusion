@@ -1,8 +1,8 @@
 import numpy as np
-import src.local_config as cfg
 import torch
 import random
 import torch.nn as nn
+import src.local_config as cfg
 
 """
 Generate Locations (currently all pixels TODO: always consistent on number of locations between indexes)
@@ -11,13 +11,13 @@ Locations are normalized to [0, 1]
 """
 
 
-def generate_normalized_locations() -> np.array:
-    y_coords, x_coords = np.meshgrid(np.arange(cfg.IMAGE_SIZE[0]), np.arange(cfg.IMAGE_SIZE[1]),
+def generate_normalized_locations(image_size) -> np.array:
+    y_coords, x_coords = np.meshgrid(np.arange(image_size[0]), np.arange(image_size[1]),
                                      indexing='ij')
     locations_grid = np.stack([y_coords, x_coords], axis=-1).reshape(-1, 2)  # (IMAGE_SIZE[0]*IMAGE_SIZE[1], 2)
     normalized_locations = locations_grid.astype(np.float32)
-    normalized_locations[:, 0] /= cfg.IMAGE_SIZE[0]
-    normalized_locations[:, 1] /= cfg.IMAGE_SIZE[1]
+    normalized_locations[:, 0] /= image_size[0]
+    normalized_locations[:, 1] /= image_size[1]
     return normalized_locations
 
 
@@ -39,11 +39,11 @@ def compile_model(model):
     return model
 
 
-def populate_random_seeds():
-    random.seed(cfg.SEED)
-    np.random.seed(cfg.SEED)
-    torch.manual_seed(cfg.SEED)
-    torch.cuda.manual_seed(cfg.SEED)
+def populate_random_seeds(seed):
+    random.seed(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    torch.cuda.manual_seed(seed)
 
 
 def generate_loss_trackers():
