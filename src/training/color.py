@@ -252,9 +252,9 @@ def train_val(model_simple, model_linear, model_mlp, device, train_dataloader, v
 
                     del preds_semantics_base, preds_color_base, preds_color_expert, gt_semantics, gt_color
 
-                    val_loss_simple += loss_semantics_simple + loss_color_simple
-                    val_loss_linear += loss_semantics_linear + loss_color_linear
-                    val_loss_mlp += loss_semantics_mlp + loss_color_mlp
+                    val_loss_simple += loss_semantics_val_simple + loss_color_val_simple
+                    val_loss_linear += loss_semantics_val_linear + loss_color_val_linear
+                    val_loss_mlp += loss_semantics_val_mlp + loss_color_val_mlp
 
             average_val_loss_simple = val_loss_simple / len(val_dataloader)
             average_val_loss_linear = val_loss_linear / len(val_dataloader)
