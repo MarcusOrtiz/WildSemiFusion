@@ -263,7 +263,10 @@ saved_models/base_1/*
 .idea/dictionaries/
 .idea/shelf/
 
-
+saved_models_1/*
+aws_saved_models_1/*
+saved_models_test/*
+aws_saved_models_test/*
 src/saved_*/*
 aws_saved_models/*
 saved_models/*

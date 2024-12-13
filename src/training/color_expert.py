@@ -47,17 +47,15 @@ def train_val(model, device, train_dataloader, val_dataloader, epochs, lr, save_
     os.makedirs(save_dir, exist_ok=True)
     checkpoint_path = os.path.join(save_dir, "checkpoint.pth")
 
-    model_module = model.module if isinstance(model, nn.DataParallel) else model
-
-    load_embeddings(model_module, device, os.path.join(cfg.AWS_SAVE_DIR, 'base'))
-    freeze_embeddings(model_module)
-    script_embeddings_inplace(model_module)
+    load_embeddings(model, device, cfg.SAVE_DIR_BASE)
+    freeze_embeddings(model)
+    script_embeddings_inplace(model)
 
     model = compile_model(model)
 
     optimizer = torch.optim.AdamW([
-        {'params': model_module.color_fcn.parameters(), 'lr': 0.0005, 'weight_decay': 5e-3},
-        {'params': model_module.compression_layer.parameters()}
+        {'params': model.color_fcn.parameters(), 'lr': 0.0005, 'weight_decay': 5e-3},
+        {'params': model.compression_layer.parameters()}
     ], lr=lr, betas=(0.9, 0.999), eps=1e-8)
 
     scheduler = torch.optim.lr_scheduler.CosineAnnealingWarmRestarts(
@@ -88,11 +86,11 @@ def train_val(model, device, train_dataloader, val_dataloader, epochs, lr, save_
         validation_losses = checkpoint.get('validation_losses', validation_losses)
         times = checkpoint.get('times', times)
 
-    normalized_locations = generate_normalized_locations()
+    normalized_locations = generate_normalized_locations(cfg.IMAGE_SIZE)
     normalized_locations_tensor = torch.from_numpy(normalized_locations).to(device)
 
     for epoch in range(start_epoch, epochs):
-        generate_plots(epoch, training_losses, validation_losses, times, save_dir)
+        generate_plots(epoch, training_losses, validation_losses, times, save_dir, cfg.PLOT_INTERVAL)
 
         model.train()
         epoch_start_time = time.time()
@@ -193,7 +191,7 @@ def train_val(model, device, train_dataloader, val_dataloader, epochs, lr, save_
             'times': times
         }, checkpoint_path)
 
-        if (epochs_no_improve_color >= cfg.EARLY_STOP_EPOCHS) and (epoch >= 200):
+        if (epochs_no_improve_color >= cfg.EARLY_STOP_EPOCHS) and (epoch >= 100):
             print(f"Early stopping triggered at epoch {epoch + 1}. SDF validation loss did not improve for {cfg.EARLY_STOP_EPOCHS} consecutive epochs.")
             print(f"Model saved at early stopping point with validation loss: {best_color_val_loss}")
             break
@@ -209,7 +207,7 @@ def train_val(model, device, train_dataloader, val_dataloader, epochs, lr, save_
 
 
 def main():
-    populate_random_seeds()
+    populate_random_seeds(cfg.SEED)
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model = ColorExpertModel(cfg.NUM_BINS)
@@ -224,10 +222,10 @@ def main():
                                     image_noise=cfg.IMAGE_NOISE, image_mask_rate=cfg.IMAGE_MASK_RATE)
     val_dataset = Rellis2DDataset(preloaded_data=val_preloaded_data, num_bins=cfg.NUM_BINS, image_size=cfg.IMAGE_SIZE,
                                   image_noise=cfg.IMAGE_NOISE, image_mask_rate=cfg.IMAGE_MASK_RATE)
-    train_dataloader = DataLoader(train_dataset, batch_size=cfg.BATCH_SIZE, shuffle=True, num_workers=cfg.NUM_WORKERS,
-                                  pin_memory=cfg.PIN_MEMORY, drop_last=True)
-    val_dataloader = DataLoader(val_dataset, batch_size=cfg.BATCH_SIZE, shuffle=False, num_workers=cfg.NUM_WORKERS,
-                                pin_memory=cfg.PIN_MEMORY, drop_last=True)
+    train_dataloader = DataLoader(train_dataset, batch_size=cfg.BATCH_SIZE_COLOR_EXPERT, shuffle=True, num_workers=cfg.NUM_WORKERS,
+                                  pin_memory=cfg.PIN_MEMORY, drop_last=True, prefetch_factor=4)
+    val_dataloader = DataLoader(val_dataset, batch_size=cfg.BATCH_SIZE_COLOR_EXPERT, shuffle=False, num_workers=cfg.NUM_WORKERS,
+                                pin_memory=cfg.PIN_MEMORY, drop_last=True, prefetch_factor=4)
     print(f"Created training dataloader with {len(train_dataset)} files and validation dataloader with {len(val_dataset)} files")
 
     # Train and validate the model

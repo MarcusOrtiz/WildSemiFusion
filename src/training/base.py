@@ -27,14 +27,13 @@ def train_val(model, device, train_dataloader, val_dataloader, epochs, lr, save_
     os.makedirs(save_dir, exist_ok=True)
     checkpoint_path = os.path.join(save_dir, "checkpoint.pth")
 
-    model_module = model.module if isinstance(model, nn.DataParallel) else model
     optimizer = torch.optim.Adam([
-        {'params': model_module.semantic_fcn.parameters(), 'lr': 5e-6, 'weight_decay': 1e-5},
-        {'params': model_module.color_fcn.parameters(), 'weight_decay': 1e-4},
-        {'params': model_module.lab_cnn.parameters()},
-        {'params': model_module.gray_cnn.parameters()},
-        {'params': model_module.fourier_layer.parameters()},
-        {'params': model_module.compression_layer.parameters()},
+        {'params': model.semantic_fcn.parameters(), 'lr': 5e-6, 'weight_decay': 1e-5},
+        {'params': model.color_fcn.parameters(), 'weight_decay': 1e-4},
+        {'params': model.lab_cnn.parameters()},
+        {'params': model.gray_cnn.parameters()},
+        {'params': model.fourier_layer.parameters()},
+        {'params': model.compression_layer.parameters()},
     ], lr=lr)
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'min', factor=cfg.LR_DECAY_FACTOR, patience=cfg.PATIENCE)
     scaler = GradScaler()
@@ -60,11 +59,11 @@ def train_val(model, device, train_dataloader, val_dataloader, epochs, lr, save_
         validation_losses = checkpoint.get('validation_losses', validation_losses)
         times = checkpoint.get('times', times)
 
-    normalized_locations = generate_normalized_locations()
+    normalized_locations = generate_normalized_locations(cfg.IMAGE_SIZE)
     normalized_locations_tensor = torch.from_numpy(normalized_locations).to(device)
 
     for epoch in range(start_epoch, epochs):
-        generate_plots(epoch, training_losses, validation_losses, times, save_dir)
+        generate_plots(epoch, training_losses, validation_losses, times, save_dir, cfg.PLOT_INTERVAL)
 
         model.train()
         epoch_start_time = time.time()
@@ -73,10 +72,10 @@ def train_val(model, device, train_dataloader, val_dataloader, epochs, lr, save_
             # if (idx < 2 or idx % 100 == 0): print(f"Loading training batch {idx}", flush=True)
             optimizer.zero_grad()
             with autocast():
-                gt_semantics = batch['gt_semantics'].to(device)
-                gt_color = batch['gt_color'].to(device)
-                gray_images = batch['gray_image'].to(device)
-                lab_images = batch['lab_image'].to(device)
+                gt_semantics = batch['gt_semantics'].to(device, non_blocking=True)
+                gt_color = batch['gt_color'].to(device, non_blocking=True)
+                gray_images = batch['gray_image'].to(device, non_blocking=True)
+                lab_images = batch['lab_image'].to(device, non_blocking=True)
 
                 # Repeat locations along batch dimension
                 batch_size = gt_semantics.shape[0]
@@ -120,10 +119,10 @@ def train_val(model, device, train_dataloader, val_dataloader, epochs, lr, save_
             for idx, batch in enumerate(val_dataloader):
                 # if (idx < 2 or idx % 100 == 0): print(f"Loading validation batch {idx}", flush=True)
                 with autocast():
-                    gt_semantics = batch['gt_semantics'].to(device)
-                    gt_color = batch['gt_color'].to(device)
-                    gray_images = batch['gray_image'].to(device)
-                    lab_images = batch['lab_image'].to(device)
+                    gt_semantics = batch['gt_semantics'].to(device, non_blocking=True)
+                    gt_color = batch['gt_color'].to(device, non_blocking=True)
+                    gray_images = batch['gray_image'].to(device, non_blocking=True)
+                    lab_images = batch['lab_image'].to(device, non_blocking=True)
 
                     # Repeat locations along batch dimension
                     batch_size = gt_semantics.shape[0]
@@ -190,13 +189,13 @@ def train_val(model, device, train_dataloader, val_dataloader, epochs, lr, save_
     return model
 
 def main():
-    populate_random_seeds()
+    populate_random_seeds(cfg.SEED)
 
     model = BaseModel(cfg.NUM_BINS, cfg.CLASSES)
     device = torch.device("cuda" if torch.cuda.is_available() else "mps")
     model = model_to_device(model, device)
-    compiled_model = compile_model(model)
-    print(f"WildFusion initialized successfully, moved to {device}")
+    model = compile_model(model)
+    print(f"WildFusion initialized successfully, moved to {device}, compiled, and scripted")
 
     train_preloaded_data = load_sequential_data(cfg.TRAIN_DIR, cfg.TRAIN_FILES_LIMIT)
     val_preloaded_data = load_sequential_data(cfg.VAL_DIR, cfg.VAL_FILES_LIMIT)
@@ -207,14 +206,14 @@ def main():
     val_dataset = Rellis2DDataset(preloaded_data=val_preloaded_data, num_bins=cfg.NUM_BINS, image_size=cfg.IMAGE_SIZE,
                                   image_noise=cfg.IMAGE_NOISE, image_mask_rate=cfg.IMAGE_MASK_RATE)
     train_dataloader = DataLoader(train_dataset, batch_size=cfg.BATCH_SIZE, shuffle=True, num_workers=cfg.NUM_WORKERS,
-                                  pin_memory=cfg.PIN_MEMORY, drop_last=True)
+                                  pin_memory=cfg.PIN_MEMORY, drop_last=True, prefetch_factor=4)
     val_dataloader = DataLoader(val_dataset, batch_size=cfg.BATCH_SIZE, shuffle=False, num_workers=cfg.NUM_WORKERS,
-                                pin_memory=cfg.PIN_MEMORY, drop_last=True)
+                                pin_memory=cfg.PIN_MEMORY, drop_last=True, prefetch_factor=4)
     print(f"Created training dataloader with {len(train_dataset)} files and validation dataloader with {len(val_dataset)} files")
 
     # Train and validate the model
     trained_model = train_val(
-        compiled_model,
+        model,
         device,
         train_dataloader,
         val_dataloader,

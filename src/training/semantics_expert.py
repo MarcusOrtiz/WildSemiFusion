@@ -38,9 +38,8 @@ def script_embeddings(model):
     model.fourier_layer = torch.jit.script(model.fourier_layer)
     model.gray_cnn = torch.jit.script(model.gray_cnn)
 
-def train_val(model, device, dataloader, val_dataloader, epochs, lr, save_dir: str, use_checkpoint:bool):
-    if not os.path.exists(save_dir):
-        os.makedirs(save_dir)
+def train_val(model, device, train_dataloader, val_dataloader, epochs, lr, save_dir: str, use_checkpoint: bool):
+    os.makedirs(save_dir, exist_ok=True)
     checkpoint_path = os.path.join(save_dir, "checkpoint.pth")
 
     model_module = model.module if isinstance(model, nn.DataParallel) else model
@@ -80,16 +79,16 @@ def train_val(model, device, dataloader, val_dataloader, epochs, lr, save_dir: s
         validation_losses = checkpoint.get('validation_losses', validation_losses)
         times = checkpoint.get('times', times)
 
-    normalized_locations = generate_normalized_locations()
+    normalized_locations = generate_normalized_locations(cfg.IMAGE_SIZE)
     normalized_locations_tensor = torch.from_numpy(normalized_locations).to(device)
 
     for epoch in range(start_epoch, epochs):
-        generate_plots(epoch, training_losses, validation_losses, times, save_dir)
+        generate_plots(epoch, training_losses, validation_losses, times, save_dir, cfg.PLOT_INTERVAL)
 
         model.train()
         epoch_start_time = time.time()
         epoch_loss = 0.0
-        for idx, batch in enumerate(dataloader):
+        for idx, batch in enumerate(train_dataloader):
             # if (idx < 2 or idx % 100 == 0): print(f"Loading training batch {idx}", flush=True)
             optimizer.zero_grad()
             with autocast():
@@ -116,7 +115,7 @@ def train_val(model, device, dataloader, val_dataloader, epochs, lr, save_dir: s
             scaler.step(optimizer)
             scaler.update()
 
-        average_epoch_loss = epoch_loss / len(dataloader)
+        average_epoch_loss = epoch_loss / len(train_dataloader)
 
         training_losses['total'].append(average_epoch_loss)
         training_losses['semantics'].append(loss_semantics.item())
@@ -199,7 +198,7 @@ def train_val(model, device, dataloader, val_dataloader, epochs, lr, save_dir: s
 
 
 def main():
-    populate_random_seeds()
+    populate_random_seeds(cfg.SEED)
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model = SemanticExpertModel(cfg.CLASSES)

@@ -57,10 +57,10 @@ class Rellis2DDataset(Dataset):
         masked_noisy_lab_image_discretized = noisy_lab_image_discretized
 
         # Convert images to tensors and adjust dimensions
-        gt_semantics_tensor = torch.tensor(gt_semantics, dtype=torch.long)
-        gt_color_tensor = torch.tensor(gt_lab_image, dtype=torch.long)
-        lab_image_tensor = torch.tensor(masked_noisy_lab_image_discretized.transpose(2, 0, 1), dtype=torch.float32)  # Shape: (3, H, W)
-        gray_image_tensor = torch.tensor(noisy_gray_image[np.newaxis, ...], dtype=torch.float32)  # Shape: (1, H, W)
+        gt_semantics_tensor = torch.tensor(gt_semantics, dtype=torch.long, device='cpu')
+        gt_color_tensor = torch.tensor(gt_lab_image, dtype=torch.long, device='cpu')
+        lab_image_tensor = torch.tensor(masked_noisy_lab_image_discretized.transpose(2, 0, 1), dtype=torch.float32, device='cpu')  # Shape: (3, H, W)
+        gray_image_tensor = torch.tensor(noisy_gray_image[np.newaxis, ...], dtype=torch.float32, device='cpu') # Shape: (1, H, W)
 
         return {
             'gt_semantics': gt_semantics_tensor,
