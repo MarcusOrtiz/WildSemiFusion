@@ -122,9 +122,9 @@ def train_val(model_simple, model_linear, model_mlp, device, train_dataloader, v
     normalized_locations_tensor = torch.from_numpy(normalized_locations).to(device)
 
     for epoch in range(start_epoch, epochs):
-        generate_plots(epoch, training_losses_simple, validation_losses_simple, times_simple, save_dir_simple)
-        generate_plots(epoch, training_losses_linear, validation_losses_linear, times_linear, save_dir_linear)
-        generate_plots(epoch, training_losses_mlp, validation_losses_mlp, times_mlp, save_dir_mlp)
+        generate_plots(epoch, training_losses_simple, validation_losses_simple, times_simple, save_dir_simple, cfg.PLOT_INTERVAL)
+        generate_plots(epoch, training_losses_linear, validation_losses_linear, times_linear, save_dir_linear, cfg.PLOT_INTERVAL)
+        generate_plots(epoch, training_losses_mlp, validation_losses_mlp, times_mlp, save_dir_mlp, cfg.PLOT_INTERVAL)
 
         model_simple.train()
         model_linear.train()

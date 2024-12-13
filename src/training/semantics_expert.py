@@ -83,7 +83,7 @@ def train_val(model, device, train_dataloader, val_dataloader, epochs, lr, save_
     normalized_locations_tensor = torch.from_numpy(normalized_locations).to(device)
 
     for epoch in range(start_epoch, epochs):
-        generate_plots(epoch, training_losses, validation_losses, times, save_dir)
+        generate_plots(epoch, training_losses, validation_losses, times, save_dir, cfg.PLOT_INTERVAL)
 
         model.train()
         epoch_start_time = time.time()

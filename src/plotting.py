@@ -1,16 +1,12 @@
 import matplotlib.pyplot as plt
-import src.local_config as cfg
 from typing import Dict, List
 import os
 
 
-def generate_plots(epoch, training_losses, validation_losses, times, save_dir):
-    if (epoch + 1) % cfg.PLOT_INTERVAL == 0:
-        print(f"Made it in plotting loop for {save_dir}")
+def generate_plots(epoch, training_losses, validation_losses, times, save_dir, plot_interval):
+    if (epoch + 1) % plot_interval == 0:
         plot_losses(training_losses, validation_losses, save_dir)
-        print(f"Made it past plot losses")
         plot_times(times, save_dir)
-        print(f"Made it past plot times")
 
 
 def plot_times(times: List[float], save_dir: str):
