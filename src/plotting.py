@@ -6,8 +6,11 @@ import os
 
 def generate_plots(epoch, training_losses, validation_losses, times, save_dir):
     if (epoch + 1) % cfg.PLOT_INTERVAL == 0:
+        print(f"Made it in plotting loop for {save_dir}")
         plot_losses(training_losses, validation_losses, save_dir)
+        print(f"Made it past plot losses")
         plot_times(times, save_dir)
+        print(f"Made it past plot times")
 
 
 def plot_times(times: List[float], save_dir: str):
