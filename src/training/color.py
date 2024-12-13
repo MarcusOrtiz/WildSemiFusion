@@ -83,7 +83,7 @@ def create_directories(save_dir: str):
     return save_dir_simple, save_dir_linear, save_dir_mlp
 
 
-def train_val(model_simple, model_linear, model_mlp, device, train_dataloader, val_dataloader, epochs, lr, save_dir: str, use_checkpoint: bool):
+def train_val(model_simple, model_linear, model_mlp, device, train_dataloader, val_dataloader , epochs, lr, save_dir: str, use_checkpoint: bool):
     save_dir_simple, save_dir_linear, save_dir_mlp = create_directories(save_dir)
 
     base_model, color_expert_model = load_sub_models(device, cfg.SAVE_DIR_BASE, cfg.SAVE_DIR_COLOR_EXPERT)
