@@ -61,14 +61,15 @@ def train_val(model, device, train_dataloader, val_dataloader, epochs, lr, save_
     scaler = GradScaler()
 
     criterion_ce_color = nn.CrossEntropyLoss(ignore_index=cfg.NUM_BINS - 1)
-    best_val_loss = float('inf')
-    epochs_no_improve = 0
     training_losses = {'total': [], 'semantics': [], 'color': []}
     validation_losses = {'total': [], 'semantics': [], 'color': []}
     times = []
     start_epoch = 0
+    best_val_loss = float('inf')
+    epochs_no_improve = 0
+
     if use_checkpoint and os.path.exists(checkpoint_path):
-        print(f"Loading checkpoint from {checkpoint_path} being used")
+        print(f"Loading checkpoint from {checkpoint_path}")
         checkpoint = torch.load(checkpoint_path, map_location=device)
         model.load_state_dict(checkpoint['model_state_dict'])
         optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
@@ -85,21 +86,20 @@ def train_val(model, device, train_dataloader, val_dataloader, epochs, lr, save_
     for epoch in range(start_epoch, epochs):
         generate_plots(epoch, training_losses, validation_losses, times, save_dir, cfg.PLOT_INTERVAL)
 
-        model.train()
+        model.color_fcn.train()
+        model.compression_layer.train()
         epoch_start_time = time.time()
-        epoch_loss = 0.0
+        epoch_train_loss = 0.0
         for idx, batch in enumerate(train_dataloader):
             # if (idx < 2 or idx % 100 == 0): print(f"Loading training batch {idx}", flush=True)
             optimizer.zero_grad()
             with autocast():
-                gt_color = batch['gt_color'].to(device)
-                lab_images = batch['lab_image'].to(device)
+                gt_color = batch['gt_color'].to(device, non_blocking=True)
+                lab_images = batch['lab_image'].to(device, non_blocking=True)
 
                 # Repeat locations along batch dimension
                 batch_size = gt_color.shape[0]
                 locations = normalized_locations_tensor.unsqueeze(0).expand(batch_size, -1, -1)
-
-                locations.requires_grad_(True)
 
                 preds_color_logits = model(locations, lab_images)
                 del locations, lab_images
@@ -111,30 +111,30 @@ def train_val(model, device, train_dataloader, val_dataloader, epochs, lr, save_
 
                 total_loss = loss_color
 
-            epoch_loss += total_loss.item()
+            epoch_train_loss += total_loss.item()
             scaler.scale(total_loss).backward()
             scaler.step(optimizer)
             scaler.update()
 
-        average_epoch_loss = epoch_loss / len(train_dataloader)
+        average_epoch_train_loss = epoch_train_loss / len(train_dataloader)
 
-        training_losses['total'].append(average_epoch_loss)
-        training_losses['color'].append(average_epoch_loss)
+        training_losses['total'].append(average_epoch_train_loss)
+        training_losses['color'].append(average_epoch_train_loss)
 
         print(f"Epoch {epoch + 1}/{epochs}")
-        print(f"Training Loss: {average_epoch_loss}")
+        print(f"Training Loss: {average_epoch_train_loss}")
 
         if torch.cuda.is_available() and not hasattr(model, "_torchdynamo_orig_callable"):
             torch.cuda.empty_cache()
 
         model.eval()
-        val_loss = 0.0
+        epoch_val_loss = 0.0
         with torch.no_grad():
             for idx, batch in enumerate(val_dataloader):
                 # if (idx < 2 or idx % 100 == 0): print(f"Loading validation batch {idx}", flush=True)
                 with autocast():
-                    gt_color = batch['gt_color'].to(device)
-                    lab_images = batch['lab_image'].to(device)
+                    gt_color = batch['gt_color'].to(device, non_blocking=True)
+                    lab_images = batch['lab_image'].to(device, non_blocking=True)
 
                     # Repeat locations along batch dimension
                     batch_size = gt_color.shape[0]
@@ -148,49 +148,49 @@ def train_val(model, device, train_dataloader, val_dataloader, epochs, lr, save_
                     loss_color_val = cfg.WEIGHT_COLOR * criterion_ce_color(preds_color_logits, gt_color)
                     del preds_color_logits, gt_color
 
-                    total_loss = loss_color_val
+                    epoch_val_loss += loss_color_val
 
-                val_loss += total_loss
+        average_epoch_val_loss = epoch_val_loss / len(val_dataloader)
 
-        average_val_loss = val_loss / len(val_dataloader)
-
-        validation_losses['total'].append(average_val_loss)
-        validation_losses['color'].append(average_val_loss)
+        validation_losses['total'].append(average_epoch_val_loss)
+        validation_losses['color'].append(average_epoch_val_loss)
         times.append(time.time() - epoch_start_time)
-        print(f"Validation Loss: {average_val_loss}")
+        print(f"Validation Loss: {average_epoch_val_loss}")
         print(f"Total Time: {sum(times)}")
 
-        if average_val_loss < best_val_loss:
-            best_val_loss = average_val_loss
-            epochs_no_improve = 0
-        else:
-            epochs_no_improve += 1
 
-        if average_val_loss < best_val_loss:
-            best_val_loss = average_val_loss
+        epochs_no_improve += 1
+
+        if average_epoch_val_loss < best_val_loss:
+            epochs_no_improve = 0
+            best_val_loss = average_epoch_val_loss
             save_best_model(model, save_dir)
             print(f"New best model saved with validation loss: {best_val_loss}")
 
-        torch.save({
-            'epoch': epoch + 1,
-            'model_state_dict': model.state_dict(),
-            'optimizer_state_dict': optimizer.state_dict(),
-            'scheduler_state_dict': scheduler.state_dict(),
-            'loss': average_epoch_loss,
-            'best_loss': best_val_loss,
-            'training_losses': training_losses,
-            'validation_losses': validation_losses,
-            'times': times
-        }, checkpoint_path)
-
-        if (epochs_no_improve >= cfg.EARLY_STOP_EPOCHS) and (epoch >= 75):
-            print(f"Early stopping triggered at epoch {epoch + 1}. SDF validation loss did not improve for {cfg.EARLY_STOP_EPOCHS} consecutive epochs.")
+        if (epochs_no_improve >= cfg.EARLY_STOP_EPOCHS) and (epoch >= 50):
+            print(f"Early stopping triggered at epoch {epoch + 1}. Validatio loss did not improve for {cfg.EARLY_STOP_EPOCHS} consecutive epochs.")
             print(f"Model saved at early stopping point with validation loss: {best_val_loss}")
             break
 
+        if (epoch + 1) % cfg.SAVE_INTERVAL == 0:
+            torch.save({
+                'epoch': epoch + 1,
+                'model_state_dict': model.state_dict(),
+                'optimizer_state_dict': optimizer.state_dict(),
+                'scheduler_state_dict': scheduler.state_dict(),
+                'loss': average_epoch_val_loss,
+                'best_loss': best_val_loss,
+                'training_losses': training_losses,
+                'validation_losses': validation_losses,
+                'times': times
+            }, checkpoint_path)
+
+
+
         if torch.cuda.is_available() and not hasattr(model, "_torchdynamo_orig_callable"):
             torch.cuda.empty_cache()
-        scheduler.step(average_val_loss)
+
+        scheduler.step(average_epoch_val_loss)
 
     total_time = sum(times)
     print(f"Total training time: {total_time // 3600:.0f} hours, {(total_time % 3600) // 60:.0f} minutes, {total_time % 60:.0f} seconds")
@@ -204,7 +204,7 @@ def main():
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model = ColorExpertModel(cfg.NUM_BINS)
     model = model_to_device(model, device)
-    print(f"Color expert model successfully initialized and mvoed to {device}")
+    print(f"Color expert model successfully initialized and moved to {device}")
 
     train_preloaded_data = load_sequential_data(cfg.TRAIN_DIR, cfg.TRAIN_FILES_LIMIT)
     val_preloaded_data = load_sequential_data(cfg.VAL_DIR, cfg.VAL_FILES_LIMIT)
@@ -222,10 +222,10 @@ def main():
 
     # Train and validate the model
     trained_model = train_val(
-        model,
-        device,
-        train_dataloader,
-        val_dataloader,
+        model=model,
+        device=device,
+        train_dataloader=train_dataloader,
+        val_dataloader=val_dataloader,
         epochs=cfg.EPOCHS,
         lr=cfg.LR,
         save_dir=cfg.SAVE_DIR_COLOR_EXPERT,

@@ -23,6 +23,7 @@ def save_best_model(model, save_dir):
 def load_embeddings(model, device, embeddings_dir: str):
     fourier_layer_path = os.path.join(embeddings_dir, "fourier_layer_model.pth")
     gray_cnn_path = os.path.join(embeddings_dir, "gray_cnn_model.pth")
+
     model.fourier_layer.load_state_dict(torch.load(fourier_layer_path, map_location=device))
     model.gray_cnn.load_state_dict(torch.load(gray_cnn_path, map_location=device))
 
@@ -42,31 +43,27 @@ def train_val(model, device, train_dataloader, val_dataloader, epochs, lr, save_
     os.makedirs(save_dir, exist_ok=True)
     checkpoint_path = os.path.join(save_dir, "checkpoint.pth")
 
-    model_module = model.module if isinstance(model, nn.DataParallel) else model
-
-    load_embeddings(model_module, device, os.path.join(cfg.AWS_SAVE_DIR, "base"))
-    freeze_embeddings(model_module)
-    script_embeddings(model_module)
+    load_embeddings(model, device, embeddings_dir=cfg.SAVE_DIR_BASE)
+    freeze_embeddings(model)
+    script_embeddings(model)
 
     model = compile_model(model)
 
     optimizer = torch.optim.Adam([
-        {'params': model_module.semantic_fcn.parameters(), 'lr': 5e-6, 'weight_decay': 1e-5},
-        {'params': model_module.compression_layer.parameters()}
+        {'params': model.semantic_fcn.parameters(), 'lr': 5e-6, 'weight_decay': 1e-5},
+        {'params': model.compression_layer.parameters()}
     ], lr=lr)
-
-    scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'min', factor=cfg.LR_DECAY_FACTOR,
-                                                           patience=cfg.PATIENCE)
+    scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'min', factor=cfg.LR_DECAY_FACTOR, patience=cfg.PATIENCE)
     scaler = GradScaler()
 
     criterion_ce_semantics = nn.CrossEntropyLoss(ignore_index=0)
-    best_semantics_val_loss = float('inf')
-    epochs_no_improve_semantics = 0
     training_losses = {'total': [], 'semantics': [], 'color': []}
     validation_losses = {'total': [], 'semantics': [], 'color': []}
     times = []
     start_epoch = 0
-    best_loss = float('inf')
+    best_val_loss = float('inf')
+    epochs_no_improve = 0
+
     if use_checkpoint and os.path.exists(checkpoint_path):
         print(f"Loading checkpoint from {checkpoint_path} ")
         checkpoint = torch.load(checkpoint_path, map_location=device)
@@ -74,7 +71,7 @@ def train_val(model, device, train_dataloader, val_dataloader, epochs, lr, save_
         optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
         scheduler.load_state_dict(checkpoint['scheduler_state_dict'])
         start_epoch = checkpoint['epoch']
-        best_loss = checkpoint.get('best_loss', best_loss)
+        best_val_loss = checkpoint.get('best_loss', best_val_loss)
         training_losses = checkpoint.get('training_losses', training_losses)
         validation_losses = checkpoint.get('validation_losses', validation_losses)
         times = checkpoint.get('times', times)
