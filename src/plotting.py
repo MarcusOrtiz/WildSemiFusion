@@ -7,7 +7,7 @@ def generate_plots(epoch, training_losses, validation_losses, times, save_dir, p
     if (epoch + 1) % plot_interval == 0:
         plot_losses(training_losses, validation_losses, save_dir)
         plot_times(times, save_dir)
-
+        print(f"Plots saved to {save_dir}")
 
 def plot_times(times: List[float], save_dir: str):
     save_path = os.path.join(save_dir, "time_per_epoch.png")
@@ -22,7 +22,6 @@ def plot_times(times: List[float], save_dir: str):
 
     plt.savefig(save_path)
     plt.close()
-    print(f"Time plot saved to: {save_path}")
 
 def plot_losses(training_losses: Dict[str, any], validation_losses: Dict[str, any], save_dir: str):
     LOSS_PLOT_PATH = os.path.join(save_dir, "loss_plot.png")
@@ -48,7 +47,6 @@ def plot_losses(training_losses: Dict[str, any], validation_losses: Dict[str, an
     plt.tight_layout()  # Ensure no overlap
     plt.savefig(INDIVIDUAL_LOSS_PLOT)
     plt.close()
-    print(f"Individual loss plot saved to: {INDIVIDUAL_LOSS_PLOT}")
 
     plt.figure(figsize=(10, 5))
     plt.plot(training_losses['total'], label="Training Loss")
@@ -60,7 +58,6 @@ def plot_losses(training_losses: Dict[str, any], validation_losses: Dict[str, an
 
     plt.savefig(LOSS_PLOT_PATH)
     plt.close()
-    print(f"Loss plot saved to: {LOSS_PLOT_PATH}")
 
 
 # from src.data.utils.data_processing import lab_discretized_to_rgb
