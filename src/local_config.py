@@ -32,12 +32,12 @@ TEST_FILES_LIMIT = None
 
 # Training parameters
 BATCH_SIZE = 6
-EPOCHS = 5
+EPOCHS = 25
 LR = 0.00002
-EARLY_STOP_EPOCHS = 10
+EARLY_STOP_EPOCHS = 5
 WEIGHT_SEMANTICS = 1
 WEIGHT_COLOR = 1
-PATIENCE = 5
+PATIENCE = 2
 LR_DECAY_FACTOR = 0.6
 
 # Dataset and preprocessing parameters
