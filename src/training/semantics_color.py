@@ -13,20 +13,17 @@ from src.models.experts import ColorExpertModel, SemanticExpertModel
 from src.models.semantics_color import SemanticsColorModelSimple, SemanticsColorModelLinear, SemanticsColorModelMLP
 
 from src.plotting import generate_plots
-from src.utils import generate_normalized_locations, populate_random_seeds, model_to_device, compile_model, generate_loss_trackers, \
-    load_checkpoint
+from src.utils import generate_normalized_locations, populate_random_seeds, model_to_device, compile_model
 
 
 def save_best_model(model, save_dir):
     torch.save(model.state_dict(), os.path.join(save_dir, "best_model.pth"))
-    # TODO: Add the sub models
 
 
 def load_sub_models(device, base_dir: str, color_expert_dir: str, semantics_expert_dir: str):
     base_path = os.path.join(base_dir, "best_model.pth")
     color_expert_path = os.path.join(color_expert_dir, "best_model.pth")
     semantics_expert_path = os.path.join(semantics_expert_dir, "best_model.pth")
-    print(f"Loading color expert model from {color_expert_path}")
 
     base_model = BaseModel(cfg.NUM_BINS, cfg.CLASSES)
     color_expert_model = ColorExpertModel(cfg.NUM_BINS)
@@ -41,35 +38,43 @@ def load_sub_models(device, base_dir: str, color_expert_dir: str, semantics_expe
     semantics_expert_model_state_dict = torch.load(semantics_expert_path, map_location=device)
     semantics_expert_model_state_dict = {k[len("_orig_mod."):] if k.startswith("_orig_mod.") else k: v for k, v in semantics_expert_model_state_dict.items()}
     semantics_expert_model.load_state_dict(semantics_expert_model_state_dict)
+    print(f"Loaded base model from {base_path}, color expert from {color_expert_path}, and semantics expert from {semantics_expert_path}", flush=True)
 
     base_model = model_to_device(base_model, device)
-    print(f"Loaded base model from {base_path}")
     color_expert_model = model_to_device(color_expert_model, device)
-    print(f"Loaded color expert model from {color_expert_path}")
     semantics_expert_model = model_to_device(semantics_expert_model, device)
-    print(f"Loaded semantics expert model from {semantics_expert_path}")
+    print(f"Moved base model, color expert, and semantics expert to {device}", flush=True)
 
     return base_model, color_expert_model, semantics_expert_model
 
 
-def freeze_script_compile_sub_model(model):
-    model.eval()
-    for param in model.parameters():
+def freeze_sub_models(base_model, color_expert_model, semantics_expert_model):
+    base_model.eval()
+    color_expert_model.eval()
+    semantics_expert_model.eval()
+    for param in base_model.parameters():
         param.requires_grad = False
-    # model = torch.jit.script(model)
-    return compile_model(model)
+    for param in color_expert_model.parameters():
+        param.requires_grad = False
+    for param in semantics_expert_model.parameters():
+        param.requires_grad = False
 
+def script_sub_models(base_model, color_expert_model, semantics_expert_model):
+    base_model = torch.jit.script(base_model)
+    color_expert_model = torch.jit.script(color_expert_model)
+    semantics_expert_model = torch.jit.script(semantics_expert_model)
+    return base_model, color_expert_model, semantics_expert_model
 
 def train_val(model, device, train_dataloader, val_dataloader, epochs, lr, save_dir: str, use_checkpoint: bool):
     model_type = model.__class__.__name__.split("Model")[-1]
-
     os.makedirs(save_dir, exist_ok=True)
     checkpoint_path = os.path.join(save_dir, "checkpoint.pth")
 
-    base_model, color_expert_model, semantics_expert_model = load_sub_models(device, cfg.SAVE_DIR_BASE, cfg.SAVE_DIR_COLOR_EXPERT, cfg.SAVE_DIR_SEMANTICS_EXPERT)
-    base_model = freeze_script_compile_sub_model(base_model)
-    color_expert_model = freeze_script_compile_sub_model(color_expert_model)
-    semantics_expert_model = freeze_script_compile_sub_model(semantics_expert_model)
+    base_model, color_expert_model, semantics_expert_model = load_sub_models(device, base_dir=cfg.SAVE_DIR_BASE, color_expert_dir=cfg.SAVE_DIR_COLOR_EXPERT, semantics_expert_dir=cfg.SAVE_DIR_SEMANTICS_EXPERT)
+    freeze_sub_models(base_model, color_expert_model, semantics_expert_model)
+    base_model, color_expert_model, semantics_expert_model = script_sub_models(base_model, color_expert_model, semantics_expert_model)
+
+    model = compile_model(model)
 
     optimizer = torch.optim.Adam([
         {'params': model.parameters(), 'lr': lr, 'weight_decay': 1e-4}, ], lr=lr)
@@ -78,17 +83,26 @@ def train_val(model, device, train_dataloader, val_dataloader, epochs, lr, save_
 
     criterion_ce_color = nn.CrossEntropyLoss(ignore_index=cfg.NUM_BINS - 1)
     criterion_ce_semantics = nn.CrossEntropyLoss(ignore_index=0)
-
-
-    epochs_no_improve_val = 0
     training_losses = {'total': [], 'semantics': [], 'color': []}
     validation_losses = {'total': [], 'semantics': [], 'color': []}
     times = []
     start_epoch = 0
-    best_val_loss, best_color_val_loss, best_semantics_val_loss = float('inf')
+    best_val_loss, best_val_semantics_loss, best_val_color_loss = float('inf'), float('inf'), float('inf')
+    epochs_no_improve = 0
 
     if use_checkpoint and os.path.exists(checkpoint_path):
-        load_checkpoint(model, device, optimizer, scheduler, save_dir)
+        checkpoint = torch.load(checkpoint_path)
+        model.load_state_dict(checkpoint['model_state_dict'])
+        optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
+        scheduler.load_state_dict(checkpoint['scheduler_state_dict'])
+        start_epoch = checkpoint['epoch']
+        best_val_loss = checkpoint['best_val_loss']
+        best_val_semantics_loss = checkpoint['best_val_semantics_loss']
+        best_val_color_loss = checkpoint['best_val_color_loss']
+        training_losses = checkpoint['training_losses']
+        validation_losses = checkpoint['validation_losses']
+        times = checkpoint['times']
+        print(f"Loaded checkpoint from {checkpoint_path}", flush=True)
 
     normalized_locations = generate_normalized_locations(cfg.IMAGE_SIZE)
     normalized_locations_tensor = torch.from_numpy(normalized_locations).to(device)
@@ -99,7 +113,7 @@ def train_val(model, device, train_dataloader, val_dataloader, epochs, lr, save_
         model.train()
         epoch_start_time = time.time()
         sub_model_time = 0
-        epoch_loss, epoch_color_loss, epoch_semantics_loss = 0.0, 0.0, 0.0
+        epoch_train_loss, epoch_train_semantics_loss, epoch_train_color_loss = 0.0, 0.0, 0.0
         for idx, batch in enumerate(train_dataloader):
             # if (idx < 2 or idx % 100 == 0): print(f"Loading training batch {idx}", flush=True)
             optimizer.zero_grad()
@@ -112,52 +126,47 @@ def train_val(model, device, train_dataloader, val_dataloader, epochs, lr, save_
                 locations = normalized_locations_tensor.unsqueeze(0).expand(batch_size, -1, -1)
 
                 sub_model_start_time = time.time()
-                with torch.no_grad():
-                    preds_semantics_base, preds_color_base = base_model(locations, gray_images, lab_images)
-                    preds_semantics_expert = semantics_expert_model(locations, gray_images)
-                    del gray_images
-                    preds_color_expert = color_expert_model(locations, lab_images)
-                    del lab_images, locations
+                preds_semantics_base, preds_color_base = base_model(locations, gray_images, lab_images)
+                preds_semantics_expert = semantics_expert_model(locations, gray_images)
+                del gray_images
+                preds_color_expert = color_expert_model(locations, lab_images)
+                del lab_images, locations
                 sub_model_time = time.time() - sub_model_start_time
 
                 gt_semantics = batch['gt_semantics'].to(device)
                 gt_color = batch['gt_color'].to(device)
 
                 preds_semantics, preds_color = model(preds_semantics_base, preds_semantics_expert, preds_color_base, preds_color_expert)
+                del preds_semantics_base, preds_semantics_expert, preds_color_base, preds_color_expert
                 loss_semantics = cfg.WEIGHT_SEMANTICS * criterion_ce_semantics(preds_semantics, gt_semantics.long().view(-1))
                 loss_color = cfg.WEIGHT_COLOR * criterion_ce_color(preds_color.view(-1, cfg.NUM_BINS), gt_color.view(-1))
-                del preds_semantics, preds_color
-
-                del preds_semantics_base, preds_color_base, preds_color_expert, gt_semantics, gt_color
+                del gt_semantics, gt_color
 
                 total_loss = loss_semantics + loss_color
-                scaler.scale(total_loss).backward()
-                scaler.step(optimizer)
-                scaler.update()
 
-            epoch_loss += total_loss.item()
-            epoch_semantics_loss += loss_semantics.item()
-            epoch_color_loss += loss_color.item()
+            epoch_train_loss += total_loss.item()
+            epoch_train_semantics_loss += loss_semantics.item()
+            epoch_train_color_loss += loss_color.item()
+            scaler.scale(total_loss).backward()
+            scaler.step(optimizer)
+            scaler.update()
 
-        average_epoch_loss = epoch_loss / len(train_dataloader)
-        average_epoch_semantics_loss = epoch_semantics_loss / len(train_dataloader)
-        average_epoch_color_loss = epoch_color_loss / len(train_dataloader)
+        average_epoch_train_loss = epoch_train_loss  / len(train_dataloader)
+        average_epoch_train_semantics_loss = epoch_train_semantics_loss / len(train_dataloader)
+        average_epoch_train_color_loss = epoch_train_color_loss / len(train_dataloader)
 
-        training_losses['total'].append(average_epoch_loss)
-        training_losses['semantics'].append(average_epoch_semantics_loss)
-        training_losses['color'].append(average_epoch_color_loss)
-
+        training_losses['total'].append(average_epoch_train_loss)
+        training_losses['semantics'].append(average_epoch_train_semantics_loss)
+        training_losses['color'].append(average_epoch_train_color_loss)
 
         print(f"Epoch {epoch + 1}/{epochs} for {model_type} model)", flush=True)
-        print(f"Training Loss: {average_epoch_loss}", flush=True)
-        print(f"Training Color Loss: {average_epoch_color_loss}", flush=True)
-        print(f"Training Semantics Loss: {average_epoch_semantics_loss}", flush=True)
+        print(f"Training Loss: {average_epoch_train_loss}", flush=True)
 
         if torch.cuda.is_available() and not hasattr(model, '_torchdynamo_orig_callable'):
             torch.cuda.empty_cache()
 
         model.eval()
-        val_loss, val_color_loss, val_semantics_loss = 0.0, 0.0, 0.0
+        epoch_val_loss, epoch_val_color_loss, epoch_val_semantics_loss = 0.0, 0.0, 0.0
         with torch.no_grad():
             for batch_idx, batch in enumerate(val_dataloader):
                 with autocast():
@@ -169,47 +178,43 @@ def train_val(model, device, train_dataloader, val_dataloader, epochs, lr, save_
                     locations = normalized_locations_tensor.unsqueeze(0).expand(batch_size, -1, -1)
 
                     sub_model_start_time = time.time()
-                    with torch.inference_mode():
-                        preds_semantics_base, preds_color_base = base_model(locations, gray_images, lab_images)
-                        preds_semantics_expert = semantics_expert_model(locations, gray_images)
-                        del gray_images
-                        preds_color_expert = color_expert_model(locations, lab_images)
-                        del lab_images, locations
+                    preds_semantics_base, preds_color_base = base_model(locations, gray_images, lab_images)
+                    preds_semantics_expert = semantics_expert_model(locations, gray_images)
+                    del gray_images
+                    preds_color_expert = color_expert_model(locations, lab_images)
+                    del lab_images, locations
                     sub_model_time += time.time() - sub_model_start_time
 
                     gt_semantics = batch['gt_semantics'].to(device)
                     gt_color = batch['gt_color'].to(device)
 
                     preds_semantics, preds_color = model(preds_semantics_base, preds_semantics_expert, preds_color_base, preds_color_expert)
+                    del preds_semantics_base, preds_semantics_expert, preds_color_base, preds_color_expert
                     loss_semantics_val = cfg.WEIGHT_SEMANTICS * criterion_ce_semantics(preds_semantics, gt_semantics.long().view(-1))
                     loss_color_val = cfg.WEIGHT_COLOR * criterion_ce_color(preds_color.view(-1, cfg.NUM_BINS), gt_color.view(-1))
-                    del preds_semantics, preds_color
+                    del gt_semantics, gt_color
 
-                    del preds_semantics_base, preds_color_base, preds_color_expert, gt_semantics, gt_color
+                    epoch_val_loss += loss_semantics_val + loss_color_val
+                    epoch_val_semantics_loss += loss_semantics_val
+                    epoch_val_color_loss += loss_color_val
 
-                    val_loss += loss_semantics_val + loss_color_val
+        average_epoch_val_loss = epoch_val_loss / len(val_dataloader)
+        average_epoch_val_color_loss = epoch_val_semantics_loss / len(val_dataloader)
+        average_epoch_val_semantics_loss = epoch_val_color_loss / len(val_dataloader)
 
-        average_val_loss = val_loss / len(val_dataloader)
-        average_val_color_loss = val_color_loss / len(val_dataloader)
-        average_val_semantics_loss = val_semantics_loss / len(val_dataloader)
-
-        validation_losses['total'].append(average_val_loss)
-        validation_losses['semantics'].append(average_val_color_loss)
-        validation_losses['color'].append(average_val_color_loss)
+        validation_losses['total'].append(average_epoch_val_loss)
+        validation_losses['semantics'].append(average_epoch_train_semantics_loss)
+        validation_losses['color'].append(average_epoch_train_color_loss)
         times.append((time.time() - epoch_start_time) - sub_model_time)
-        print(f"Validation Loss: {average_val_loss}", flush=True)
-        print(f"Validation Color Loss: {average_val_color_loss}", flush=True)
-        print(f"Validation Semantics Loss: {average_val_semantics_loss}", flush=True)
+        print(f"Validation Loss: {average_epoch_val_loss}", flush=True)
         print(f"Time: {sum(times)}", flush=True)
 
-        epochs_no_improve_val += 1
+        epochs_no_improve += 1
 
-        if average_val_loss < best_val_loss:
-            best_val_loss = average_val_loss
-            save_best_model(model, save_dir)
-            best_color_val_loss = average_val_color_loss
-            best_semantics_val_loss = average_val_semantics_loss
-            epochs_no_improve_val = 0
+        if average_epoch_val_loss < best_val_loss:
+            best_val_loss = average_epoch_val_loss
+            best_val_color_loss = average_epoch_val_color_loss
+            best_val_semantics_loss = average_epoch_val_semantics_loss
             print(f"New best {model_type} model saved with validation loss: {best_val_loss}")
 
         if (epoch + 1) % cfg.SAVE_INTERVAL == 0:
@@ -218,34 +223,34 @@ def train_val(model, device, train_dataloader, val_dataloader, epochs, lr, save_
                 'model_state_dict': model.state_dict(),
                 'optimizer_state_dict': optimizer.state_dict(),
                 'scheduler_state_dict': scheduler.state_dict(),
-                'loss': average_epoch_loss,
-                'best_loss': best_val_loss,
+                'best_val_loss': best_val_loss,
+                'best_val_color_loss': best_val_color_loss,
+                'best_val_semantics_loss': best_val_semantics_loss,
                 'training_losses': training_losses,
                 'validation_losses': validation_losses,
                 'times': times
-            }, os.path.join(save_dir, "checkpoint.pth"))
+            }, checkpoint_path)
 
-        if (epochs_no_improve_val >= cfg.EARLY_STOP_EPOCHS) and (epoch >= 15):
-            print(f"Early stop at epoch {epoch + 1} for {model_type} model. Val loss did not improve for {cfg.EARLY_STOP_EPOCHS} consecutive epochs")
-            print(f"Final training stats for {model_type} model")
+        if (epochs_no_improve >= cfg.EARLY_STOP_EPOCHS) and (epoch >= 50):
             total_time = sum(times)
-            print(f"Main model training time: {total_time}")
+
+            print(f"Early stop at epoch {epoch + 1} for {model_type} model. Val loss did not improve for {cfg.EARLY_STOP_EPOCHS} consecutive epochs)")
             print(f"Average time per epoch: {total_time / epochs}")
             print(f"Best validation loss: {best_val_loss}")
-            print(f"Color loss for best loss: {best_color_val_loss}")
-            print(f"Semantics loss for best loss: {best_semantics_val_loss}")
+            print(f"Color loss for best loss: {best_val_color_loss}")
+            print(f"Semantics loss for best loss: {best_val_semantics_loss}")
             break
 
         if torch.cuda.is_available() and not hasattr(model, '_torchdynamo_orig_callable'):
             torch.cuda.empty_cache()
-        scheduler.step(average_val_loss)
+        scheduler.step(average_epoch_val_loss)
 
-    print(f"Final training stats for {model_type} model )")
     total_time = sum(times)
+    print(f"Stopping since {model_type} since all epochs are done)")
     print(f"Main model training time: {total_time}")
     print(f"Average time per epoch: {total_time / epochs}")
     print(f"Best validation loss: {best_val_loss}")
-    print(f"Best color validation loss: {best_color_val_loss}")
+    print(f"Best color validation loss: {best_val_color_loss}")
 
     return model
 

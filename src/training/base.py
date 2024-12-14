@@ -48,7 +48,6 @@ def train_val(model, device, train_dataloader, val_dataloader, epochs, lr, save_
     epochs_no_improve = 0
 
     if use_checkpoint and os.path.exists(checkpoint_path):
-        print(f"Checkpoint at {checkpoint_path} being used")
         checkpoint = torch.load(checkpoint_path, map_location=device)
         model.load_state_dict(checkpoint['model_state_dict'])
         optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
@@ -58,6 +57,7 @@ def train_val(model, device, train_dataloader, val_dataloader, epochs, lr, save_
         training_losses = checkpoint.get('training_losses', training_losses)
         validation_losses = checkpoint.get('validation_losses', validation_losses)
         times = checkpoint.get('times', times)
+        print(f"Loaded checkpoint from {checkpoint_path}", flush=True)
 
     normalized_locations = generate_normalized_locations(cfg.IMAGE_SIZE)
     normalized_locations_tensor = torch.from_numpy(normalized_locations).to(device)
