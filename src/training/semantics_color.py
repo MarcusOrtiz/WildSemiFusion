@@ -61,7 +61,7 @@ def freeze_script_compile_sub_model(model):
 
 
 def train_val(model, device, train_dataloader, val_dataloader, epochs, lr, save_dir: str, use_checkpoint: bool):
-    model_type = model.__class__.__name__.split("_")[-1]
+    model_type = model.__class__.__name__.split("Model")[-1]
 
     os.makedirs(save_dir, exist_ok=True)
     checkpoint_path = os.path.join(save_dir, "checkpoint.pth")
