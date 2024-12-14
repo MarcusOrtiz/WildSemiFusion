@@ -78,7 +78,7 @@ def lab_discretized_to_rgb(lab_colors: np.array, num_bins, void_bin: bool):
         num_bins = num_bins - 1
 
     lab_colors = lab_colors.copy()
-    print(f"lab_colors shape {lab_colors.shape}")
+    # print(f"lab_colors shape {lab_colors.shape}")
 
     lab_colors_normalized = (lab_colors.astype(float) / num_bins)
 
@@ -88,9 +88,9 @@ def lab_discretized_to_rgb(lab_colors: np.array, num_bins, void_bin: bool):
                                                      channel_size(B_CHANNEL)] + \
                             [L_CHANNEL[0], A_CHANNEL[0], B_CHANNEL[0]]
 
-    print("L channel range:", lab_colors_continuous[:, :, 0].min(), lab_colors_continuous[:, :, 0].max())
-    print("A channel range:", lab_colors_continuous[:, :, 1].min(), lab_colors_continuous[:, :, 1].max())
-    print("B channel range:", lab_colors_continuous[:, :, 2].min(), lab_colors_continuous[:, :, 2].max())
+    # print("L channel range:", lab_colors_continuous[:, :, 0].min(), lab_colors_continuous[:, :, 0].max())
+    # print("A channel range:", lab_colors_continuous[:, :, 1].min(), lab_colors_continuous[:, :, 1].max())
+    # print("B channel range:", lab_colors_continuous[:, :, 2].min(), lab_colors_continuous[:, :, 2].max())
 
     rgb_image = color.lab2rgb(lab_colors_continuous)
 

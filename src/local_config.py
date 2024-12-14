@@ -8,14 +8,16 @@ SAVE_DIR_BASE = os.path.join(SAVE_DIR, "base")
 SAVE_DIR_COLOR_EXPERT = os.path.join(SAVE_DIR, "color_expert")
 SAVE_DIR_SEMANTICS_EXPERT = os.path.join(SAVE_DIR, "semantics_expert")
 SAVE_DIR_COLOR = os.path.join(SAVE_DIR, "color")
-SAVE_DIR_COLOR_SEMANTICS = os.path.join(SAVE_DIR, "color_semantics")
+SAVE_DIR_COLOR_SEMANTICS = os.path.join(SAVE_DIR, "semantics_color")
 
 AWS_SAVE_DIR = os.path.join(SRC_DIR, "../aws_saved_models") # Just for visually testing aws locally
 AWS_SAVE_DIR_BASE = os.path.join(AWS_SAVE_DIR, "base")
 AWS_SAVE_DIR_COLOR_EXPERT = os.path.join(SAVE_DIR, "color_expert")
 AWS_SAVE_DIR_SEMANTICS_EXPERT = os.path.join(AWS_SAVE_DIR, "semantics_expert")
 AWS_SAVE_DIR_COLOR = os.path.join(AWS_SAVE_DIR, "color")
-AWS_SAVE_DIR_COLOR_SEMANTICS = os.path.join(AWS_SAVE_DIR, "color_semantics")
+AWS_SAVE_DIR_COLOR_SEMANTICS = os.path.join(AWS_SAVE_DIR, "semantics_color")
+
+TESTING_MODELS_DIR = os.path.join(SRC_DIR, "../testing_models")
 
 # Data Directorie
 INPUT_DIR = os.path.join(SRC_DIR, "../input")
@@ -28,6 +30,7 @@ NUM_WORKERS = 0
 PIN_MEMORY = False
 TRAIN_FILES_LIMIT = 50
 VAL_FILES_LIMIT = 10
+TEST_FILES_LIMIT = 5
 
 # Training parameters
 BATCH_SIZE = 6
