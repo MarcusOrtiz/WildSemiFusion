@@ -35,7 +35,7 @@ class SemanticsColorModelLinear(nn.Module):
 
 
 class SemanticsColorModelMLP(nn.Module):
-    def __init__(self, num_bins):
+    def __init__(self, num_bins, num_classes):
         super(SemanticsColorModelMLP, self).__init__()
         self.color_fusion_fc1 = nn.Linear(num_bins * 2, num_bins)
         self.color_fusion_bn1 = nn.BatchNorm1d(num_bins)
@@ -45,13 +45,13 @@ class SemanticsColorModelMLP(nn.Module):
         self.color_fusion_drop2 = nn.Dropout(0.2)
         self.color_fusion_fc3 = nn.Linear(num_bins, num_bins)
 
-        self.semantics_fusion_fc1 = nn.Linear(num_bins * 2, num_bins)
-        self.semantics_fusion_bn1 = nn.BatchNorm1d(num_bins)
+        self.semantics_fusion_fc1 = nn.Linear(num_classes * 2, num_classes)
+        self.semantics_fusion_bn1 = nn.BatchNorm1d(num_classes)
         self.semantics_fusion_drop1 = nn.Dropout(0.1)
-        self.semantics_fusion_fc2 = nn.Linear(num_bins, num_bins)
-        self.semantics_fusion_bn2 = nn.BatchNorm1d(num_bins)
+        self.semantics_fusion_fc2 = nn.Linear(num_classes, num_classes)
+        self.semantics_fusion_bn2 = nn.BatchNorm1d(num_classes)
         self.semantics_fusion_drop2 = nn.Dropout(0.2)
-        self.semantics_color_fusion_fc3 = nn.Linear(num_bins, num_bins)
+        self.semantics_color_fusion_fc3 = nn.Linear(num_classes, num_classes)
 
         self.relu = nn.ReLU()
 
