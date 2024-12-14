@@ -148,7 +148,7 @@ def train_val(model, device, train_dataloader, val_dataloader, epochs, lr, save_
                     loss_color_val = cfg.WEIGHT_COLOR * criterion_ce_color(preds_color_logits, gt_color)
                     del preds_color_logits, gt_color
 
-                    epoch_val_loss += loss_color_val
+                    epoch_val_loss += loss_color_val.item()
 
         average_epoch_val_loss = epoch_val_loss / len(val_dataloader)
 
