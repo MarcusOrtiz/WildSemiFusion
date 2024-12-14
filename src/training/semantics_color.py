@@ -85,7 +85,7 @@ def train_val(model, device, train_dataloader, val_dataloader, epochs, lr, save_
     validation_losses = {'total': [], 'semantics': [], 'color': []}
     times = []
     start_epoch = 0
-    best_loss, best_color_val_loss, best_semantics_val_loss = float('inf')
+    best_val_loss, best_color_val_loss, best_semantics_val_loss = float('inf')
 
     if use_checkpoint and os.path.exists(checkpoint_path):
         load_checkpoint(model, device, optimizer, scheduler, save_dir)
@@ -99,7 +99,7 @@ def train_val(model, device, train_dataloader, val_dataloader, epochs, lr, save_
         model.train()
         epoch_start_time = time.time()
         sub_model_time = 0
-        epoch_loss = 0.0
+        epoch_loss, epoch_color_loss, epoch_semantics_loss = 0.0, 0.0, 0.0
         for idx, batch in enumerate(train_dataloader):
             # if (idx < 2 or idx % 100 == 0): print(f"Loading training batch {idx}", flush=True)
             optimizer.zero_grad()
@@ -131,28 +131,33 @@ def train_val(model, device, train_dataloader, val_dataloader, epochs, lr, save_
                 del preds_semantics_base, preds_color_base, preds_color_expert, gt_semantics, gt_color
 
                 total_loss = loss_semantics + loss_color
+                scaler.scale(total_loss).backward()
+                scaler.step(optimizer)
+                scaler.update()
 
             epoch_loss += total_loss.item()
-            scaler.scale(total_loss).backward()
-            scaler.step(optimizer)
-            scaler.update()
-
+            epoch_semantics_loss += loss_semantics.item()
+            epoch_color_loss += loss_color.item()
 
         average_epoch_loss = epoch_loss / len(train_dataloader)
+        average_epoch_semantics_loss = epoch_semantics_loss / len(train_dataloader)
+        average_epoch_color_loss = epoch_color_loss / len(train_dataloader)
 
         training_losses['total'].append(average_epoch_loss)
-        training_losses['semantics'].append(loss_semantics.item())
-        training_losses['color'].append(loss_color.item())
+        training_losses['semantics'].append(average_epoch_semantics_loss)
+        training_losses['color'].append(average_epoch_color_loss)
 
 
         print(f"Epoch {epoch + 1}/{epochs} for {model_type} model)", flush=True)
         print(f"Training Loss: {average_epoch_loss}", flush=True)
+        print(f"Training Color Loss: {average_epoch_color_loss}", flush=True)
+        print(f"Training Semantics Loss: {average_epoch_semantics_loss}", flush=True)
 
         if torch.cuda.is_available() and not hasattr(model, '_torchdynamo_orig_callable'):
             torch.cuda.empty_cache()
 
         model.eval()
-        val_loss = 0.0
+        val_loss, val_color_loss, val_semantics_loss = 0.0, 0.0, 0.0
         with torch.no_grad():
             for batch_idx, batch in enumerate(val_dataloader):
                 with autocast():
@@ -185,25 +190,27 @@ def train_val(model, device, train_dataloader, val_dataloader, epochs, lr, save_
                     val_loss += loss_semantics_val + loss_color_val
 
         average_val_loss = val_loss / len(val_dataloader)
-        color_val_loss = loss_color_val.item()
-        semantics_val_loss = loss_semantics.item()
+        average_val_color_loss = val_color_loss / len(val_dataloader)
+        average_val_semantics_loss = val_semantics_loss / len(val_dataloader)
 
         validation_losses['total'].append(average_val_loss)
-        validation_losses['semantics'].append(semantics_val_loss)
-        validation_losses['color'].append(color_val_loss)
+        validation_losses['semantics'].append(average_val_color_loss)
+        validation_losses['color'].append(average_val_color_loss)
         times.append((time.time() - epoch_start_time) - sub_model_time)
         print(f"Validation Loss: {average_val_loss}", flush=True)
-        print(f"Current training time: {sum(times)}", flush=True)
+        print(f"Validation Color Loss: {average_val_color_loss}", flush=True)
+        print(f"Validation Semantics Loss: {average_val_semantics_loss}", flush=True)
+        print(f"Time: {sum(times)}", flush=True)
 
         epochs_no_improve_val += 1
 
-        if average_val_loss < best_loss:
-            best_loss = average_val_loss
+        if average_val_loss < best_val_loss:
+            best_val_loss = average_val_loss
             save_best_model(model, save_dir)
-            best_color_val_loss = color_val_loss
-            best_semantics_val_loss = semantics_val_loss
+            best_color_val_loss = average_val_color_loss
+            best_semantics_val_loss = average_val_semantics_loss
             epochs_no_improve_val = 0
-            print(f"New best {model_type} model saved with validation loss: {best_loss}")
+            print(f"New best {model_type} model saved with validation loss: {best_val_loss}")
 
         if (epoch + 1) % cfg.SAVE_INTERVAL == 0:
             torch.save({
@@ -212,7 +219,7 @@ def train_val(model, device, train_dataloader, val_dataloader, epochs, lr, save_
                 'optimizer_state_dict': optimizer.state_dict(),
                 'scheduler_state_dict': scheduler.state_dict(),
                 'loss': average_epoch_loss,
-                'best_loss': best_loss,
+                'best_loss': best_val_loss,
                 'training_losses': training_losses,
                 'validation_losses': validation_losses,
                 'times': times
@@ -224,7 +231,7 @@ def train_val(model, device, train_dataloader, val_dataloader, epochs, lr, save_
             total_time = sum(times)
             print(f"Main model training time: {total_time}")
             print(f"Average time per epoch: {total_time / epochs}")
-            print(f"Best validation loss: {best_loss}")
+            print(f"Best validation loss: {best_val_loss}")
             print(f"Color loss for best loss: {best_color_val_loss}")
             print(f"Semantics loss for best loss: {best_semantics_val_loss}")
             break
@@ -237,7 +244,7 @@ def train_val(model, device, train_dataloader, val_dataloader, epochs, lr, save_
     total_time = sum(times)
     print(f"Main model training time: {total_time}")
     print(f"Average time per epoch: {total_time / epochs}")
-    print(f"Best validation loss: {best_loss}")
+    print(f"Best validation loss: {best_val_loss}")
     print(f"Best color validation loss: {best_color_val_loss}")
 
     return model

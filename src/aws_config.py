@@ -26,10 +26,10 @@ VAL_DIR = os.path.join(INPUT_DIR, "rellis_2d_preprocessed/val")
 TEST_DIR = os.path.join(INPUT_DIR, "rellis_2d_preprocessed/test")
 
 # Pytorch data processing parameters (limits should be None for full dataset)
-NUM_WORKERS = 0
+NUM_WORKERS = 3
 PIN_MEMORY = True
-TRAIN_FILES_LIMIT = None
-VAL_FILES_LIMIT = None
+TRAIN_FILES_LIMIT = 36
+VAL_FILES_LIMIT = 12
 TEST_FILES_LIMIT = None
 
 # Training parameters
@@ -53,8 +53,8 @@ IMAGE_NOISE = 0.01
 IMAGE_MASK_RATE = (.1, .25)
 
 # Plotting
-PLOT_INTERVAL = 3
-SAVE_INTERVAL = 5
+PLOT_INTERVAL = 1
+SAVE_INTERVAL = 1
 
 # Random seed for reproducibility
 SEED = 7

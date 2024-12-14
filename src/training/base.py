@@ -97,9 +97,7 @@ def train_val(model, device, train_dataloader, val_dataloader, epochs, lr, save_
                 total_loss = loss_semantics + loss_color
 
             epoch_loss += total_loss.item()
-            scaler.scale(total_loss).backward()
-            scaler.step(optimizer)
-            scaler.update()
+
 
         average_epoch_loss = epoch_loss / len(train_dataloader)
 
