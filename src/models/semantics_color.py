@@ -61,19 +61,19 @@ class SemanticsColorModelMLP(nn.Module):
         samples, channels, _ = preds_color_combined.shape
         preds_color_combined = preds_color_combined.view(samples * channels, -1)
 
-        preds_color_combined = self.relu(self.bn1(self.color_fusion_fc1(preds_color_combined)))
-        preds_color_combined = self.dropout_1(preds_color_combined)
-        preds_color_combined = self.relu(self.bn2(self.color_fusion_fc2(preds_color_combined)))
-        preds_color_combined = self.dropout_2(preds_color_combined)
+        preds_color_combined = self.relu(self.color_fusion_bn1(self.color_fusion_fc1(preds_color_combined)))
+        preds_color_combined = self.color_fusion_drop1(preds_color_combined)
+        preds_color_combined = self.relu(self.color_fusion_bn2(self.color_fusion_fc2(preds_color_combined)))
+        preds_color_combined = self.color_fusion_drop2(preds_color_combined)
 
         preds_color_combined = self.color_fusion_fc3(preds_color_combined)
         preds_color_combined = preds_color_combined.view(samples, channels, -1)
 
         preds_semantics_combined = torch.cat([preds_semantics_base, preds_semantics_expert], dim=-1)
-        preds_semantics_combined = self.relu(self.bn1(self.semantics_fusion_fc1(preds_semantics_combined)))
-        preds_semantics_combined = self.dropout_1(preds_semantics_combined)
-        preds_semantics_combined = self.relu(self.bn2(self.semantics_fusion_fc2(preds_semantics_combined)))
-        preds_semantics_combined = self.dropout_2(preds_semantics_combined)
+        preds_semantics_combined = self.relu(self.semantics_fusion_bn1(self.semantics_fusion_fc1(preds_semantics_combined)))
+        preds_semantics_combined = self.semantics_fusion_drop1(preds_semantics_combined)
+        preds_semantics_combined = self.relu(self.semantics_fusion_bn2(self.semantics_fusion_fc2(preds_semantics_combined)))
+        preds_semantics_combined = self.semantics_fusion_drop2(preds_semantics_combined)
 
         preds_semantics_combined = self.semantics_color_fusion_fc3(preds_semantics_combined)
 

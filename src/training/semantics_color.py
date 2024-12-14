@@ -264,6 +264,8 @@ def main():
     # Train and validate each color model
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    if torch.cuda.is_available():
+        torch.cuda.synchronize(device=device)
     model_simple = SemanticsColorModelSimple(cfg.NUM_BINS, cfg.CLASSES)
     model_simple = model_to_device(model_simple, device)
     trained_simple_model = train_val(
@@ -279,6 +281,8 @@ def main():
     del trained_simple_model, model_simple
     print("Training finished for SemanticsColorSimpleModel \n ---------------------")
 
+    if torch.cuda.is_available():
+        torch.cuda.synchronize(device=device)
     model_linear = SemanticsColorModelLinear(cfg.NUM_BINS, cfg.CLASSES)
     model_linear = model_to_device(model_linear, device)
     trained_linear_model = train_val(
@@ -294,6 +298,8 @@ def main():
     del trained_linear_model, model_linear
     print("Training finished for SemanticsColorLinearModel \n ---------------------")
 
+    if torch.cuda.is_available():
+        torch.cuda.synchronize(device=device)
     model_mlp = SemanticsColorModelMLP(cfg.NUM_BINS, cfg.CLASSES)
     model_mlp = model_to_device(model_mlp, device)
     trained_mlp_model = train_val(
