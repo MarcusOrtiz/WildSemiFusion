@@ -28,8 +28,8 @@ TEST_DIR = os.path.join(INPUT_DIR, "rellis_2d_preprocessed/test")
 # Pytorch data processing parameters (limits should be None for full dataset)
 NUM_WORKERS = 3
 PIN_MEMORY = True
-TRAIN_FILES_LIMIT = 36
-VAL_FILES_LIMIT = 12
+TRAIN_FILES_LIMIT = 32
+VAL_FILES_LIMIT = 32
 TEST_FILES_LIMIT = None
 
 # Training parameters
