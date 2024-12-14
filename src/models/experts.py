@@ -67,12 +67,11 @@ class SemanticExpertModel(nn.Module):
 
         locations = locations.reshape(-1, 2)
 
-        with torch.inference_mode():
-            location_features = self.fourier_layer(
-                locations)  # (batch_size, num_locations, locations_dim) -> (batch_size * num_locations, 2) -> (batch_size * num_locations, 256)
-            del locations
-            gray_features = self.gray_cnn(gray_images)  # (batch_size, 1, image_size[0], image_size[1]) -> (batch_size, 256)
-            del gray_images
+        location_features = self.fourier_layer(
+            locations)  # (batch_size, num_locations, locations_dim) -> (batch_size * num_locations, 2) -> (batch_size * num_locations, 256)
+        del locations
+        gray_features = self.gray_cnn(gray_images)  # (batch_size, 1, image_size[0], image_size[1]) -> (batch_size, 256)
+        del gray_images
 
         gray_features = gray_features[:, None, :].expand(-1, num_locations, -1).reshape(-1, gray_features.size(-1))
 

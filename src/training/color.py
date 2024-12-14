@@ -61,8 +61,8 @@ def script_sub_models(base_model, color_expert_model):
 
 def train_val(color_model, base_model, color_expert_model, device, train_dataloader, val_dataloader, epochs, lr, save_dir: str, use_checkpoint: bool):
     model_type = color_model.__class__.__name__.split("Model")[-1]
-    os.makedirs(save_dir+model_type, exist_ok=True)
-    checkpoint_path = os.path.join(save_dir+model_type, "checkpoint.pth")
+    os.makedirs(save_dir, exist_ok=True)
+    checkpoint_path = os.path.join(save_dir, "checkpoint.pth")
 
     color_model = compile_model(color_model)
 
@@ -185,7 +185,7 @@ def train_val(color_model, base_model, color_expert_model, device, train_dataloa
         if average_epoch_val_loss < best_val_loss:
             epochs_no_improve = 0
             best_val_loss = average_epoch_val_loss
-            save_best_model(color_model, save_dir+model_type)
+            save_best_model(color_model, save_dir)
             print(f"New best {model_type} model saved with validation loss: {best_val_loss}")
 
         if (epoch + 1) % cfg.SAVE_INTERVAL == 0:
@@ -256,7 +256,7 @@ def main():
         val_dataloader=val_dataloader,
         epochs=cfg.EPOCHS,
         lr=cfg.LR,
-        save_dir=cfg.SAVE_DIR_COLOR,
+        save_dir=cfg.SAVE_DIR_COLOR + "_simple",
         use_checkpoint=not args.scratch
     )
     print("Training finished for Simple Color Model \n ---------------------", flush=True)
@@ -273,7 +273,7 @@ def main():
         val_dataloader=val_dataloader,
         epochs=cfg.EPOCHS,
         lr=cfg.LR,
-        save_dir=cfg.SAVE_DIR_COLOR,
+        save_dir=cfg.SAVE_DIR_COLOR + "_linear",
         use_checkpoint=not args.scratch
     )
     print("Training finished for Linear Color Model \n ---------------------", flush=True)
@@ -290,7 +290,7 @@ def main():
         val_dataloader=val_dataloader,
         epochs=cfg.EPOCHS,
         lr=cfg.LR,
-        save_dir=cfg.SAVE_DIR_COLOR,
+        save_dir=cfg.SAVE_DIR_COLOR + "_mlp",
         use_checkpoint=not args.scratch
     )
     print("Training finished for MLP Color Model \n ---------------------", flush=True)
