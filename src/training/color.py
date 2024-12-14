@@ -17,31 +17,14 @@ from src.plotting import generate_plots
 from src.utils import generate_normalized_locations, populate_random_seeds, model_to_device, compile_model, generate_loss_trackers, update_loss_trackers
 
 
-def load_checkpoint(model, device, optimizer, scheduler, save_dir: str):
-    checkpoint_path = os.path.join(save_dir, "checkpoint.pth")
-
-    checkpoint = torch.load(checkpoint_path, map_location=device)
-    model.load_state_dict(checkpoint['model_state_dict'])
-    optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
-    scheduler.load_state_dict(checkpoint['scheduler_state_dict'])
-    start_epoch = checkpoint['epoch']
-    best_loss = checkpoint['best_loss']
-    training_losses = checkpoint.get('training_losses', [])
-    validation_losses = checkpoint.get('validation_losses', [])
-    times = checkpoint.get('times', [])
-    return start_epoch, best_loss, training_losses, validation_losses, times
-
 
 def save_best_model(model, save_dir):
     torch.save(model.state_dict(), os.path.join(save_dir, "best_model.pth"))
-    # Add the sub models
 
 
 def load_sub_models(device, base_dir: str, color_expert_dir: str):
     base_path = os.path.join(base_dir, "best_model.pth")
-    print(f"Loading base model from {base_path}")
     color_expert_path = os.path.join(color_expert_dir, "best_model.pth")
-    print(f"Loading color expert model from {color_expert_path}")
 
     base_model = BaseModel(cfg.NUM_BINS, cfg.CLASSES)
     color_expert_model = ColorExpertModel(cfg.NUM_BINS)
@@ -52,93 +35,74 @@ def load_sub_models(device, base_dir: str, color_expert_dir: str):
     color_expert_model_state_dict = torch.load(color_expert_path, map_location=device)
     color_expert_model_state_dict = {k[len("_orig_mod."):] if k.startswith("_orig_mod.") else k: v for k, v in color_expert_model_state_dict.items()}
     color_expert_model.load_state_dict(color_expert_model_state_dict)
+    print(f"Loaded base model from {base_path}, color expert from {color_expert_path}", flush=True)
 
     base_model = model_to_device(base_model, device)
     color_expert_model = model_to_device(color_expert_model, device)
+    print(f"Moved base model and color expert to {device}", flush=True)
+
     return base_model, color_expert_model
 
 
-def freeze_script_compile_sub_model(model):
-    model.eval()
-    for param in model.parameters():
+def freeze_sub_models(base_model, color_expert_model):
+    base_model.eval()
+    color_expert_model.eval()
+    for param in base_model.parameters():
         param.requires_grad = False
-    # model = torch.jit.script(model)
-    return compile_model(model)
+    for param in color_expert_model.parameters():
+        param.requires_grad = False
 
 
-def create_optimization(model, lr):
+def script_sub_models(base_model, color_expert_model):
+    base_model = torch.jit.script(base_model)
+    color_expert_model = torch.jit.script(color_expert_model)
+    return base_model, color_expert_model
+
+
+def train_val(color_model, base_model, color_expert_model, device, train_dataloader, val_dataloader, epochs, lr, save_dir: str, use_checkpoint: bool):
+    model_type = color_model.__class__.__name__.split("Model")[-1]
+    os.makedirs(save_dir+model_type, exist_ok=True)
+    checkpoint_path = os.path.join(save_dir+model_type, "checkpoint.pth")
+
+    color_model = compile_model(color_model)
+
     optimizer = torch.optim.Adam([
-        {'params': model.parameters(), 'lr': lr, 'weight_decay': 1e-4}, ], lr=lr)
+        {'params': color_model.parameters(), 'lr': lr, 'weight_decay': 1e-4}, ], lr=lr)
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'min', factor=cfg.LR_DECAY_FACTOR, patience=cfg.PATIENCE)
     scaler = GradScaler()
-    return optimizer, scheduler, scaler
-
-
-def create_directories(save_dir: str):
-    save_dir_simple = save_dir + "_simple"
-    save_dir_linear = save_dir + "_linear"
-    save_dir_mlp = save_dir + "_mlp"
-    os.makedirs(save_dir_simple, exist_ok=True)
-    os.makedirs(save_dir_linear, exist_ok=True)
-    os.makedirs(save_dir_mlp, exist_ok=True)
-    return save_dir_simple, save_dir_linear, save_dir_mlp
-
-
-def train_val(model_simple, model_linear, model_mlp, device, train_dataloader, val_dataloader, epochs, lr, save_dir: str, use_checkpoint: bool):
-    save_dir_simple, save_dir_linear, save_dir_mlp = create_directories(save_dir)
-
-    base_model, color_expert_model = load_sub_models(device, cfg.SAVE_DIR_BASE, cfg.SAVE_DIR_COLOR_EXPERT)
-    base_model = freeze_script_compile_sub_model(base_model)
-    color_expert_model = freeze_script_compile_sub_model(color_expert_model)
-
-    # model_simple = compile_model(model_simple)
-    # model_linear = compile_model(model_linear)
-
-    optimizer_simple, scheduler_simple, scaler_simple = create_optimization(model_simple, lr)
-    optimizer_linear, scheduler_linear, scaler_linear = create_optimization(model_linear, lr)
-    optimizer_mlp, scheduler_mlp, scaler_mlp = create_optimization(model_mlp, lr)
 
     criterion_ce_color = nn.CrossEntropyLoss(ignore_index=cfg.NUM_BINS - 1)
-    criterion_ce_semantics = nn.CrossEntropyLoss(ignore_index=0)
-    best_color_val_loss_simple, best_color_val_loss_linear, best_color_val_loss_mlp = float('inf'), float('inf'), float('inf')
-    epochs_no_improve_color_simple, epochs_no_improve_color_linear, epochs_no_improve_color_mlp = 0, 0, 0
-    training_losses_simple, validation_losses_simple = generate_loss_trackers()
-    training_losses_linear, validation_losses_linear = generate_loss_trackers()
-    training_losses_mlp, validation_losses_mlp = generate_loss_trackers()
-    times_simple, times_linear, times_mlp = [], [], []
-    running_simple, running_linear, running_mlp = True, True, True
-    best_loss_simple, best_loss_linear, best_loss_mlp = float('inf'), float('inf'), float('inf')
+    training_losses = {'total': [], 'semantics': [], 'color': []}
+    validation_losses = {'total': [], 'semantics': [], 'color': []}
+    times = []
     start_epoch = 0
+    best_val_loss = float('inf')
+    epochs_no_improve = 0
 
-    if use_checkpoint and os.path.exists(os.path.join(save_dir_simple, "checkpoint.pth")):
-        _, best_loss_simple, training_losses_simple, validation_losses_simple, times_simple = load_checkpoint(model_simple, device, optimizer_simple,
-                                                                                                              scheduler_simple, save_dir_simple)
-    if use_checkpoint and os.path.exists(os.path.join(save_dir_linear, "checkpoint.pth")):
-        _, best_loss_linear, training_losses_linear, validation_losses_linear, times_linear = load_checkpoint(model_linear, device, optimizer_linear,
-                                                                                                              scheduler_linear, save_dir_linear)
-    if use_checkpoint and os.path.exists(os.path.join(save_dir_mlp, "checkpoint.pth")):
-        _, best_loss_mlp, training_losses_mlp, validation_losses_mlp, times_mlp = load_checkpoint(model_mlp, device, optimizer_mlp,
-                                                                                                  scheduler_mlp, save_dir_mlp)
+    if use_checkpoint and os.path.exists(checkpoint_path):
+        checkpoint = torch.load(checkpoint_path, map_location=device)
+        color_model.load_state_dict(checkpoint['model_state_dict'])
+        optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
+        scheduler.load_state_dict(checkpoint['scheduler_state_dict'])
+        start_epoch = checkpoint['epoch']
+        best_val_loss = checkpoint['best_val_loss']
+        training_losses = checkpoint.get('training_losses', [])
+        validation_losses = checkpoint.get('validation_losses', [])
+        times = checkpoint.get('times', [])
 
     normalized_locations = generate_normalized_locations(cfg.IMAGE_SIZE)
     normalized_locations_tensor = torch.from_numpy(normalized_locations).to(device)
 
     for epoch in range(start_epoch, epochs):
-        generate_plots(epoch, training_losses_simple, validation_losses_simple, times_simple, save_dir_simple, cfg.PLOT_INTERVAL)
-        generate_plots(epoch, training_losses_linear, validation_losses_linear, times_linear, save_dir_linear, cfg.PLOT_INTERVAL)
-        generate_plots(epoch, training_losses_mlp, validation_losses_mlp, times_mlp, save_dir_mlp, cfg.PLOT_INTERVAL)
+        generate_plots(epoch, training_losses, validation_losses, times, save_dir, cfg.PLOT_INTERVAL)
 
-        model_simple.train()
-        model_linear.train()
-        model_mlp.train()
+        color_model.train()
         epoch_start_time = time.time()
         sub_model_time = 0
-        epoch_loss_simple, epoch_loss_linear, epoch_loss_mlp = 0.0, 0.0, 0.0
+        epoch_train_loss = 0.0
         for idx, batch in enumerate(train_dataloader):
             # if (idx < 2 or idx % 100 == 0): print(f"Loading training batch {idx}", flush=True)
-            optimizer_simple.zero_grad()
-            optimizer_linear.zero_grad()
-            optimizer_mlp.zero_grad()
+            optimizer.zero_grad()
             with autocast():
                 gray_images = batch['gray_image'].to(device)
                 lab_images = batch['lab_image'].to(device)
@@ -148,73 +112,40 @@ def train_val(model_simple, model_linear, model_mlp, device, train_dataloader, v
                 locations = normalized_locations_tensor.unsqueeze(0).expand(batch_size, -1, -1)
 
                 sub_model_start_time = time.time()
-                with torch.no_grad():
-                    preds_semantics_base, preds_color_base = base_model(locations, gray_images, lab_images)
-                    del gray_images
-                    preds_color_expert = color_expert_model(locations, lab_images)
-                    del lab_images, locations
+                preds_semantics_base, preds_color_base = base_model(locations, gray_images, lab_images)
+                del gray_images
+                preds_color_expert = color_expert_model(locations, lab_images)
+                del lab_images, locations
                 sub_model_time = time.time() - sub_model_start_time
 
-                gt_semantics = batch['gt_semantics'].to(device)
                 gt_color = batch['gt_color'].to(device)
 
+                preds_semantics, preds_color = color_model(preds_semantics_base, preds_color_base, preds_color_expert)
+                del preds_semantics_base, preds_color_base, preds_color_expert
+                loss_color = cfg.WEIGHT_COLOR * criterion_ce_color(preds_color.view(-1, cfg.NUM_BINS), gt_color.view(-1))
+                del gt_color
 
-                preds_semantics_simple, preds_color_simple = model_simple(preds_semantics_base, preds_color_base, preds_color_expert)
-                loss_semantics_simple = cfg.WEIGHT_SEMANTICS * criterion_ce_semantics(preds_semantics_simple, gt_semantics.long().view(-1))
-                loss_color_simple = cfg.WEIGHT_COLOR * criterion_ce_color(preds_color_simple.view(-1, cfg.NUM_BINS), gt_color.view(-1))
-                del preds_semantics_simple, preds_color_simple
+                total_loss = loss_color
 
-                preds_semantics_linear, preds_color_linear = model_linear(preds_semantics_base, preds_color_base, preds_color_expert)
-                loss_semantics_linear = cfg.WEIGHT_SEMANTICS * criterion_ce_semantics(preds_semantics_linear, gt_semantics.long().view(-1))
-                loss_color_linear = cfg.WEIGHT_COLOR * criterion_ce_color(preds_color_linear.view(-1, cfg.NUM_BINS), gt_color.view(-1))
-                del preds_semantics_linear, preds_color_linear
+            epoch_train_loss += total_loss.item()
+            scaler.scale(total_loss).backward()
+            scaler.step(optimizer)
+            scaler.update()
 
-                preds_semantics_mlp, preds_color_mlp = model_mlp(preds_semantics_base, preds_color_base, preds_color_expert)
-                loss_semantics_mlp = cfg.WEIGHT_SEMANTICS * criterion_ce_semantics(preds_semantics_mlp, gt_semantics.long().view(-1))
-                loss_color_mlp = cfg.WEIGHT_COLOR * criterion_ce_color(preds_color_mlp.view(-1, cfg.NUM_BINS), gt_color.view(-1))
-                del preds_semantics_mlp, preds_color_mlp
+        average_epoch_train_loss = epoch_train_loss / len(train_dataloader)
 
-                del preds_semantics_base, preds_color_base, preds_color_expert, gt_semantics, gt_color
+        training_losses['total'].append(average_epoch_train_loss)
+        training_losses['color'].append(average_epoch_train_loss)
 
-                total_loss_simple = loss_semantics_simple + loss_color_simple
-                total_loss_linear = loss_semantics_linear + loss_color_linear
-                total_loss_mlp = loss_semantics_mlp + loss_color_mlp
+        print(f"Epoch {epoch + 1}/{epochs} for {model_type} model)", flush=True)
+        print(f"Training Loss Simple: {average_epoch_train_loss}", flush=True)
 
-            epoch_loss_simple += total_loss_simple.item()
-            scaler_simple.scale(total_loss_simple).backward()
-            scaler_simple.step(optimizer_simple)
-            scaler_simple.update()
-
-            epoch_loss_linear += total_loss_linear.item()
-            scaler_linear.scale(total_loss_linear).backward()
-            scaler_linear.step(optimizer_linear)
-            scaler_linear.update()
-
-            epoch_loss_mlp += total_loss_mlp.item()
-            scaler_mlp.scale(total_loss_mlp).backward()
-            scaler_mlp.step(optimizer_mlp)
-            scaler_mlp.update()
-
-        average_epoch_loss_simple = epoch_loss_simple / len(train_dataloader)
-        average_epoch_loss_linear = epoch_loss_linear / len(train_dataloader)
-        average_epoch_loss_mlp = epoch_loss_mlp / len(train_dataloader)
-
-        update_loss_trackers(training_losses_simple, average_epoch_loss_simple, loss_semantics_simple.item(), loss_color_simple.item())
-        update_loss_trackers(training_losses_linear, average_epoch_loss_linear, loss_semantics_linear.item(), loss_color_linear.item())
-        update_loss_trackers(training_losses_mlp, average_epoch_loss_mlp, loss_semantics_mlp.item(), loss_color_mlp.item())
-
-        print(f"Epoch {epoch + 1}/{epochs})")
-        print(f"Training Loss Simple: {average_epoch_loss_simple}")
-        print(f"Training Loss Linear: {average_epoch_loss_linear}")
-        print(f"Training Loss MLP: {average_epoch_loss_mlp}")
-
-        if torch.cuda.is_available() and not hasattr(model_simple, '_torchdynamo_orig_callable') and not hasattr(model_linear, '_torchdynamo_orig_callable') and not hasattr(model_mlp, '_torchdynamo_orig_callable'):
+        if torch.cuda.is_available() and not hasattr(color_model, '_torchdynamo_orig_callable'):
             torch.cuda.empty_cache()
 
-        for model in [model_simple, model_linear, model_mlp]:
-            model.eval()
 
-        val_loss_simple, val_loss_linear, val_loss_mlp = 0.0, 0.0, 0.0
+        color_model.eval()
+        epoch_val_loss = 0.0
         with torch.no_grad():
             for batch_idx, batch in enumerate(val_dataloader):
                 with autocast():
@@ -226,162 +157,70 @@ def train_val(model_simple, model_linear, model_mlp, device, train_dataloader, v
                     locations = normalized_locations_tensor.unsqueeze(0).expand(batch_size, -1, -1)
 
                     sub_model_start_time = time.time()
-                    with torch.inference_mode():
-                        preds_semantics_base, preds_color_base = base_model(locations, gray_images, lab_images)
-                        del gray_images
-                        preds_color_expert = color_expert_model(locations, lab_images)
-                        del lab_images, locations
+                    preds_semantics_base, preds_color_base = base_model(locations, gray_images, lab_images)
+                    del gray_images
+                    preds_color_expert = color_expert_model(locations, lab_images)
+                    del lab_images, locations
                     sub_model_time += time.time() - sub_model_start_time
 
-                    gt_semantics = batch['gt_semantics'].to(device)
                     gt_color = batch['gt_color'].to(device)
 
-                    preds_semantics_simple, preds_color_simple = model_simple(preds_semantics_base, preds_color_base, preds_color_expert)
-                    loss_semantics_val_simple = cfg.WEIGHT_SEMANTICS * criterion_ce_semantics(preds_semantics_simple, gt_semantics.long().view(-1))
-                    loss_color_val_simple = cfg.WEIGHT_COLOR * criterion_ce_color(preds_color_simple.view(-1, cfg.NUM_BINS), gt_color.view(-1))
-                    del preds_semantics_simple, preds_color_simple
+                    preds_semantics, preds_color = color_model(preds_semantics_base, preds_color_base, preds_color_expert)
+                    del preds_semantics_base, preds_color_base, preds_color_expert
+                    loss_color_val = cfg.WEIGHT_COLOR * criterion_ce_color(preds_color.view(-1, cfg.NUM_BINS), gt_color.view(-1))
+                    del gt_color
 
-                    preds_semantics_linear, preds_color_linear = model_linear(preds_semantics_base, preds_color_base, preds_color_expert)
-                    loss_semantics_val_linear = cfg.WEIGHT_SEMANTICS * criterion_ce_semantics(preds_semantics_linear, gt_semantics.long().view(-1))
-                    loss_color_val_linear = cfg.WEIGHT_COLOR * criterion_ce_color(preds_color_linear.view(-1, cfg.NUM_BINS), gt_color.view(-1))
-                    del preds_semantics_linear, preds_color_linear
+                    epoch_val_loss += loss_color_val.item()
 
-                    preds_semantics_mlp, preds_color_mlp = model_mlp(preds_semantics_base, preds_color_base, preds_color_expert)
-                    loss_semantics_val_mlp = cfg.WEIGHT_SEMANTICS * criterion_ce_semantics(preds_semantics_mlp, gt_semantics.long().view(-1))
-                    loss_color_val_mlp = cfg.WEIGHT_COLOR * criterion_ce_color(preds_color_mlp.view(-1, cfg.NUM_BINS), gt_color.view(-1))
-                    del preds_semantics_mlp, preds_color_mlp
+        average_epoch_val_loss = epoch_val_loss / len(val_dataloader)
 
-                    del preds_semantics_base, preds_color_base, preds_color_expert, gt_semantics, gt_color
+        validation_losses['total'].append(average_epoch_val_loss)
+        validation_losses['color'].append(average_epoch_val_loss)
+        times.append((time.time() - epoch_start_time) - sub_model_time)
+        print(f"Validation Loss Simple: {average_epoch_val_loss}", flush=True)
+        print(f"Time: {sum(times)}", flush=True)
 
-                    val_loss_simple += loss_semantics_val_simple + loss_color_val_simple
-                    val_loss_linear += loss_semantics_val_linear + loss_color_val_linear
-                    val_loss_mlp += loss_semantics_val_mlp + loss_color_val_mlp
+        epochs_no_improve += 1
 
-        average_val_loss_simple = val_loss_simple / len(val_dataloader)
-        average_val_loss_linear = val_loss_linear / len(val_dataloader)
-        average_val_loss_mlp = val_loss_mlp / len(val_dataloader)
-        color_val_loss_simple = loss_color_val_simple.item()
-        color_val_loss_linear = loss_color_val_linear.item()
-        color_val_loss_mlp = loss_color_val_mlp.item()
-        semantics_val_loss_simple = loss_semantics_val_simple.item()
-        semantics_val_loss_linear = loss_semantics_val_linear.item()
-        semantics_val_loss_mlp = loss_semantics_val_mlp.item()
+        if average_epoch_val_loss < best_val_loss:
+            epochs_no_improve = 0
+            best_val_loss = average_epoch_val_loss
+            save_best_model(color_model, save_dir+model_type)
+            print(f"New best {model_type} model saved with validation loss: {best_val_loss}")
 
-        update_loss_trackers(validation_losses_simple, average_val_loss_simple.item(), semantics_val_loss_simple, color_val_loss_simple)
-        update_loss_trackers(validation_losses_linear, average_val_loss_linear.item(), semantics_val_loss_linear, color_val_loss_linear)
-        update_loss_trackers(validation_losses_mlp, average_val_loss_mlp.item(), semantics_val_loss_mlp, color_val_loss_mlp)
-        times_simple.append((time.time() - epoch_start_time) / 3 - sub_model_time)
-        times_linear.append((time.time() - epoch_start_time) / 3 - sub_model_time)
-        times_mlp.append((time.time() - epoch_start_time) / 3 - sub_model_time)
-
-        if running_simple:
-            print(f"Validation Loss Simple: {average_val_loss_simple}")
-            print(f"Training Time Simple: {sum(times_simple)}")
-        if running_linear:
-            print(f"Validation Loss Linear: {average_val_loss_linear}")
-            print(f"Training Time Linear: {sum(times_linear)}")
-        if running_mlp:
-            print(f"Validation Loss MLP: {average_val_loss_mlp}")
-            print(f"Training Time MLP: {sum(times_mlp)}")
-
-        if color_val_loss_simple < best_color_val_loss_simple:
-            best_color_val_loss_simple = color_val_loss_simple
-            epochs_no_improve_color_simple = 0
-        else:
-            epochs_no_improve_color_simple += 1
-
-        if color_val_loss_linear < best_color_val_loss_linear:
-            best_color_val_loss_linear = color_val_loss_linear
-            epochs_no_improve_color_linear = 0
-        else:
-            epochs_no_improve_color_linear += 1
-
-        if color_val_loss_mlp < best_color_val_loss_mlp:
-            best_color_val_loss_mlp = color_val_loss_mlp
-            epochs_no_improve_color_mlp = 0
-        else:
-            epochs_no_improve_color_mlp += 1
-
-        if average_val_loss_simple.item() < best_loss_simple and running_simple:
-            best_loss_simple = average_val_loss_simple
-            save_best_model(model_simple, save_dir_simple)
-            print(f"New best simple model saved with validation loss: {best_loss_simple}")
-
-        if average_val_loss_linear.item() < best_loss_linear and running_linear:
-            best_loss_linear = average_val_loss_linear
-            save_best_model(model_linear, save_dir_linear)
-            print(f"New best linear model saved with validation loss: {best_loss_linear}")
-
-        if average_val_loss_mlp.item() < best_loss_mlp and running_mlp:
-            best_loss_mlp = average_val_loss_mlp
-            save_best_model(model_mlp, save_dir_mlp)
-            print(f"New best mlp model saved with validation loss: {best_loss_mlp}")
-
-        if running_simple and (epoch + 1) % cfg.SAVE_INTERVAL == 0:
+        if (epoch + 1) % cfg.SAVE_INTERVAL == 0:
             torch.save({
                 'epoch': epoch + 1,
-                'model_state_dict': model_simple.state_dict(),
-                'optimizer_state_dict': optimizer_simple.state_dict(),
-                'scheduler_state_dict': scheduler_simple.state_dict(),
-                'loss': average_epoch_loss_simple,
-                'best_loss': best_loss_simple,
-                'training_losses': training_losses_simple,
-                'validation_losses': validation_losses_simple,
-                'times': times_simple
-            }, os.path.join(save_dir_simple, "checkpoint.pth"))
+                'model_state_dict': color_model.state_dict(),
+                'optimizer_state_dict': optimizer.state_dict(),
+                'scheduler_state_dict': scheduler.state_dict(),
+                'best_val_loss': best_val_loss,
+                'training_losses': training_losses,
+                'validation_losses': validation_losses,
+                'times': times
+            }, checkpoint_path)
 
-        if running_linear and (epoch + 1) % cfg.SAVE_INTERVAL == 0:
-            torch.save({
-                'epoch': epoch + 1,
-                'model_state_dict': model_linear.state_dict(),
-                'optimizer_state_dict': optimizer_linear.state_dict(),
-                'scheduler_state_dict': scheduler_linear.state_dict(),
-                'loss': average_epoch_loss_linear,
-                'best_loss': best_loss_linear,
-                'training_losses': training_losses_linear,
-                'validation_losses': validation_losses_linear,
-                'times': times_linear
-            }, os.path.join(save_dir_linear, "checkpoint.pth"))
+        if (epochs_no_improve >= cfg.EARLY_STOP_EPOCHS) and (epoch >= 50):
+            total_time = sum(times)
 
-        if running_mlp and (epoch + 1) % cfg.SAVE_INTERVAL == 0:
-            torch.save({
-                'epoch': epoch + 1,
-                'model_state_dict': model_mlp.state_dict(),
-                'optimizer_state_dict': optimizer_mlp.state_dict(),
-                'scheduler_state_dict': scheduler_mlp.state_dict(),
-                'loss': average_epoch_loss_mlp,
-                'best_loss': best_loss_mlp,
-                'training_losses': training_losses_mlp,
-                'validation_losses': validation_losses_mlp,
-                'times': times_mlp
-            }, os.path.join(save_dir_mlp, "checkpoint.pth"))
+            print(f"Early stop at epoch {epoch + 1} for {model_type} model. Val loss did not improve for {cfg.EARLY_STOP_EPOCHS} consecutive epochs)")
+            print(f"Average time per epoch: {total_time / epochs}")
+            print(f"Best validation loss: {best_val_loss}")
+            break
 
-        if (epochs_no_improve_color_simple >= cfg.EARLY_STOP_EPOCHS) and (epoch >= 15) and running_simple:
-            running_simple = False
-            print(f"Early stop at epoch {epoch + 1}. Color validation loss did not improve for {cfg.EARLY_STOP_EPOCHS} consecutive epochs.")
-            print(f"Model saved at early stopping point with validation loss: {best_color_val_loss_simple}")
+        if torch.cuda.is_available():
+            torch.cuda.empty_cache()
+        scheduler.step(average_epoch_val_loss)
 
-        if (epochs_no_improve_color_linear >= cfg.EARLY_STOP_EPOCHS) and (epoch >= 15) and running_linear:
-            running_linear = False
-            print(f"Early stop at epoch {epoch + 1}. Color validation loss did not improve for {cfg.EARLY_STOP_EPOCHS} consecutive epochs.")
-            print(f"Model saved at early stopping point with validation loss: {best_color_val_loss_linear}")
 
-        if (epochs_no_improve_color_mlp >= cfg.EARLY_STOP_EPOCHS) and (epoch >= 15) and running_mlp:
-            running_mlp = False
-            print(f"Early stop at epoch {epoch + 1}. Color validation loss did not improve for {cfg.EARLY_STOP_EPOCHS} consecutive epochs.")
-            print(f"Model saved at early stopping point with validation loss: {best_color_val_loss_mlp}")
+    total_time = sum(times)
+    print(f"Total training time: {total_time // 3600:.0f} hours, {(total_time % 3600) // 60:.0f} minutes, {total_time % 60:.0f} seconds", flush=True)
+    print(f"Stopping since {model_type} since all epochs are done)", flush=True)
+    print(f"Main model training time: {total_time}", flush=True)
+    print(f"Average time per epoch: {total_time / epochs}", flush=True)
+    print(f"Best validation loss: {best_val_loss}", flush=True)
 
-        if torch.cuda.is_available(): torch.cuda.empty_cache()
-        sys.stdout.flush()
-
-        scheduler_simple.step(average_val_loss_simple)
-        scheduler_linear.step(average_val_loss_linear)
-        scheduler_mlp.step(average_val_loss_mlp)
-
-    total_time = sum(times_simple) + sum(times_linear) + sum(times_mlp)
-    print(f"Total training time: {total_time // 3600:.0f} hours, {(total_time % 3600) // 60:.0f} minutes, {total_time % 60:.0f} seconds")
-
-    return model_simple, model_linear, model_mlp
+    return color_model
 
 
 def main():
@@ -401,19 +240,17 @@ def main():
                                 pin_memory=cfg.PIN_MEMORY, drop_last=True)
     print(f"Created training dataloader with {len(train_dataset)} files and validation dataloader with {len(val_dataset)} files")
 
-    # Train and validate each color model
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    model_simple = ColorModelSimple(cfg.NUM_BINS)
-    model_linear = ColorModelLinear(cfg.NUM_BINS)
-    model_mlp = ColorModelMLP(cfg.NUM_BINS)
-    model_simple = model_to_device(model_simple, device)
-    model_linear = model_to_device(model_linear, device)
-    model_mlp = model_to_device(model_mlp, device)
+    base_model, color_expert_model = load_sub_models(device, base_dir=cfg.SAVE_DIR_BASE, color_expert_dir=cfg.SAVE_DIR_COLOR_EXPERT)
+    freeze_sub_models(base_model=base_model, color_expert_model=color_expert_model)
+    base_model, color_expert_model = script_sub_models(base_model=base_model, color_expert_model=color_expert_model)
 
-    trained_simple_model, trained_linear_model, trained_mlp_model = train_val(
-        model_simple=model_simple,
-        model_linear=model_linear,
-        model_mlp=model_mlp,
+    color_model_simple = ColorModelSimple(num_bins=cfg.NUM_BINS)
+    color_model_simple = model_to_device(color_model_simple, device)
+    trained_color_model_simple = train_val(
+        color_model=color_model_simple,
+        base_model=base_model,
+        color_expert_model=color_expert_model,
         device=device,
         train_dataloader=train_dataloader,
         val_dataloader=val_dataloader,
@@ -422,8 +259,41 @@ def main():
         save_dir=cfg.SAVE_DIR_COLOR,
         use_checkpoint=not args.scratch
     )
+    print("Training finished for Simple Color Model \n ---------------------", flush=True)
+    del color_model_simple, trained_color_model_simple
 
-    print("Training finished for color models \n ---------------------")
+    color_model_linear = ColorModelLinear(num_bins=cfg.NUM_BINS)
+    color_model_linear = model_to_device(color_model_linear, device)
+    trained_color_model_linear = train_val(
+        color_model=color_model_linear,
+        base_model=base_model,
+        color_expert_model=color_expert_model,
+        device=device,
+        train_dataloader=train_dataloader,
+        val_dataloader=val_dataloader,
+        epochs=cfg.EPOCHS,
+        lr=cfg.LR,
+        save_dir=cfg.SAVE_DIR_COLOR,
+        use_checkpoint=not args.scratch
+    )
+    print("Training finished for Linear Color Model \n ---------------------", flush=True)
+    del color_model_linear, trained_color_model_linear
+
+    color_model_mlp = ColorModelMLP(num_bins=cfg.NUM_BINS)
+    color_model_mlp = model_to_device(color_model_mlp, device)
+    trained_color_model_mlp = train_val(
+        color_model=color_model_mlp,
+        base_model=base_model,
+        color_expert_model=color_expert_model,
+        device=device,
+        train_dataloader=train_dataloader,
+        val_dataloader=val_dataloader,
+        epochs=cfg.EPOCHS,
+        lr=cfg.LR,
+        save_dir=cfg.SAVE_DIR_COLOR,
+        use_checkpoint=not args.scratch
+    )
+    print("Training finished for MLP Color Model \n ---------------------", flush=True)
 
 
 if __name__ == "__main__":

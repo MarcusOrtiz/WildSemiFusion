@@ -252,6 +252,7 @@ def train_val(model, device, train_dataloader, val_dataloader, epochs, lr, save_
     print(f"Average time per epoch: {total_time / epochs}")
     print(f"Best validation loss: {best_val_loss}")
     print(f"Best color validation loss: {best_val_color_loss}")
+    print(f"Best semantics validation loss: {best_val_semantics_loss}")
 
     return model
 
