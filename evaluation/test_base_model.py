@@ -24,7 +24,6 @@ def test_base_model(model, device, test_preloaded_data):
 
     start_time = time.time()
     for rgb_image, gt_semantics in zip(test_preloaded_data['rgb_images'], test_preloaded_data['gt_semantics']):
-        model.eval()
         with torch.no_grad():
             # Convert rgb_image to gray and lab
             gray_image = rgb_to_gray(rgb_image)
@@ -34,8 +33,8 @@ def test_base_model(model, device, test_preloaded_data):
             batch_size = 1
 
             locations = normalized_locations_tensor.repeat(batch_size, 1, 1)
-            lab_image_tensor = torch.tensor(lab_image_discretized.transpose(2, 0, 1), dtype=torch.float32).unsqueeze(0)  # Shape: (3, H, W)
-            gray_image_tensor = torch.tensor(gray_image[np.newaxis, ...], dtype=torch.float32).unsqueeze(0)  # Shape: (1, H, W)
+            lab_image_tensor = torch.tensor(lab_image_discretized.transpose(2, 0, 1), dtype=torch.float32).unsqueeze(0).to(device)  # Shape: (3, H, W)
+            gray_image_tensor = torch.tensor(gray_image[np.newaxis, ...], dtype=torch.float32).unsqueeze(0).to(device)  # Shape: (1, H, W)
 
             preds_semantics, preds_color = model(locations, gray_image_tensor, lab_image_tensor)
 

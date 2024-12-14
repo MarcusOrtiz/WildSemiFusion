@@ -24,9 +24,6 @@ def test_color_model(base_model, color_expert_model, color_model, device, test_p
 
     times = []
     for rgb_image, gt_semantics in zip(test_preloaded_data['rgb_images'], test_preloaded_data['gt_semantics']):
-        base_model.eval()
-        color_expert_model.eval()
-        color_model.eval()
         with torch.no_grad():
             # Convert rgb_image to gray and lab
             gray_image = rgb_to_gray(rgb_image)
@@ -36,8 +33,8 @@ def test_color_model(base_model, color_expert_model, color_model, device, test_p
             batch_size = 1
 
             locations = normalized_locations_tensor.repeat(batch_size, 1, 1)
-            lab_image_tensor = torch.tensor(lab_image_discretized.transpose(2, 0, 1), dtype=torch.float32).unsqueeze(0)  # Shape: (3, H, W)
-            gray_image_tensor = torch.tensor(gray_image[np.newaxis, ...], dtype=torch.float32).unsqueeze(0)  # Shape: (1, H, W)
+            lab_image_tensor = torch.tensor(lab_image_discretized.transpose(2, 0, 1), dtype=torch.float32).unsqueeze(0).to(device)  # Shape: (3, H, W)
+            gray_image_tensor = torch.tensor(gray_image[np.newaxis, ...], dtype=torch.float32).unsqueeze(0).to(device)  # Shape: (1, H, W)
 
             if torch.cuda.is_available(): torch.cuda.synchronize()
             start_time = time.time()
@@ -122,7 +119,6 @@ def main():
         color_model_path = os.path.join(cfg.TESTING_MODELS_DIR, "color_mlp", "best_model.pth")
         color_model = ColorModelMLP(cfg.NUM_BINS)
 
-    color_model_path = os.path.expanduser(color_model_path)
     color_model = load_model(color_model, color_model_path, device)
     color_model = freeze_compile_model(color_model)
     print("Color model frozen and compiled successfully")
