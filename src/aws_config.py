@@ -8,14 +8,14 @@ SAVE_DIR_BASE = os.path.join(SAVE_DIR, "base")
 SAVE_DIR_COLOR_EXPERT = os.path.join(SAVE_DIR, "color_expert")
 SAVE_DIR_SEMANTICS_EXPERT = os.path.join(SAVE_DIR, "semantics_expert")
 SAVE_DIR_COLOR = os.path.join(SAVE_DIR, "color")
-SAVE_DIR_COLOR_SEMANTICS = os.path.join(SAVE_DIR, "color_semantics")
+SAVE_DIR_COLOR_SEMANTICS = os.path.join(SAVE_DIR, "semantics_color")
 
 AWS_SAVE_DIR = os.path.join(SAVE_DIR, "../aws_saved_models_test")
 AWS_SAVE_DIR_BASE = os.path.join(AWS_SAVE_DIR, "base")
 AWS_SAVE_DIR_COLOR_EXPERT = os.path.join(AWS_SAVE_DIR, "color_expert")
 AWS_SAVE_DIR_SEMANTICS_EXPERT = os.path.join(AWS_SAVE_DIR, "semantics_expert")
 AWS_SAVE_DIR_COLOR = os.path.join(AWS_SAVE_DIR, "color")
-AWS_SAVE_DIR_COLOR_SEMANTICS = os.path.join(AWS_SAVE_DIR, "color_semantics")
+AWS_SAVE_DIR_COLOR_SEMANTICS = os.path.join(AWS_SAVE_DIR, "semantics_color")
 
 # Data Directories
 INPUT_DIR = os.path.join(SRC_DIR, "../input")
