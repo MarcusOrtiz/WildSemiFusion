@@ -199,12 +199,12 @@ def train_val(model, device, train_dataloader, val_dataloader, epochs, lr, save_
                     epoch_val_color_loss += loss_color_val
 
         average_epoch_val_loss = epoch_val_loss / len(val_dataloader)
-        average_epoch_val_color_loss = epoch_val_semantics_loss / len(val_dataloader)
-        average_epoch_val_semantics_loss = epoch_val_color_loss / len(val_dataloader)
+        average_epoch_val_semantics_loss = epoch_val_semantics_loss / len(val_dataloader)
+        average_epoch_val_color_loss = epoch_val_color_loss / len(val_dataloader)
 
         validation_losses['total'].append(average_epoch_val_loss)
-        validation_losses['semantics'].append(average_epoch_train_semantics_loss)
-        validation_losses['color'].append(average_epoch_train_color_loss)
+        validation_losses['semantics'].append(average_epoch_val_semantics_loss)
+        validation_losses['color'].append(average_epoch_val_color_loss)
         times.append((time.time() - epoch_start_time) - sub_model_time)
         print(f"Validation Loss: {average_epoch_val_loss}", flush=True)
         print(f"Time: {sum(times)}", flush=True)
@@ -212,6 +212,7 @@ def train_val(model, device, train_dataloader, val_dataloader, epochs, lr, save_
         epochs_no_improve += 1
 
         if average_epoch_val_loss < best_val_loss:
+            epochs_no_improve = 0
             best_val_loss = average_epoch_val_loss
             best_val_color_loss = average_epoch_val_color_loss
             best_val_semantics_loss = average_epoch_val_semantics_loss
