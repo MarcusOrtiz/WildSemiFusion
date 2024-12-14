@@ -67,7 +67,7 @@ def freeze_script_compile_sub_model(model):
 
 def create_optimization(model, lr):
     optimizer = torch.optim.Adam([
-        {'params': model.parameters(), 'lr': lr, 'weight_decay': 1e-5}, ], lr=lr)
+        {'params': model.parameters(), 'lr': lr, 'weight_decay': 1e-4}, ], lr=lr)
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'min', factor=cfg.LR_DECAY_FACTOR, patience=cfg.PATIENCE)
     scaler = GradScaler()
     return optimizer, scheduler, scaler
@@ -252,9 +252,9 @@ def train_val(model_simple, model_linear, model_mlp, device, train_dataloader, v
 
                     del preds_semantics_base, preds_color_base, preds_color_expert, gt_semantics, gt_color
 
-                    val_loss_simple += loss_semantics_simple + loss_color_simple
-                    val_loss_linear += loss_semantics_linear + loss_color_linear
-                    val_loss_mlp += loss_semantics_mlp + loss_color_mlp
+                    val_loss_simple += loss_semantics_val_simple + loss_color_val_simple
+                    val_loss_linear += loss_semantics_val_linear + loss_color_val_linear
+                    val_loss_mlp += loss_semantics_val_mlp + loss_color_val_mlp
 
             average_val_loss_simple = val_loss_simple / len(val_dataloader)
             average_val_loss_linear = val_loss_linear / len(val_dataloader)
@@ -355,17 +355,17 @@ def train_val(model_simple, model_linear, model_mlp, device, train_dataloader, v
                 'times': times_mlp
             }, os.path.join(save_dir_mlp, "checkpoint.pth"))
 
-        if (epochs_no_improve_color_simple >= cfg.EARLY_STOP_EPOCHS) and (epoch >= 75) and running_simple:
+        if (epochs_no_improve_color_simple >= cfg.EARLY_STOP_EPOCHS) and (epoch >= 5) and running_simple:
             running_simple = False
             print(f"Early stop at epoch {epoch + 1}. Color validation loss did not improve for {cfg.EARLY_STOP_EPOCHS} consecutive epochs.")
             print(f"Model saved at early stopping point with validation loss: {best_color_val_loss_simple}")
 
-        if (epochs_no_improve_color_linear >= cfg.EARLY_STOP_EPOCHS) and (epoch >= 75) and running_linear:
+        if (epochs_no_improve_color_linear >= cfg.EARLY_STOP_EPOCHS) and (epoch >= 5) and running_linear:
             running_linear = False
             print(f"Early stop at epoch {epoch + 1}. Color validation loss did not improve for {cfg.EARLY_STOP_EPOCHS} consecutive epochs.")
             print(f"Model saved at early stopping point with validation loss: {best_color_val_loss_linear}")
 
-        if (epochs_no_improve_color_mlp >= cfg.EARLY_STOP_EPOCHS) and (epoch >= 75) and running_mlp:
+        if (epochs_no_improve_color_mlp >= cfg.EARLY_STOP_EPOCHS) and (epoch >= 5) and running_mlp:
             running_mlp = False
             print(f"Early stop at epoch {epoch + 1}. Color validation loss did not improve for {cfg.EARLY_STOP_EPOCHS} consecutive epochs.")
             print(f"Model saved at early stopping point with validation loss: {best_color_val_loss_mlp}")

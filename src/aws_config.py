@@ -26,8 +26,8 @@ TEST_DIR = os.path.join(INPUT_DIR, "rellis_2d_preprocessed/test")
 # Pytorch data processing parameters (limits should be None for full dataset)
 NUM_WORKERS = 3
 PIN_MEMORY = True
-TRAIN_FILES_LIMIT = None
-VAL_FILES_LIMIT = None
+TRAIN_FILES_LIMIT = 32
+VAL_FILES_LIMIT = 32
 TEST_FILES_LIMIT = None
 
 # Training parameters
@@ -35,13 +35,13 @@ BATCH_SIZE = 32
 BATCH_SIZE_COLOR = 12
 BATCH_SIZE_COLOR_EXPERT = 16
 BATCH_SIZE_COLOR_SEMANTICS = 12
-EPOCHS = 150
+EPOCHS = 3
 LR = 0.00002
-EARLY_STOP_EPOCHS = 10
+EARLY_STOP_EPOCHS = 5
 WEIGHT_SEMANTICS = 1
 WEIGHT_COLOR = 1
-PATIENCE = 5
-LR_DECAY_FACTOR = 0.6
+PATIENCE = 2
+LR_DECAY_FACTOR = 0.5
 
 # Dataset and preprocessing parameters
 NUM_BINS = 257  # including void which must be last bin, consider switching to 193
@@ -51,8 +51,8 @@ IMAGE_NOISE = 0.01
 IMAGE_MASK_RATE = (.1, .25)
 
 # Plotting
-PLOT_INTERVAL = 5
-SAVE_INTERVAL = 5
+PLOT_INTERVAL = 1
+SAVE_INTERVAL = 1
 
 # Random seed for reproducibility
 SEED = 7
