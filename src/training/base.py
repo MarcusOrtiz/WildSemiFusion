@@ -130,7 +130,7 @@ def train_val(model, device, train_dataloader, val_dataloader, epochs, lr, save_
 
                     # Repeat locations along batch dimension
                     batch_size = gt_semantics.shape[0]
-                    locations = normalized_locations_tensor.unsqueeze(0).expand(batch_size, -1, -1)
+                    locations = normalized_locations_tensor.unsqueeze(0)
 
                     preds_semantics, preds_color_logits = model(locations, gray_images, lab_images)
                     del locations, gray_images, lab_images
