@@ -5,7 +5,7 @@ import numpy as np
 import time
 import argparse
 
-from evaluation.utils import compute_average_metrics, load_model, freeze_compile_model
+from evaluation.utils import compute_average_metrics, load_model, freeze_model
 from src.data.utils.data_processing import load_sequential_data, rgb_to_gray, rgb_to_lab_continuous, lab_continuous_to_lab_discretized, lab_discretized_to_rgb
 from src.models.base import BaseModel
 from src.utils import model_to_device, compile_model, generate_normalized_locations, populate_random_seeds
@@ -94,7 +94,7 @@ def main():
     model_path = os.path.join(cfg.TESTING_MODELS_DIR, "base", "best_model.pth")
     model = BaseModel(cfg.NUM_BINS, cfg.CLASSES)
     model = load_model(model, model_path, device)
-    model = freeze_compile_model(model)
+    freeze_model(model)
     print("Model loaded successfully and compiled")
 
     test_preloaded_data = load_sequential_data(cfg.TEST_DIR, cfg.TEST_FILES_LIMIT)

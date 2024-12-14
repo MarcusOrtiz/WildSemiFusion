@@ -54,9 +54,8 @@ def load_model(model, model_path, device):
     return model
 
 
-def freeze_compile_model(model):
+def freeze_model(model):
     model.eval()
     for param in model.parameters():
         param.requires_grad = False
-    return compile_model(model)
 

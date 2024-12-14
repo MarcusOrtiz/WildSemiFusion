@@ -5,7 +5,7 @@ import numpy as np
 import time
 import argparse
 
-from evaluation.utils import compute_average_metrics, load_model, freeze_compile_model
+from evaluation.utils import compute_average_metrics, load_model, freeze_model
 from src.data.utils.data_processing import load_sequential_data, rgb_to_gray, rgb_to_lab_continuous, lab_continuous_to_lab_discretized, lab_discretized_to_rgb
 from src.models.base import BaseModel
 from src.models.color import ColorModelSimple, ColorModelLinear, ColorModelMLP
@@ -99,14 +99,14 @@ def main():
     base_model_path = os.path.join(cfg.TESTING_MODELS_DIR, "base", "best_model.pth")
     base_model = BaseModel(cfg.NUM_BINS, cfg.CLASSES)
     base_model = load_model(base_model, base_model_path, device)
-    base_model = freeze_compile_model(base_model)
+    base_model = freeze_model(base_model)
     print("Base model frozen and compiled successfully")
 
     color_expert_model_path = os.path.join(cfg.TESTING_MODELS_DIR, "color_expert", "best_model.pth")
     color_expert_model_path = os.path.expanduser(color_expert_model_path)
     color_expert_model = ColorExpertModel(cfg.NUM_BINS)
     color_expert_model = load_model(color_expert_model, color_expert_model_path, device)
-    color_expert_model = freeze_compile_model(color_expert_model)
+    color_expert_model = freeze_model(color_expert_model)
     print("Color expert model frozen and compiled successfully")
 
     if model_type == 'simple':
@@ -120,7 +120,7 @@ def main():
         color_model = ColorModelMLP(cfg.NUM_BINS)
 
     color_model = load_model(color_model, color_model_path, device)
-    color_model = freeze_compile_model(color_model)
+    color_model = freeze_model(color_model)
     print("Color model frozen and compiled successfully")
 
     test_preloaded_data = load_sequential_data(cfg.TEST_DIR, cfg.TEST_FILES_LIMIT)
