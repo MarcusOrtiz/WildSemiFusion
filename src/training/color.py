@@ -256,32 +256,32 @@ def train_val(model_simple, model_linear, model_mlp, device, train_dataloader, v
                     val_loss_linear += loss_semantics_val_linear + loss_color_val_linear
                     val_loss_mlp += loss_semantics_val_mlp + loss_color_val_mlp
 
-            average_val_loss_simple = val_loss_simple / len(val_dataloader)
-            average_val_loss_linear = val_loss_linear / len(val_dataloader)
-            average_val_loss_mlp = val_loss_mlp / len(val_dataloader)
-            color_val_loss_simple = loss_color_val_simple.item()
-            color_val_loss_linear = loss_color_val_linear.item()
-            color_val_loss_mlp = loss_color_val_mlp.item()
-            semantics_val_loss_simple = loss_semantics_val_simple.item()
-            semantics_val_loss_linear = loss_semantics_val_linear.item()
-            semantics_val_loss_mlp = loss_semantics_val_mlp.item()
+        average_val_loss_simple = val_loss_simple / len(val_dataloader)
+        average_val_loss_linear = val_loss_linear / len(val_dataloader)
+        average_val_loss_mlp = val_loss_mlp / len(val_dataloader)
+        color_val_loss_simple = loss_color_val_simple.item()
+        color_val_loss_linear = loss_color_val_linear.item()
+        color_val_loss_mlp = loss_color_val_mlp.item()
+        semantics_val_loss_simple = loss_semantics_val_simple.item()
+        semantics_val_loss_linear = loss_semantics_val_linear.item()
+        semantics_val_loss_mlp = loss_semantics_val_mlp.item()
 
-            update_loss_trackers(validation_losses_simple, average_val_loss_simple.item(), semantics_val_loss_simple, color_val_loss_simple)
-            update_loss_trackers(validation_losses_linear, average_val_loss_linear.item(), semantics_val_loss_linear, color_val_loss_linear)
-            update_loss_trackers(validation_losses_mlp, average_val_loss_mlp.item(), semantics_val_loss_mlp, color_val_loss_mlp)
-            times_simple.append((time.time() - epoch_start_time) / 3 - sub_model_time)
-            times_linear.append((time.time() - epoch_start_time) / 3 - sub_model_time)
-            times_mlp.append((time.time() - epoch_start_time) / 3 - sub_model_time)
+        update_loss_trackers(validation_losses_simple, average_val_loss_simple.item(), semantics_val_loss_simple, color_val_loss_simple)
+        update_loss_trackers(validation_losses_linear, average_val_loss_linear.item(), semantics_val_loss_linear, color_val_loss_linear)
+        update_loss_trackers(validation_losses_mlp, average_val_loss_mlp.item(), semantics_val_loss_mlp, color_val_loss_mlp)
+        times_simple.append((time.time() - epoch_start_time) / 3 - sub_model_time)
+        times_linear.append((time.time() - epoch_start_time) / 3 - sub_model_time)
+        times_mlp.append((time.time() - epoch_start_time) / 3 - sub_model_time)
 
-            if running_simple:
-                print(f"Validation Loss Simple: {average_val_loss_simple}")
-                print(f"Training Time Simple: {sum(times_simple)}")
-            if running_linear:
-                print(f"Validation Loss Linear: {average_val_loss_linear}")
-                print(f"Training Time Linear: {sum(times_linear)}")
-            if running_mlp:
-                print(f"Validation Loss MLP: {average_val_loss_mlp}")
-                print(f"Training Time MLP: {sum(times_mlp)}")
+        if running_simple:
+            print(f"Validation Loss Simple: {average_val_loss_simple}")
+            print(f"Training Time Simple: {sum(times_simple)}")
+        if running_linear:
+            print(f"Validation Loss Linear: {average_val_loss_linear}")
+            print(f"Training Time Linear: {sum(times_linear)}")
+        if running_mlp:
+            print(f"Validation Loss MLP: {average_val_loss_mlp}")
+            print(f"Training Time MLP: {sum(times_mlp)}")
 
         if color_val_loss_simple < best_color_val_loss_simple:
             best_color_val_loss_simple = color_val_loss_simple

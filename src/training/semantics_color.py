@@ -72,20 +72,20 @@ def train_val(model, device, train_dataloader, val_dataloader, epochs, lr, save_
     semantics_expert_model = freeze_script_compile_sub_model(semantics_expert_model)
 
     optimizer = torch.optim.Adam([
-        {'params': model.parameters(), 'lr': lr, 'weight_decay': 1e-5}, ], lr=lr)
+        {'params': model.parameters(), 'lr': lr, 'weight_decay': 1e-4}, ], lr=lr)
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'min', factor=cfg.LR_DECAY_FACTOR, patience=cfg.PATIENCE)
     scaler = GradScaler()
 
     criterion_ce_color = nn.CrossEntropyLoss(ignore_index=cfg.NUM_BINS - 1)
     criterion_ce_semantics = nn.CrossEntropyLoss(ignore_index=0)
 
-    best_color_val_loss = float('inf')
-    epochs_no_improve_color = 0
+
+    epochs_no_improve_val = 0
     training_losses = {'total': [], 'semantics': [], 'color': []}
     validation_losses = {'total': [], 'semantics': [], 'color': []}
     times = []
     start_epoch = 0
-    best_loss = float('inf')
+    best_loss, best_color_val_loss, best_semantics_val_loss = float('inf')
 
     if use_checkpoint and os.path.exists(checkpoint_path):
         load_checkpoint(model, device, optimizer, scheduler, save_dir)
@@ -145,8 +145,8 @@ def train_val(model, device, train_dataloader, val_dataloader, epochs, lr, save_
         training_losses['color'].append(loss_color.item())
 
 
-        print(f"Epoch {epoch + 1}/{epochs} for {model_type} model)")
-        print(f"Training Loss: {average_epoch_loss}")
+        print(f"Epoch {epoch + 1}/{epochs} for {model_type} model)", flush=True)
+        print(f"Training Loss: {average_epoch_loss}", flush=True)
 
         if torch.cuda.is_available() and not hasattr(model, '_torchdynamo_orig_callable'):
             torch.cuda.empty_cache()
@@ -184,26 +184,25 @@ def train_val(model, device, train_dataloader, val_dataloader, epochs, lr, save_
 
                     val_loss += loss_semantics_val + loss_color_val
 
-            average_val_loss = val_loss / len(val_dataloader)
-            color_val_loss = loss_color_val.item()
-            semantics_val_loss = loss_semantics.item()
+        average_val_loss = val_loss / len(val_dataloader)
+        color_val_loss = loss_color_val.item()
+        semantics_val_loss = loss_semantics.item()
 
-            validation_losses['total'].append(average_val_loss.item())
-            validation_losses['semantics'].append(semantics_val_loss)
-            validation_losses['color'].append(color_val_loss)
-            times.append((time.time() - epoch_start_time) - sub_model_time)
-            print(f"Validation Loss: {average_val_loss.item()}")
-            print(f"Current training: {sum(times)}")
+        validation_losses['total'].append(average_val_loss)
+        validation_losses['semantics'].append(semantics_val_loss)
+        validation_losses['color'].append(color_val_loss)
+        times.append((time.time() - epoch_start_time) - sub_model_time)
+        print(f"Validation Loss: {average_val_loss}", flush=True)
+        print(f"Current training time: {sum(times)}", flush=True)
 
-        if color_val_loss < best_color_val_loss:
-            best_color_val_loss = color_val_loss
-            epochs_no_improve_color = 0
-        else:
-            epochs_no_improve_color += 1
+        epochs_no_improve_val += 1
 
-        if average_val_loss.item() < best_loss:
+        if average_val_loss < best_loss:
             best_loss = average_val_loss
             save_best_model(model, save_dir)
+            best_color_val_loss = color_val_loss
+            best_semantics_val_loss = semantics_val_loss
+            epochs_no_improve_val = 0
             print(f"New best {model_type} model saved with validation loss: {best_loss}")
 
         if (epoch + 1) % cfg.SAVE_INTERVAL == 0:
@@ -219,15 +218,15 @@ def train_val(model, device, train_dataloader, val_dataloader, epochs, lr, save_
                 'times': times
             }, os.path.join(save_dir, "checkpoint.pth"))
 
-        if (epochs_no_improve_color >= cfg.EARLY_STOP_EPOCHS) and (epoch >= 10):
-            print(f"Early stop at epoch {epoch + 1} for {model_type} model. Color val loss did not improve for {cfg.EARLY_STOP_EPOCHS} consecutive epochs")
+        if (epochs_no_improve_val >= cfg.EARLY_STOP_EPOCHS) and (epoch >= 15):
+            print(f"Early stop at epoch {epoch + 1} for {model_type} model. Val loss did not improve for {cfg.EARLY_STOP_EPOCHS} consecutive epochs")
             print(f"Final training stats for {model_type} model")
             total_time = sum(times)
             print(f"Main model training time: {total_time}")
             print(f"Average time per epoch: {total_time / epochs}")
             print(f"Best validation loss: {best_loss}")
-            print(f"Best color validation loss: {best_color_val_loss}")
-
+            print(f"Color loss for best loss: {best_color_val_loss}")
+            print(f"Semantics loss for best loss: {best_semantics_val_loss}")
             break
 
         if torch.cuda.is_available() and not hasattr(model, '_torchdynamo_orig_callable'):

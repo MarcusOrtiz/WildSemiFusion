@@ -100,14 +100,14 @@ def main():
     base_model = BaseModel(cfg.NUM_BINS, cfg.CLASSES)
     base_model = load_model(base_model, base_model_path, device)
     freeze_model(base_model)
-    print("Base model frozen and compiled successfully")
+    print("Base model frozen successfully")
 
     color_expert_model_path = os.path.join(cfg.TESTING_MODELS_DIR, "color_expert", "best_model.pth")
     color_expert_model_path = os.path.expanduser(color_expert_model_path)
     color_expert_model = ColorExpertModel(cfg.NUM_BINS)
     color_expert_model = load_model(color_expert_model, color_expert_model_path, device)
     freeze_model(color_expert_model)
-    print("Color expert model frozen and compiled successfully")
+    print("Color expert model frozen successfully")
 
     if model_type == 'simple':
         color_model_path = os.path.join(cfg.TESTING_MODELS_DIR, "color_simple", "best_model.pth")
@@ -121,7 +121,7 @@ def main():
 
     color_model = load_model(color_model, color_model_path, device)
     freeze_model(color_model)
-    print("Color model frozen and compiled successfully")
+    print("Color model frozen successfully")
 
     test_preloaded_data = load_sequential_data(cfg.TEST_DIR, cfg.TEST_FILES_LIMIT)
     print(f"Testing preloaded data gathered successfully for {len(test_preloaded_data['rgb_images'])} images")

@@ -103,21 +103,21 @@ def main():
     base_model = BaseModel(cfg.NUM_BINS, cfg.CLASSES)
     base_model = load_model(base_model, base_model_path, device)
     freeze_model(base_model)
-    print("Base model frozen and compiled successfully")
+    print("Base model frozen successfully")
 
     color_expert_model_path = os.path.join(cfg.TESTING_MODELS_DIR, "color_expert", "best_model.pth")
     color_expert_model_path = os.path.expanduser(color_expert_model_path)
     color_expert_model = ColorExpertModel(cfg.NUM_BINS)
     color_expert_model = load_model(color_expert_model, color_expert_model_path, device)
     freeze_model(color_expert_model)
-    print("Color expert model frozen and compiled successfully")
+    print("Color expert model successfully")
 
     semantics_expert_model_path = os.path.join(cfg.TESTING_MODELS_DIR, "semantics_expert", "best_model.pth")
     semantics_expert_model_path = os.path.expanduser(semantics_expert_model_path)
     semantics_expert_model = SemanticExpertModel(cfg.CLASSES)
     semantics_expert_model = load_model(semantics_expert_model, semantics_expert_model_path, device)
     freeze_model(semantics_expert_model)
-    print("Semantics expert model frozen and compiled successfully")
+    print("Semantics expert model successfully")
 
     if model_type == 'simple':
         semantics_color_model_path = os.path.join(cfg.TESTING_MODELS_DIR, "semantics_color_simple", "best_model.pth")
@@ -131,7 +131,7 @@ def main():
 
     semantics_color_model = load_model(semantics_color_model, semantics_color_model_path, device)
     freeze_model(semantics_color_model)
-    print("SemanticsColor model frozen and compiled successfully")
+    print("SemanticsColor model frozen successfully")
 
     test_preloaded_data = load_sequential_data(cfg.TEST_DIR, cfg.TEST_FILES_LIMIT)
     print(f"Testing preloaded data gathered successfully for {len(test_preloaded_data['rgb_images'])} images")
