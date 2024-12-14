@@ -107,9 +107,9 @@ def train_val(model, device, train_dataloader, val_dataloader, epochs, lr, save_
         average_epoch_semantics_loss = epoch_train_semantics_loss / len(train_dataloader)
         average_epoch_color_loss = epoch_train_color_loss / len(train_dataloader)
 
-        training_losses['total'].append(average_epoch_train_loss.item())
-        training_losses['semantics'].append(average_epoch_semantics_loss.item())
-        training_losses['color'].append(average_epoch_color_loss.item())
+        training_losses['total'].append(average_epoch_train_loss)
+        training_losses['semantics'].append(average_epoch_semantics_loss)
+        training_losses['color'].append(average_epoch_color_loss)
 
         print(f"Epoch {epoch + 1}/{epochs}")
         print(f"Training Loss: {average_epoch_train_loss}")
@@ -143,17 +143,17 @@ def train_val(model, device, train_dataloader, val_dataloader, epochs, lr, save_
                     loss_color_val = cfg.WEIGHT_COLOR * criterion_ce_color(preds_color_logits, gt_color)
                     del preds_color_logits, gt_color
 
-                    epoch_val_loss += loss_semantics_val + loss_color_val
-                    epoch_val_semantics_loss += loss_semantics_val
-                    epochs_val_color_loss += loss_color_val
+                    epoch_val_loss += loss_semantics_val.item() + loss_color_val.item()
+                    epoch_val_semantics_loss += loss_semantics_val.item()
+                    epochs_val_color_loss += loss_color_val.item()
 
         average_epoch_val_loss = epoch_val_loss / len(val_dataloader)
         average_epoch_val_semantics_loss = epoch_val_semantics_loss / len(val_dataloader)
         average_epoch_val_color_loss = epochs_val_color_loss / len(val_dataloader)
 
-        validation_losses['total'].append(average_epoch_val_loss.item())
-        validation_losses['semantics'].append(average_epoch_val_semantics_loss.item())
-        validation_losses['color'].append(average_epoch_val_color_loss.item())
+        validation_losses['total'].append(average_epoch_val_loss)
+        validation_losses['semantics'].append(average_epoch_val_semantics_loss)
+        validation_losses['color'].append(average_epoch_val_color_loss)
         times.append(time.time() - epoch_start_time)
         print(f"Validation Loss: {average_epoch_val_loss}")
         print(f"Total Time: {sum(times)}")
