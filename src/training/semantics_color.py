@@ -277,7 +277,7 @@ def main():
         val_dataloader=val_dataloader,
         epochs=cfg.EPOCHS,
         lr=cfg.LR,
-        save_dir=cfg.SAVE_DIR_COLOR_SEMANTICS + "_simple",
+        save_dir=cfg.SAVE_DIR_COLOR_SEMANTICS + "_simple" + "_temp",
         use_checkpoint=not args.scratch
     )
     del trained_simple_model, model_simple
@@ -294,7 +294,7 @@ def main():
         val_dataloader=val_dataloader,
         epochs=cfg.EPOCHS,
         lr=cfg.LR,
-        save_dir=cfg.SAVE_DIR_COLOR_SEMANTICS + "_linear",
+        save_dir=cfg.SAVE_DIR_COLOR_SEMANTICS + "_linear" + "_temp",
         use_checkpoint=not args.scratch
     )
     del trained_linear_model, model_linear
@@ -311,7 +311,7 @@ def main():
         val_dataloader=val_dataloader,
         epochs=cfg.EPOCHS,
         lr=cfg.LR,
-        save_dir=cfg.SAVE_DIR_COLOR_SEMANTICS + "_mlp",
+        save_dir=cfg.SAVE_DIR_COLOR_SEMANTICS + "_mlp" + "temp",
         use_checkpoint=not args.scratch
     )
     print("Training finished for SemanticsColorMLPModel \n ---------------------")
