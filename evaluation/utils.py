@@ -49,9 +49,9 @@ def load_model(model, model_path, device):
     model_state_dict = torch.load(model_path, map_location=device)
     model_state_dict = {k[len("_orig_mod."):] if k.startswith("_orig_mod.") else k: v for k, v in model_state_dict.items()}
     model.load_state_dict(model_state_dict)
-    base_model = model_to_device(model, device)
+    model = model_to_device(model, device)
     print(f"Loaded model from {model_path} and moved to {device}")
-    return base_model
+    return model
 
 
 def freeze_compile_model(model):
