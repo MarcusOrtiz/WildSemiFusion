@@ -8,14 +8,14 @@ SAVE_DIR_BASE = os.path.join(SAVE_DIR, "base")
 SAVE_DIR_COLOR_EXPERT = os.path.join(SAVE_DIR, "color_expert")
 SAVE_DIR_SEMANTICS_EXPERT = os.path.join(SAVE_DIR, "semantics_expert")
 SAVE_DIR_COLOR = os.path.join(SAVE_DIR, "color")
-SAVE_DIR_COLOR_SEMANTICS = os.path.join(SAVE_DIR, "color_semantics")
+SAVE_DIR_COLOR_SEMANTICS = os.path.join(SAVE_DIR, "semantics_color")
 
 AWS_SAVE_DIR = os.path.join(SAVE_DIR, "../aws_saved_models_test")
 AWS_SAVE_DIR_BASE = os.path.join(AWS_SAVE_DIR, "base")
 AWS_SAVE_DIR_COLOR_EXPERT = os.path.join(AWS_SAVE_DIR, "color_expert")
 AWS_SAVE_DIR_SEMANTICS_EXPERT = os.path.join(AWS_SAVE_DIR, "semantics_expert")
 AWS_SAVE_DIR_COLOR = os.path.join(AWS_SAVE_DIR, "color")
-AWS_SAVE_DIR_COLOR_SEMANTICS = os.path.join(AWS_SAVE_DIR, "color_semantics")
+AWS_SAVE_DIR_COLOR_SEMANTICS = os.path.join(AWS_SAVE_DIR, "semantics_color")
 
 # Data Directories
 INPUT_DIR = os.path.join(SRC_DIR, "../input")
@@ -24,21 +24,23 @@ VAL_DIR = os.path.join(INPUT_DIR, "rellis_2d_preprocessed/val")
 TEST_DIR = os.path.join(INPUT_DIR, "rellis_2d_preprocessed/test")
 
 # Pytorch data processing parameters (limits should be None for full dataset)
-NUM_WORKERS = 3
+NUM_WORKERS = 0
 PIN_MEMORY = True
-TRAIN_FILES_LIMIT = None #825 for best color combination
-VAL_FILES_LIMIT = None  # 400 for best val file combination
+TRAIN_FILES_LIMIT = None
+VAL_FILES_LIMIT = None
+TEST_FILES_LIMIT = None
 
 # Training parameters
 BATCH_SIZE = 32
 BATCH_SIZE_COLOR = 12
 BATCH_SIZE_COLOR_EXPERT = 16
-EPOCHS = 25
-LR = 0.00002
+BATCH_SIZE_COLOR_SEMANTICS = 12
+EPOCHS = 60
+LR = 0.0005
 EARLY_STOP_EPOCHS = 5
 WEIGHT_SEMANTICS = 1
 WEIGHT_COLOR = 1
-PATIENCE = 2
+PATIENCE = 3
 LR_DECAY_FACTOR = 0.5
 
 # Dataset and preprocessing parameters
@@ -50,7 +52,7 @@ IMAGE_MASK_RATE = (.1, .25)
 
 # Plotting
 PLOT_INTERVAL = 3
-SAVE_INTERVAL = 3
+SAVE_INTERVAL = 5
 
 # Random seed for reproducibility
 SEED = 7
