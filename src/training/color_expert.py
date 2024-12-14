@@ -103,8 +103,6 @@ def train_val(model, device, train_dataloader, val_dataloader, epochs, lr, save_
 
                 preds_color_logits = model(locations, lab_images)
                 del locations, lab_images
-                if torch.cuda.is_available() and not hasattr(model, "_torchdynamo_orig_callable"):
-                    torch.cuda.empty_cache()
 
                 preds_color_logits = preds_color_logits.view(-1, cfg.NUM_BINS)
                 gt_color = gt_color.view(-1)
