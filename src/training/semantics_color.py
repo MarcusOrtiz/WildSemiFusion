@@ -61,6 +61,8 @@ def freeze_script_compile_sub_model(model):
 
 
 def train_val(model, device, train_dataloader, val_dataloader, epochs, lr, save_dir: str, use_checkpoint: bool):
+    model_type = model.__class__.__name__.split("_")[-1]
+
     os.makedirs(save_dir, exist_ok=True)
     checkpoint_path = os.path.join(save_dir, "checkpoint.pth")
 
@@ -202,7 +204,7 @@ def train_val(model, device, train_dataloader, val_dataloader, epochs, lr, save_
         if average_val_loss.item() < best_loss:
             best_loss = average_val_loss
             save_best_model(model, save_dir)
-            print(f"New best simple model saved with validation loss: {best_loss}")
+            print(f"New best {model_type} model saved with validation loss: {best_loss}")
 
         if (epoch + 1) % cfg.SAVE_INTERVAL == 0:
             torch.save({
@@ -219,7 +221,7 @@ def train_val(model, device, train_dataloader, val_dataloader, epochs, lr, save_
 
         if (epochs_no_improve_color >= cfg.EARLY_STOP_EPOCHS) and (epoch >= 75):
             print(f"Early stop at epoch {epoch + 1}. Color validation loss did not improve for {cfg.EARLY_STOP_EPOCHS} consecutive epochs.")
-            print(f"Model saved at early stopping point with validation loss: {best_color_val_loss}")
+            print(f"{model_type} Model saved at early stopping point with validation loss: {best_color_val_loss}")
             break
 
         if torch.cuda.is_available() and not hasattr(model, '_torchdynamo_orig_callable'):
@@ -243,9 +245,9 @@ def main():
                                     image_noise=cfg.IMAGE_NOISE, image_mask_rate=cfg.IMAGE_MASK_RATE)
     val_dataset = Rellis2DDataset(preloaded_data=val_preloaded_data, num_bins=cfg.NUM_BINS, image_size=cfg.IMAGE_SIZE,
                                   image_noise=cfg.IMAGE_NOISE, image_mask_rate=cfg.IMAGE_MASK_RATE)
-    train_dataloader = DataLoader(train_dataset, batch_size=cfg.BATCH_SIZE_COLOR, shuffle=True, num_workers=0,
+    train_dataloader = DataLoader(train_dataset, batch_size=cfg.BATCH_SIZE_COLOR_SEMANTICS, shuffle=True, num_workers=0,
                                   pin_memory=cfg.PIN_MEMORY, drop_last=True)
-    val_dataloader = DataLoader(val_dataset, batch_size=cfg.BATCH_SIZE_COLOR, shuffle=False, num_workers=0,
+    val_dataloader = DataLoader(val_dataset, batch_size=cfg.BATCH_SIZE_COLOR_SEMANTICS, shuffle=False, num_workers=0,
                                 pin_memory=cfg.PIN_MEMORY, drop_last=True)
     print(f"Created training dataloader with {len(train_dataset)} files and validation dataloader with {len(val_dataset)} files")
 
@@ -260,11 +262,13 @@ def main():
         val_dataloader=val_dataloader,
         epochs=cfg.EPOCHS,
         lr=cfg.LR,
-        save_dir=cfg.SAVE_DIR_COLOR + "_simple",
+        save_dir=cfg.SAVE_DIR_COLOR_SEMANTICS + "_simple",
         use_checkpoint=not args.scratch
     )
     del trained_simple_model, model_simple
     print("Training finished for SemanticsColorSimpleModel \n ---------------------")
+
+    quit()
 
     model_linear = ColorModelLinear(cfg.NUM_BINS)
     model_linear = model_to_device(model_linear, device)
@@ -275,7 +279,7 @@ def main():
         val_dataloader=val_dataloader,
         epochs=cfg.EPOCHS,
         lr=cfg.LR,
-        save_dir=cfg.SAVE_DIR_COLOR + "_linear",
+        save_dir=cfg.SAVE_DIR_COLOR_SEMANTICS + "_linear",
         use_checkpoint=not args.scratch
     )
     del trained_linear_model, model_linear
@@ -290,7 +294,7 @@ def main():
         val_dataloader=val_dataloader,
         epochs=cfg.EPOCHS,
         lr=cfg.LR,
-        save_dir=cfg.SAVE_DIR_COLOR + "_mlp",
+        save_dir=cfg.SAVE_DIR_COLOR_SEMANTICS + "_mlp",
         use_checkpoint=not args.scratch
     )
     print("Training finished for SemanticsColorMLPModel \n ---------------------")
