@@ -5,12 +5,12 @@ import torch.nn as nn
 import argparse
 import importlib
 from src.data.utils.data_processing import load_sequential_data
-from src.models.color import ColorModelSimple, ColorModelLinear, ColorModelMLP
 from src.data.rellis_2D_dataset import Rellis2DDataset
 from torch.utils.data import DataLoader
 from torch.cuda.amp import GradScaler, autocast
 from src.models.base import BaseModel
 from src.models.experts import ColorExpertModel, SemanticExpertModel
+from src.models.semantics_color import SemanticsColorModelSimple, SemanticsColorModelLinear
 
 from src.plotting import generate_plots
 from src.utils import generate_normalized_locations, populate_random_seeds, model_to_device, compile_model, generate_loss_trackers, \
@@ -123,7 +123,7 @@ def train_val(model, device, train_dataloader, val_dataloader, epochs, lr, save_
                 gt_semantics = batch['gt_semantics'].to(device)
                 gt_color = batch['gt_color'].to(device)
 
-                preds_semantics, preds_color = model(preds_semantics_base, preds_color_base, preds_color_expert)
+                preds_semantics, preds_color = model(preds_semantics_base, preds_semantics_expert, preds_color_base, preds_color_expert)
                 loss_semantics = cfg.WEIGHT_SEMANTICS * criterion_ce_semantics(preds_semantics, gt_semantics.long().view(-1))
                 loss_color = cfg.WEIGHT_COLOR * criterion_ce_color(preds_color.view(-1, cfg.NUM_BINS), gt_color.view(-1))
                 del preds_semantics, preds_color
@@ -253,7 +253,7 @@ def main():
 
     # Train and validate each color model
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    model_simple = ColorModelSimple(cfg.NUM_BINS)
+    model_simple = SemanticsColorModelSimple(cfg.NUM_BINS, cfg.CLASSES)
     model_simple = model_to_device(model_simple, device)
     trained_simple_model = train_val(
         model=model_simple,
@@ -270,7 +270,7 @@ def main():
 
     quit()
 
-    model_linear = ColorModelLinear(cfg.NUM_BINS)
+    model_linear = SemanticsColorModelLinear(cfg.NUM_BINS, cfg.CLASSES)
     model_linear = model_to_device(model_linear, device)
     trained_linear_model = train_val(
         model=model_linear,
@@ -285,7 +285,7 @@ def main():
     del trained_linear_model, model_linear
     print("Training finished for SemanticsColorLinearModel \n ---------------------")
 
-    model_mlp = ColorModelMLP(cfg.NUM_BINS)
+    model_mlp = SemanticsColorModelMlp(cfg.NUM_BINS)
     model_mlp = model_to_device(model_mlp, device)
     trained_mlp_model = train_val(
         model=model_mlp,
