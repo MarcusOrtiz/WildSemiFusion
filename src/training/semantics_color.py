@@ -123,7 +123,7 @@ def train_val(model, device, train_dataloader, val_dataloader, epochs, lr, save_
                 gt_semantics = batch['gt_semantics'].to(device)
                 gt_color = batch['gt_color'].to(device)
 
-                preds_semantics, preds_color = model(preds_semantics_base, preds_semantics_expert, preds_color_base, preds_color_expert)
+                preds_semantics, preds_color = model(preds_semantics_base, preds_color_base, preds_color_expert)
                 loss_semantics = cfg.WEIGHT_SEMANTICS * criterion_ce_semantics(preds_semantics, gt_semantics.long().view(-1))
                 loss_color = cfg.WEIGHT_COLOR * criterion_ce_color(preds_color.view(-1, cfg.NUM_BINS), gt_color.view(-1))
                 del preds_semantics, preds_color
