@@ -23,6 +23,7 @@ def save_best_model(model, save_dir):
 def load_embeddings(model, device, embeddings_dir: str):
     fourier_layer_path = os.path.join(embeddings_dir, "fourier_layer_model.pth")
     gray_cnn_path = os.path.join(embeddings_dir, "gray_cnn_model.pth")
+
     model.fourier_layer.load_state_dict(torch.load(fourier_layer_path, map_location=device))
     model.gray_cnn.load_state_dict(torch.load(gray_cnn_path, map_location=device))
 
@@ -42,31 +43,27 @@ def train_val(model, device, train_dataloader, val_dataloader, epochs, lr, save_
     os.makedirs(save_dir, exist_ok=True)
     checkpoint_path = os.path.join(save_dir, "checkpoint.pth")
 
-    model_module = model.module if isinstance(model, nn.DataParallel) else model
-
-    load_embeddings(model_module, device, os.path.join(cfg.AWS_SAVE_DIR, "base"))
-    freeze_embeddings(model_module)
-    script_embeddings(model_module)
+    load_embeddings(model, device, embeddings_dir=cfg.SAVE_DIR_BASE)
+    freeze_embeddings(model)
+    script_embeddings(model)
 
     model = compile_model(model)
 
     optimizer = torch.optim.Adam([
-        {'params': model_module.semantic_fcn.parameters(), 'lr': 5e-6, 'weight_decay': 1e-5},
-        {'params': model_module.compression_layer.parameters()}
+        {'params': model.semantic_fcn.parameters(), 'lr': 5e-6, 'weight_decay': 1e-5},
+        {'params': model.compression_layer.parameters(), 'weight_decay': 1e-5}
     ], lr=lr)
-
-    scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'min', factor=cfg.LR_DECAY_FACTOR,
-                                                           patience=cfg.PATIENCE)
+    scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'min', factor=cfg.LR_DECAY_FACTOR, patience=cfg.PATIENCE)
     scaler = GradScaler()
 
     criterion_ce_semantics = nn.CrossEntropyLoss(ignore_index=0)
-    best_semantics_val_loss = float('inf')
-    epochs_no_improve_semantics = 0
     training_losses = {'total': [], 'semantics': [], 'color': []}
     validation_losses = {'total': [], 'semantics': [], 'color': []}
     times = []
     start_epoch = 0
-    best_loss = float('inf')
+    best_val_loss = float('inf')
+    epochs_no_improve = 0
+
     if use_checkpoint and os.path.exists(checkpoint_path):
         print(f"Loading checkpoint from {checkpoint_path} ")
         checkpoint = torch.load(checkpoint_path, map_location=device)
@@ -74,7 +71,7 @@ def train_val(model, device, train_dataloader, val_dataloader, epochs, lr, save_
         optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
         scheduler.load_state_dict(checkpoint['scheduler_state_dict'])
         start_epoch = checkpoint['epoch']
-        best_loss = checkpoint.get('best_loss', best_loss)
+        best_val_loss = checkpoint.get('best_loss', best_val_loss)
         training_losses = checkpoint.get('training_losses', training_losses)
         validation_losses = checkpoint.get('validation_losses', validation_losses)
         times = checkpoint.get('times', times)
@@ -85,21 +82,20 @@ def train_val(model, device, train_dataloader, val_dataloader, epochs, lr, save_
     for epoch in range(start_epoch, epochs):
         generate_plots(epoch, training_losses, validation_losses, times, save_dir, cfg.PLOT_INTERVAL)
 
-        model.train()
+        model.semantic_fcn.train()
+        model.compression_layer.train()
         epoch_start_time = time.time()
-        epoch_loss = 0.0
+        epoch_train_loss = 0.0
         for idx, batch in enumerate(train_dataloader):
             # if (idx < 2 or idx % 100 == 0): print(f"Loading training batch {idx}", flush=True)
             optimizer.zero_grad()
             with autocast():
-                gt_semantics = batch['gt_semantics'].to(device)
-                gray_images = batch['gray_image'].to(device)
+                gt_semantics = batch['gt_semantics'].to(device, non_blocking=True)
+                gray_images = batch['gray_image'].to(device, non_blocking=True)
 
                 # Repeat locations along batch dimension
                 batch_size = gt_semantics.shape[0]
                 locations = normalized_locations_tensor.unsqueeze(0).expand(batch_size, -1, -1)
-
-                locations.requires_grad_(True)
 
                 preds_semantics = model(locations, gray_images)
                 del locations, gray_images
@@ -110,30 +106,30 @@ def train_val(model, device, train_dataloader, val_dataloader, epochs, lr, save_
 
                 total_loss = loss_semantics
 
-            epoch_loss += total_loss.item()
+            epoch_train_loss += total_loss.item()
             scaler.scale(total_loss).backward()
             scaler.step(optimizer)
             scaler.update()
 
-        average_epoch_loss = epoch_loss / len(train_dataloader)
+        average_epoch_loss = epoch_train_loss / len(train_dataloader)
 
         training_losses['total'].append(average_epoch_loss)
-        training_losses['semantics'].append(loss_semantics.item())
+        training_losses['semantics'].append(average_epoch_loss)
 
-        print(f"Epoch {epoch + 1}/{epochs})")
-        print(f"Training Loss: {average_epoch_loss}")
+        print(f"Epoch {epoch + 1}/{epochs})", flush=True)
+        print(f"Training Loss: {average_epoch_loss}", flush=True)
 
         if torch.cuda.is_available() and not hasattr(model, "_torchdynamo_orig_callable"):
             torch.cuda.empty_cache()
 
         model.eval()
-        val_loss = 0.0
+        epoch_val_loss = 0.0
         with torch.no_grad():
             for batch_idx, batch in enumerate(val_dataloader):
                 # if (idx < 2 or idx % 100 == 0): print(f"Loading validation batch {idx}", flush=True)
                 with autocast():
-                    gt_semantics = batch['gt_semantics'].to(device)
-                    gray_images = batch['gray_image'].to(device)
+                    gt_semantics = batch['gt_semantics'].to(device, non_blocking=True)
+                    gray_images = batch['gray_image'].to(device, non_blocking=True)
 
                     # Repeat locations along batch dimension
                     batch_size = gt_semantics.shape[0]
@@ -147,52 +143,50 @@ def train_val(model, device, train_dataloader, val_dataloader, epochs, lr, save_
                     loss_semantics_val = cfg.WEIGHT_SEMANTICS * criterion_ce_semantics(preds_semantics, gt_semantics)
                     del preds_semantics, gt_semantics
 
-                    val_loss += loss_semantics_val
+                    epoch_val_loss += loss_semantics_val
 
-        average_val_loss = val_loss / len(val_dataloader)
-        semantics_val_loss = loss_semantics_val.item()
+        average_epoch_val_loss = epoch_val_loss / len(val_dataloader)
 
-        validation_losses['total'].append(average_val_loss.item())
-        validation_losses['semantics'].append(semantics_val_loss)
+        validation_losses['total'].append(average_epoch_val_loss)
+        validation_losses['semantics'].append(average_epoch_val_loss)
         times.append(time.time() - epoch_start_time)
-        print(f"Validation Loss: {average_val_loss.item()}")
-        print(f"Total Time: {sum(times)}")
+        print(f"Validation Loss: {average_epoch_val_loss}", flush=True)
+        print(f"Total Time: {sum(times)}", flush=True)
 
-        if semantics_val_loss < best_semantics_val_loss:
-            best_semantics_val_loss = semantics_val_loss
-            epochs_no_improve_semantics = 0
-        else:
-            epochs_no_improve_semantics += 1
+        epochs_no_improve += 1
 
-        if average_val_loss < best_loss:
-            best_loss = average_val_loss
+        if average_epoch_val_loss < best_val_loss:
+            best_val_loss = average_epoch_val_loss
+            epochs_no_improve = 0
             save_best_model(model, save_dir)
-            print(f"New best model saved with validation loss: {best_loss}")
+            print(f"New best model saved with validation loss: {best_val_loss}", flush=True)
 
-        torch.save({
-            'epoch': epoch + 1,
-            'model_state_dict': model.state_dict(),
-            'optimizer_state_dict': optimizer.state_dict(),
-            'scheduler_state_dict': scheduler.state_dict(),
-            'loss': average_epoch_loss,
-            'best_loss': best_loss,
-            'training_losses': training_losses,
-            'validation_losses': validation_losses,
-            'times': times
-        }, checkpoint_path)
-
-        if (epochs_no_improve_semantics >= cfg.EARLY_STOP_EPOCHS) and (epoch >= 200):
-            print(f"Early stop at epoch {epoch + 1}. Semantics val loss did not improve for {cfg.EARLY_STOP_EPOCHS} consecutive epochs.")
-            print(f"Model saved at early stopping point with validation loss: {best_semantics_val_loss}")
+        if (epochs_no_improve >= cfg.EARLY_STOP_EPOCHS) and (epoch >= 50):
+            print(f"Early stop at epoch {epoch + 1}. Validation loss did not improve for {cfg.EARLY_STOP_EPOCHS} consecutive epochs.", flush=True)
+            print(f"Model saved at early stopping point with validation loss: {best_val_loss}", flush=True)
             break
+
+        if (epoch + 1) % cfg.SAVE_INTERVAL == 0:
+            torch.save({
+                'epoch': epoch + 1,
+                'model_state_dict': model.state_dict(),
+                'optimizer_state_dict': optimizer.state_dict(),
+                'scheduler_state_dict': scheduler.state_dict(),
+                'loss': average_epoch_loss,
+                'best_loss': best_val_loss,
+                'training_losses': training_losses,
+                'validation_losses': validation_losses,
+                'times': times
+            }, checkpoint_path)
+
 
         if torch.cuda.is_available() and not hasattr(model, "_torchdynamo_orig_callable"):
             torch.cuda.empty_cache()
 
-        scheduler.step(average_val_loss)
+        scheduler.step(average_epoch_val_loss)
 
     total_time = sum(times)
-    print(f"Total training time: {total_time // 3600:.0f} hours, {(total_time % 3600) // 60:.0f} minutes, {total_time % 60:.0f} seconds")
+    print(f"Total training time: {total_time // 3600:.0f} hours, {(total_time % 3600) // 60:.0f} minutes, {total_time % 60:.0f} seconds", flush=True)
 
     return model
 
@@ -235,11 +229,13 @@ def main():
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Train a expert model foucsed on color prediction")
+    parser = argparse.ArgumentParser(description="Train a expert model foucsed on semantics prediction")
     parser.add_argument('--config', type=str, default='src.local_config',
                         help='Path to the configuration module (src.local_config | src.aws_config)')
     parser.add_argument('--scratch', action='store_true', help='If not specified and checkpoint is stored, it will be used')
     args = parser.parse_args()
     cfg = importlib.import_module(args.config)
+
+    torch.set_float32_matmul_precision('high')
 
     main()
