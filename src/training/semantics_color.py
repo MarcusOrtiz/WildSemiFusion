@@ -10,7 +10,7 @@ from torch.utils.data import DataLoader
 from torch.cuda.amp import GradScaler, autocast
 from src.models.base import BaseModel
 from src.models.experts import ColorExpertModel, SemanticExpertModel
-from src.models.semantics_color import SemanticsColorModelSimple, SemanticsColorModelLinear
+from src.models.semantics_color import SemanticsColorModelSimple, SemanticsColorModelLinear, SemanticsColorModelMLP
 
 from src.plotting import generate_plots
 from src.utils import generate_normalized_locations, populate_random_seeds, model_to_device, compile_model, generate_loss_trackers, \
@@ -278,8 +278,6 @@ def main():
     del trained_simple_model, model_simple
     print("Training finished for SemanticsColorSimpleModel \n ---------------------")
 
-    quit()
-
     model_linear = SemanticsColorModelLinear(cfg.NUM_BINS, cfg.CLASSES)
     model_linear = model_to_device(model_linear, device)
     trained_linear_model = train_val(
@@ -295,7 +293,8 @@ def main():
     del trained_linear_model, model_linear
     print("Training finished for SemanticsColorLinearModel \n ---------------------")
 
-    model_mlp = SemanticsColorModelMlp(cfg.NUM_BINS)
+
+    model_mlp = SemanticsColorModelMLP(cfg.NUM_BINS, cfg.CLASSES)
     model_mlp = model_to_device(model_mlp, device)
     trained_mlp_model = train_val(
         model=model_mlp,
