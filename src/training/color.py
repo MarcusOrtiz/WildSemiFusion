@@ -1,4 +1,5 @@
 import time
+import sys
 import os
 import torch
 import torch.nn as nn
@@ -355,22 +356,24 @@ def train_val(model_simple, model_linear, model_mlp, device, train_dataloader, v
                 'times': times_mlp
             }, os.path.join(save_dir_mlp, "checkpoint.pth"))
 
-        if (epochs_no_improve_color_simple >= cfg.EARLY_STOP_EPOCHS) and (epoch >= 5) and running_simple:
+        if (epochs_no_improve_color_simple >= cfg.EARLY_STOP_EPOCHS) and (epoch >= 15) and running_simple:
             running_simple = False
             print(f"Early stop at epoch {epoch + 1}. Color validation loss did not improve for {cfg.EARLY_STOP_EPOCHS} consecutive epochs.")
             print(f"Model saved at early stopping point with validation loss: {best_color_val_loss_simple}")
 
-        if (epochs_no_improve_color_linear >= cfg.EARLY_STOP_EPOCHS) and (epoch >= 5) and running_linear:
+        if (epochs_no_improve_color_linear >= cfg.EARLY_STOP_EPOCHS) and (epoch >= 15) and running_linear:
             running_linear = False
             print(f"Early stop at epoch {epoch + 1}. Color validation loss did not improve for {cfg.EARLY_STOP_EPOCHS} consecutive epochs.")
             print(f"Model saved at early stopping point with validation loss: {best_color_val_loss_linear}")
 
-        if (epochs_no_improve_color_mlp >= cfg.EARLY_STOP_EPOCHS) and (epoch >= 5) and running_mlp:
+        if (epochs_no_improve_color_mlp >= cfg.EARLY_STOP_EPOCHS) and (epoch >= 15) and running_mlp:
             running_mlp = False
             print(f"Early stop at epoch {epoch + 1}. Color validation loss did not improve for {cfg.EARLY_STOP_EPOCHS} consecutive epochs.")
             print(f"Model saved at early stopping point with validation loss: {best_color_val_loss_mlp}")
 
         if torch.cuda.is_available(): torch.cuda.empty_cache()
+        sys.stdout.flush()
+
         scheduler_simple.step(average_val_loss_simple)
         scheduler_linear.step(average_val_loss_linear)
         scheduler_mlp.step(average_val_loss_mlp)
@@ -392,9 +395,9 @@ def main():
                                     image_noise=cfg.IMAGE_NOISE, image_mask_rate=cfg.IMAGE_MASK_RATE)
     val_dataset = Rellis2DDataset(preloaded_data=val_preloaded_data, num_bins=cfg.NUM_BINS, image_size=cfg.IMAGE_SIZE,
                                   image_noise=cfg.IMAGE_NOISE, image_mask_rate=cfg.IMAGE_MASK_RATE)
-    train_dataloader = DataLoader(train_dataset, batch_size=cfg.BATCH_SIZE_COLOR, shuffle=True, num_workers=0,
+    train_dataloader = DataLoader(train_dataset, batch_size=cfg.BATCH_SIZE_COLOR, shuffle=True, num_workers=cfg.NUM_WORKERS,
                                   pin_memory=cfg.PIN_MEMORY, drop_last=True)
-    val_dataloader = DataLoader(val_dataset, batch_size=cfg.BATCH_SIZE_COLOR, shuffle=False, num_workers=0,
+    val_dataloader = DataLoader(val_dataset, batch_size=cfg.BATCH_SIZE_COLOR, shuffle=False, num_workers=cfg.NUM_WORKERS,
                                 pin_memory=cfg.PIN_MEMORY, drop_last=True)
     print(f"Created training dataloader with {len(train_dataset)} files and validation dataloader with {len(val_dataset)} files")
 
