@@ -55,7 +55,7 @@ def train_val(model, device, train_dataloader, val_dataloader, epochs, lr, save_
 
     optimizer = torch.optim.Adam([
         {'params': model.color_fcn.parameters(), 'weight_decay': 1e-4},
-        {'params': model.compression_layer.parameters()},
+        {'params': model.compression_layer.parameters(), 'weight_decay': 1e-5},
     ], lr=lr)
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'min', factor=cfg.LR_DECAY_FACTOR, patience=cfg.PATIENCE)
     scaler = GradScaler()
@@ -121,8 +121,8 @@ def train_val(model, device, train_dataloader, val_dataloader, epochs, lr, save_
         training_losses['total'].append(average_epoch_train_loss)
         training_losses['color'].append(average_epoch_train_loss)
 
-        print(f"Epoch {epoch + 1}/{epochs}")
-        print(f"Training Loss: {average_epoch_train_loss}")
+        print(f"Epoch {epoch + 1}/{epochs}", flush=True)
+        print(f"Training Loss: {average_epoch_train_loss}", flush=True)
 
         if torch.cuda.is_available() and not hasattr(model, "_torchdynamo_orig_callable"):
             torch.cuda.empty_cache()
@@ -155,8 +155,8 @@ def train_val(model, device, train_dataloader, val_dataloader, epochs, lr, save_
         validation_losses['total'].append(average_epoch_val_loss)
         validation_losses['color'].append(average_epoch_val_loss)
         times.append(time.time() - epoch_start_time)
-        print(f"Validation Loss: {average_epoch_val_loss}")
-        print(f"Total Time: {sum(times)}")
+        print(f"Validation Loss: {average_epoch_val_loss}", flush=True)
+        print(f"Total Time: {sum(times)}", flush=True)
 
 
         epochs_no_improve += 1
@@ -165,11 +165,11 @@ def train_val(model, device, train_dataloader, val_dataloader, epochs, lr, save_
             epochs_no_improve = 0
             best_val_loss = average_epoch_val_loss
             save_best_model(model, save_dir)
-            print(f"New best model saved with validation loss: {best_val_loss}")
+            print(f"New best model saved with validation loss: {best_val_loss}", flush=True)
 
         if (epochs_no_improve >= cfg.EARLY_STOP_EPOCHS) and (epoch >= 50):
-            print(f"Early stopping triggered at epoch {epoch + 1}. Validatio loss did not improve for {cfg.EARLY_STOP_EPOCHS} consecutive epochs.")
-            print(f"Model saved at early stopping point with validation loss: {best_val_loss}")
+            print(f"Early stopping triggered at epoch {epoch + 1}. Validatio loss did not improve for {cfg.EARLY_STOP_EPOCHS} consecutive epochs.", flush=True)
+            print(f"Model saved at early stopping point with validation loss: {best_val_loss}", flush=True)
             break
 
         if (epoch + 1) % cfg.SAVE_INTERVAL == 0:
@@ -186,14 +186,13 @@ def train_val(model, device, train_dataloader, val_dataloader, epochs, lr, save_
             }, checkpoint_path)
 
 
-
         if torch.cuda.is_available() and not hasattr(model, "_torchdynamo_orig_callable"):
             torch.cuda.empty_cache()
 
         scheduler.step(average_epoch_val_loss)
 
     total_time = sum(times)
-    print(f"Total training time: {total_time // 3600:.0f} hours, {(total_time % 3600) // 60:.0f} minutes, {total_time % 60:.0f} seconds")
+    print(f"Total training time: {total_time // 3600:.0f} hours, {(total_time % 3600) // 60:.0f} minutes, {total_time % 60:.0f} seconds", flush=True)
 
     return model
 
