@@ -143,7 +143,7 @@ def train_val(model, device, train_dataloader, val_dataloader, epochs, lr, save_
                     loss_semantics_val = cfg.WEIGHT_SEMANTICS * criterion_ce_semantics(preds_semantics, gt_semantics)
                     del preds_semantics, gt_semantics
 
-                    epoch_val_loss += loss_semantics_val
+                    epoch_val_loss += loss_semantics_val.item()
 
         average_epoch_val_loss = epoch_val_loss / len(val_dataloader)
 
