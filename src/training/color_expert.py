@@ -53,27 +53,20 @@ def train_val(model, device, train_dataloader, val_dataloader, epochs, lr, save_
 
     model = compile_model(model)
 
-    optimizer = torch.optim.AdamW([
-        {'params': model.color_fcn.parameters(), 'lr': 0.0005, 'weight_decay': 5e-3},
-        {'params': model.compression_layer.parameters()}
-    ], lr=lr, betas=(0.9, 0.999), eps=1e-8)
-
-    scheduler = torch.optim.lr_scheduler.CosineAnnealingWarmRestarts(
-        optimizer,
-        T_0=10,  # Initial restart period
-        T_mult=2,  # Multiply restart period each time
-        eta_min=1e-6  # Minimum learning rate
-    )
+    optimizer = torch.optim.Adam([
+        {'params': model.color_fcn.parameters(), 'weight_decay': 1e-4},
+        {'params': model.compression_layer.parameters()},
+    ], lr=lr)
+    scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'min', factor=cfg.LR_DECAY_FACTOR, patience=cfg.PATIENCE)
     scaler = GradScaler()
 
     criterion_ce_color = nn.CrossEntropyLoss(ignore_index=cfg.NUM_BINS - 1)
-    best_color_val_loss = float('inf')
-    epochs_no_improve_color = 0
+    best_val_loss = float('inf')
+    epochs_no_improve = 0
     training_losses = {'total': [], 'semantics': [], 'color': []}
     validation_losses = {'total': [], 'semantics': [], 'color': []}
     times = []
     start_epoch = 0
-    best_loss = float('inf')
     if use_checkpoint and os.path.exists(checkpoint_path):
         print(f"Loading checkpoint from {checkpoint_path} being used")
         checkpoint = torch.load(checkpoint_path, map_location=device)
@@ -81,7 +74,7 @@ def train_val(model, device, train_dataloader, val_dataloader, epochs, lr, save_
         optimizer.load_state_dict(checkpoint['optimizer_state_dict'])
         scheduler.load_state_dict(checkpoint['scheduler_state_dict'])
         start_epoch = checkpoint['epoch']
-        best_loss = checkpoint.get('best_loss', best_loss)
+        best_val_loss = checkpoint.get('best_loss', best_val_loss)
         training_losses = checkpoint.get('training_losses', training_losses)
         validation_losses = checkpoint.get('validation_losses', validation_losses)
         times = checkpoint.get('times', times)
@@ -126,7 +119,7 @@ def train_val(model, device, train_dataloader, val_dataloader, epochs, lr, save_
         average_epoch_loss = epoch_loss / len(train_dataloader)
 
         training_losses['total'].append(average_epoch_loss)
-        training_losses['color'].append(loss_color.item())
+        training_losses['color'].append(average_epoch_loss)
 
         print(f"Epoch {epoch + 1}/{epochs}")
         print(f"Training Loss: {average_epoch_loss}")
@@ -160,24 +153,23 @@ def train_val(model, device, train_dataloader, val_dataloader, epochs, lr, save_
                 val_loss += total_loss
 
         average_val_loss = val_loss / len(val_dataloader)
-        color_val_loss = loss_color_val.item()
 
-        validation_losses['total'].append(average_val_loss.item())
-        validation_losses['color'].append(color_val_loss)
+        validation_losses['total'].append(average_val_loss)
+        validation_losses['color'].append(average_val_loss)
         times.append(time.time() - epoch_start_time)
-        print(f"Validation Loss: {average_val_loss.item()}")
+        print(f"Validation Loss: {average_val_loss}")
         print(f"Total Time: {sum(times)}")
 
-        if color_val_loss < best_color_val_loss:
-            best_color_val_loss = color_val_loss
-            epochs_no_improve_color = 0
+        if average_val_loss < best_val_loss:
+            best_val_loss = average_val_loss
+            epochs_no_improve = 0
         else:
-            epochs_no_improve_color += 1
+            epochs_no_improve += 1
 
-        if average_val_loss < best_loss:
-            best_loss = average_val_loss
+        if average_val_loss < best_val_loss:
+            best_val_loss = average_val_loss
             save_best_model(model, save_dir)
-            print(f"New best model saved with validation loss: {best_loss}")
+            print(f"New best model saved with validation loss: {best_val_loss}")
 
         torch.save({
             'epoch': epoch + 1,
@@ -185,15 +177,15 @@ def train_val(model, device, train_dataloader, val_dataloader, epochs, lr, save_
             'optimizer_state_dict': optimizer.state_dict(),
             'scheduler_state_dict': scheduler.state_dict(),
             'loss': average_epoch_loss,
-            'best_loss': best_loss,
+            'best_loss': best_val_loss,
             'training_losses': training_losses,
             'validation_losses': validation_losses,
             'times': times
         }, checkpoint_path)
 
-        if (epochs_no_improve_color >= cfg.EARLY_STOP_EPOCHS) and (epoch >= 100):
+        if (epochs_no_improve >= cfg.EARLY_STOP_EPOCHS) and (epoch >= 75):
             print(f"Early stopping triggered at epoch {epoch + 1}. SDF validation loss did not improve for {cfg.EARLY_STOP_EPOCHS} consecutive epochs.")
-            print(f"Model saved at early stopping point with validation loss: {best_color_val_loss}")
+            print(f"Model saved at early stopping point with validation loss: {best_val_loss}")
             break
 
         if torch.cuda.is_available() and not hasattr(model, "_torchdynamo_orig_callable"):
@@ -250,6 +242,6 @@ if __name__ == "__main__":
     args = parser.parse_args()
     cfg = importlib.import_module(args.config)
 
-    torch.set_float32_matmul_precision('highest')
+    torch.set_float32_matmul_precision('high')
 
     main()
