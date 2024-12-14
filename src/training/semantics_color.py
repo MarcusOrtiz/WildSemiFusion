@@ -219,7 +219,7 @@ def train_val(model, device, train_dataloader, val_dataloader, epochs, lr, save_
                 'times': times
             }, os.path.join(save_dir, "checkpoint.pth"))
 
-        if (epochs_no_improve_color >= cfg.EARLY_STOP_EPOCHS) and (epoch >= 75):
+        if (epochs_no_improve_color >= cfg.EARLY_STOP_EPOCHS) and (epoch >= 10):
             print(f"Early stop at epoch {epoch + 1} for {model_type} model. Color val loss did not improve for {cfg.EARLY_STOP_EPOCHS} consecutive epochs")
             print(f"Final training stats for {model_type} model")
             total_time = sum(times)
@@ -264,8 +264,8 @@ def main():
     # Train and validate each color model
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    if torch.cuda.is_available():
-        torch.cuda.synchronize(device=device)
+   #if torch.cuda.is_available():
+       # torch.cuda.synchronize(device=device)
     model_simple = SemanticsColorModelSimple(cfg.NUM_BINS, cfg.CLASSES)
     model_simple = model_to_device(model_simple, device)
     trained_simple_model = train_val(
@@ -281,8 +281,8 @@ def main():
     del trained_simple_model, model_simple
     print("Training finished for SemanticsColorSimpleModel \n ---------------------")
 
-    if torch.cuda.is_available():
-        torch.cuda.synchronize(device=device)
+    #if torch.cuda.is_available():
+        #torch.cuda.synchronize(device=device)
     model_linear = SemanticsColorModelLinear(cfg.NUM_BINS, cfg.CLASSES)
     model_linear = model_to_device(model_linear, device)
     trained_linear_model = train_val(
@@ -298,8 +298,8 @@ def main():
     del trained_linear_model, model_linear
     print("Training finished for SemanticsColorLinearModel \n ---------------------")
 
-    if torch.cuda.is_available():
-        torch.cuda.synchronize(device=device)
+    #if torch.cuda.is_available():
+        #torch.cuda.synchronize(device=device)
     model_mlp = SemanticsColorModelMLP(cfg.NUM_BINS, cfg.CLASSES)
     model_mlp = model_to_device(model_mlp, device)
     trained_mlp_model = train_val(
