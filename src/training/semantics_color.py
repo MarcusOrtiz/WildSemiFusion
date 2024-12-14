@@ -71,6 +71,8 @@ def train_val(model, device, train_dataloader, val_dataloader, epochs, lr, save_
     color_expert_model = freeze_script_compile_sub_model(color_expert_model)
     semantics_expert_model = freeze_script_compile_sub_model(semantics_expert_model)
 
+    quit()
+
     optimizer = torch.optim.Adam([
         {'params': model.parameters(), 'lr': lr, 'weight_decay': 1e-5}, ], lr=lr)
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'min', factor=cfg.LR_DECAY_FACTOR, patience=cfg.PATIENCE)

@@ -185,7 +185,6 @@ class ComplexSemanticNet(SemanticNet):
         self.bn2 = nn.BatchNorm1d(hidden_dim)
         self.fc3 = nn.Linear(hidden_dim, num_classes)
 
-
         self.fc3 = nn.Linear(hidden_dim, hidden_dim)
         self.bn3 = nn.BatchNorm1d(hidden_dim)
         self.fc4 = nn.Linear(hidden_dim, hidden_dim)
