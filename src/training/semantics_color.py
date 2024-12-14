@@ -145,7 +145,7 @@ def train_val(model, device, train_dataloader, val_dataloader, epochs, lr, save_
         training_losses['color'].append(loss_color.item())
 
 
-        print(f"Epoch {epoch + 1}/{epochs})")
+        print(f"Epoch {epoch + 1}/{epochs} for {model_type} model)")
         print(f"Training Loss: {average_epoch_loss}")
 
         if torch.cuda.is_available() and not hasattr(model, '_torchdynamo_orig_callable'):
@@ -193,7 +193,7 @@ def train_val(model, device, train_dataloader, val_dataloader, epochs, lr, save_
             validation_losses['color'].append(color_val_loss)
             times.append((time.time() - epoch_start_time) - sub_model_time)
             print(f"Validation Loss: {average_val_loss.item()}")
-            print(f"Training Time: {times[-1]}")
+            print(f"Current training: {sum(times)}")
 
         if color_val_loss < best_color_val_loss:
             best_color_val_loss = color_val_loss
@@ -220,16 +220,26 @@ def train_val(model, device, train_dataloader, val_dataloader, epochs, lr, save_
             }, os.path.join(save_dir, "checkpoint.pth"))
 
         if (epochs_no_improve_color >= cfg.EARLY_STOP_EPOCHS) and (epoch >= 75):
-            print(f"Early stop at epoch {epoch + 1}. Color validation loss did not improve for {cfg.EARLY_STOP_EPOCHS} consecutive epochs.")
-            print(f"{model_type} Model saved at early stopping point with validation loss: {best_color_val_loss}")
+            print(f"Early stop at epoch {epoch + 1} for {model_type} model. Color val loss did not improve for {cfg.EARLY_STOP_EPOCHS} consecutive epochs")
+            print(f"Final training stats for {model_type} model")
+            total_time = sum(times)
+            print(f"Main model training time: {total_time}")
+            print(f"Average time per epoch: {total_time / epochs}")
+            print(f"Best validation loss: {best_loss}")
+            print(f"Best color validation loss: {best_color_val_loss}")
+
             break
 
         if torch.cuda.is_available() and not hasattr(model, '_torchdynamo_orig_callable'):
             torch.cuda.empty_cache()
         scheduler.step(average_val_loss)
 
+    print(f"Final training stats for {model_type} model )")
     total_time = sum(times)
-    print(f"Total training time: {total_time // 3600:.0f} hours, {(total_time % 3600) // 60:.0f} minutes, {total_time % 60:.0f} seconds")
+    print(f"Main model training time: {total_time}")
+    print(f"Average time per epoch: {total_time / epochs}")
+    print(f"Best validation loss: {best_loss}")
+    print(f"Best color validation loss: {best_color_val_loss}")
 
     return model
 
