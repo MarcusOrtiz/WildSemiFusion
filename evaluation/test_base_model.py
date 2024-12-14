@@ -92,8 +92,7 @@ def main():
     populate_random_seeds(cfg.SEED)
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    model_path = "~/Projects/WildSemiFusion/testing_models/base/best_model.pth"
-    model_path = os.path.expanduser(model_path)
+    model_path = os.path.join(cfg.TESTING_MODELS_DIR, "base", "best_model.pth")
     model = BaseModel(cfg.NUM_BINS, cfg.CLASSES)
     model = load_model(model, model_path, device)
     model = freeze_compile_model(model)

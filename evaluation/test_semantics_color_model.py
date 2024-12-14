@@ -102,35 +102,35 @@ def main():
     populate_random_seeds(cfg.SEED)
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    base_model_path = "~/Projects/WildSemiFusion/testing_models/base/best_model.pth" # TODO: Fix the path
+    base_model_path = os.path.join(cfg.TESTING_MODELS_DIR, "base", "best_model.pth")
     base_model_path = os.path.expanduser(base_model_path)
     base_model = BaseModel(cfg.NUM_BINS, cfg.CLASSES)
     base_model = load_model(base_model, base_model_path, device)
     base_model = freeze_compile_model(base_model)
     print("Base model frozen and compiled successfully")
 
-    color_expert_model_path = "~/Projects/WildSemiFusion/testing_models/color_expert/best_model.pth"
+    color_expert_model_path = os.path.join(cfg.TESTING_MODELS_DIR, "color_expert", "best_model.pth")
     color_expert_model_path = os.path.expanduser(color_expert_model_path)
     color_expert_model = ColorExpertModel(cfg.NUM_BINS)
     color_expert_model = load_model(color_expert_model, color_expert_model_path, device)
     color_expert_model = freeze_compile_model(color_expert_model)
     print("Color expert model frozen and compiled successfully")
 
-    semantics_expert_model_path = "~/Projects/WildSemiFusion/testing_models/semantics_expert/best_model.pth"
+    semantics_expert_model_path = os.path.join(cfg.TESTING_MODELS_DIR, "semantics_expert", "best_model.pth")
     semantics_expert_model_path = os.path.expanduser(semantics_expert_model_path)
-    semantics_expert_model = SemanticExpertModel(cfg.NUM_BINS)
+    semantics_expert_model = SemanticExpertModel(cfg.CLASSES)
     semantics_expert_model = load_model(semantics_expert_model, semantics_expert_model_path, device)
     semantics_expert_model = freeze_compile_model(semantics_expert_model)
     print("Semantics expert model frozen and compiled successfully")
 
     if model_type == 'simple':
-        semantics_color_model_path = "~/Projects/WildSemiFusion/testing_models/semantics_color_simple/best_model.pth"
+        semantics_color_model_path = os.path.join(cfg.TESTING_MODELS_DIR, "semantics_color_simple", "best_model.pth")
         semantics_color_model = SemanticsColorModelSimple(cfg.NUM_BINS, cfg.CLASSES)
     elif model_type == 'linear':
-        semantics_color_model_path = "~/Projects/WildSemiFusion/testing_models/semantics_color_linear/best_model.pth"
+        semantics_color_model_path = os.path.join(cfg.TESTING_MODELS_DIR, "semantics_color_linear", "best_model.pth")
         semantics_color_model = SemanticsColorModelLinear(cfg.NUM_BINS, cfg.CLASSES)
     elif model_type == 'mlp':
-        semantics_color_model_path = "~/Projects/WildSemiFusion/testing_models/semantics_color_mlp/best_model.pth"
+        semantics_color_model_path = os.path.join(cfg.TESTING_MODELS_DIR, "semantics_color_mlp", "best_model.pth")
         semantics_color_model = SemanticsColorModelMLP(cfg.NUM_BINS, cfg.CLASSES)
 
     semantics_color_model_path = os.path.expanduser(semantics_color_model_path)

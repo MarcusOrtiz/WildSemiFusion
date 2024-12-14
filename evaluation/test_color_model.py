@@ -99,14 +99,13 @@ def main():
     populate_random_seeds(cfg.SEED)
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    base_model_path = "~/Projects/WildSemiFusion/testing_models/base/best_model.pth" # TODO: Fix the path
-    base_model_path = os.path.expanduser(base_model_path)
+    base_model_path = os.path.join(cfg.TESTING_MODELS_DIR, "base", "best_model.pth")
     base_model = BaseModel(cfg.NUM_BINS, cfg.CLASSES)
     base_model = load_model(base_model, base_model_path, device)
     base_model = freeze_compile_model(base_model)
     print("Base model frozen and compiled successfully")
 
-    color_expert_model_path = "~/Desktop/Models/experts/color_expert_12_6PM/best_model.pth"
+    color_expert_model_path = os.path.join(cfg.TESTING_MODELS_DIR, "color_expert", "best_model.pth")
     color_expert_model_path = os.path.expanduser(color_expert_model_path)
     color_expert_model = ColorExpertModel(cfg.NUM_BINS)
     color_expert_model = load_model(color_expert_model, color_expert_model_path, device)
@@ -114,13 +113,13 @@ def main():
     print("Color expert model frozen and compiled successfully")
 
     if model_type == 'simple':
-        color_model_path = "~/Projects/WildSemiFusion/testing_models/color_simple/best_model.pth"
+        color_model_path = os.path.join(cfg.TESTING_MODELS_DIR, "color_simple", "best_model.pth")
         color_model = ColorModelSimple(cfg.NUM_BINS)
     elif model_type == 'linear':
-        color_model_path = "~/Projects/WildSemiFusion/testing_models/color_linear/best_model.pth"
+        color_model_path = os.path.join(cfg.TESTING_MODELS_DIR, "color_linear", "best_model.pth")
         color_model = ColorModelLinear(cfg.NUM_BINS)
     elif model_type == 'mlp':
-        color_model_path = "~/Projects/WildSemiFusion/testing_models/color_mlp/best_model.pth"
+        color_model_path = os.path.join(cfg.TESTING_MODELS_DIR, "color_mlp", "best_model.pth")
         color_model = ColorModelMLP(cfg.NUM_BINS)
 
     color_model_path = os.path.expanduser(color_model_path)

@@ -17,6 +17,8 @@ AWS_SAVE_DIR_SEMANTICS_EXPERT = os.path.join(AWS_SAVE_DIR, "semantics_expert")
 AWS_SAVE_DIR_COLOR = os.path.join(AWS_SAVE_DIR, "color")
 AWS_SAVE_DIR_COLOR_SEMANTICS = os.path.join(AWS_SAVE_DIR, "semantics_color")
 
+TESTING_MODELS_DIR = os.path.join(SRC_DIR, "../saved_models_test")
+
 # Data Directories
 INPUT_DIR = os.path.join(SRC_DIR, "../input")
 TRAIN_DIR = os.path.join(INPUT_DIR, "rellis_2d_preprocessed/train")
