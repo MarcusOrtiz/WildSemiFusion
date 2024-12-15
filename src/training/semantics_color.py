@@ -216,7 +216,7 @@ def train_val(model, device, train_dataloader, val_dataloader, epochs, lr, save_
             best_val_loss = average_epoch_val_loss
             best_val_color_loss = average_epoch_val_color_loss
             best_val_semantics_loss = average_epoch_val_semantics_loss
-            print(f"New best {model_type} model saved with validation loss: {best_val_loss}", flash=True)
+            print(f"New best {model_type} model saved with validation loss: {best_val_loss}", flush=True)
 
         if (epoch + 1) % cfg.SAVE_INTERVAL == 0:
             torch.save({
