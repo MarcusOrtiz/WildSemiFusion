@@ -99,12 +99,14 @@ def train_val(model, device, train_dataloader, val_dataloader, epochs, lr, save_
 
                 # Repeat locations along batch dimension
                 batch_size = gt_color.shape[0]
+                print(f"gt color shape: {gt_color.shape}")
                 locations = normalized_locations_tensor.unsqueeze(0).expand(batch_size, -1, -1)
 
                 preds_color_logits = model(locations, lab_images)
                 del locations, lab_images
 
                 preds_color_logits = preds_color_logits.view(-1, cfg.NUM_BINS)
+                gt_color = gt_color.view(batch_size, 3, -1)
                 gt_color = gt_color.view(-1)
                 loss_color = cfg.WEIGHT_COLOR * criterion_ce_color(preds_color_logits, gt_color)
                 del preds_color_logits, gt_color
