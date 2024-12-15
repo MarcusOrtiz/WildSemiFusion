@@ -113,11 +113,11 @@ class ComplexColorNet(nn.Module):
 
         self.fc4 = nn.Linear(hidden_dim_2, hidden_dim_2)
         self.bn4 = nn.LayerNorm(hidden_dim_2)
-        self.dropout4 = nn.Dropout(0.4)
+        self.dropout4 = nn.Dropout(0.3)
 
         self.fc5 = nn.Linear(hidden_dim_2, hidden_dim_3)
         self.bn5 = nn.LayerNorm(hidden_dim_3)
-        self.dropout5 = nn.Dropout(0.5)
+        self.dropout5 = nn.Dropout(0.4)
 
         self.fc6 = nn.Linear(hidden_dim_3, 3 * num_bins)
 
