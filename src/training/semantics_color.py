@@ -102,7 +102,7 @@ def train_val(model, device, train_dataloader, val_dataloader, epochs, lr, save_
         training_losses = checkpoint['training_losses']
         validation_losses = checkpoint['validation_losses']
         times = checkpoint['times']
-        print(f"Loaded checkpoint from {checkpoint_path}", flush=True)
+        print(f"Loaded checkpoint from {checkpoint_path} with start epoch {start_epoch}", flush=True)
 
     normalized_locations = generate_normalized_locations(cfg.IMAGE_SIZE)
     normalized_locations_tensor = torch.from_numpy(normalized_locations).to(device)

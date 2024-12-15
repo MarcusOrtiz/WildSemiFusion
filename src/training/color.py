@@ -199,6 +199,7 @@ def train_val(color_model, base_model, color_expert_model, device, train_dataloa
                 'validation_losses': validation_losses,
                 'times': times
             }, checkpoint_path)
+            print(f"Checkpoint saved for {model_type} model at epoch {epoch + 1}", flush=True)
 
         if (epochs_no_improve >= cfg.EARLY_STOP_EPOCHS) and (epoch >= 10):
             total_time = sum(times)
