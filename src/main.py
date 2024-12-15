@@ -6,7 +6,7 @@ def main():
     training_scripts = [
         # "python -m src.training.base --scratch --config " + args.config,
         # "python -m src.training.color_expert --scratch --config " + args.config,
-        "python -m src.training.color --scratch --config " + args.config + " 2>&1 | tee ../outputs/color_fixed_indent.txt"
+        "python -m src.training.color --scratch --config " + args.config + " 2>&1 | tee ../outputs/color_fixed_indent.txt",
         "python -m src.training.semantics_color --scratch --config " + args.config + " 2>&1 | tee ../outputs/semantics_color_fixed_indent.txt"
         # "python -m src.training.color --config " + args.config,
     ]
