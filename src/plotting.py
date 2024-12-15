@@ -7,7 +7,7 @@ def generate_plots(epoch, training_losses, validation_losses, times, save_dir, p
     if (epoch + 1) % plot_interval == 0:
         plot_losses(training_losses, validation_losses, save_dir)
         plot_times(times, save_dir)
-        print(f"Plots saved to {save_dir}")
+        print(f"Plots saved to {save_dir}", flush=True)
 
 def plot_times(times: List[float], save_dir: str):
     save_path = os.path.join(save_dir, "time_per_epoch.png")
