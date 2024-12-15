@@ -161,7 +161,7 @@ def train_val(model, device, train_dataloader, val_dataloader, epochs, lr, save_
             save_best_model(model, save_dir)
             print(f"New best model saved with validation loss: {best_val_loss}", flush=True)
 
-        if (epochs_no_improve >= cfg.EARLY_STOP_EPOCHS) and (epoch >= 50):
+        if (epochs_no_improve >= cfg.EARLY_STOP_EPOCHS) and (epoch >= 20):
             print(f"Early stop at epoch {epoch + 1}. Validation loss did not improve for {cfg.EARLY_STOP_EPOCHS} consecutive epochs.", flush=True)
             print(f"Model saved at early stopping point with validation loss: {best_val_loss}", flush=True)
             break
