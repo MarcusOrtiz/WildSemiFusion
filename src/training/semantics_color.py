@@ -194,9 +194,9 @@ def train_val(model, device, train_dataloader, val_dataloader, epochs, lr, save_
                     loss_color_val = cfg.WEIGHT_COLOR * criterion_ce_color(preds_color.view(-1, cfg.NUM_BINS), gt_color.view(-1))
                     del gt_semantics, gt_color
 
-                    epoch_val_loss += loss_semantics_val + loss_color_val
-                    epoch_val_semantics_loss += loss_semantics_val
-                    epoch_val_color_loss += loss_color_val
+                    epoch_val_loss += loss_semantics_val.item() + loss_color_val.item()
+                    epoch_val_semantics_loss += loss_semantics_val.item()
+                    epoch_val_color_loss += loss_color_val.item()
 
         average_epoch_val_loss = epoch_val_loss / len(val_dataloader)
         average_epoch_val_semantics_loss = epoch_val_semantics_loss / len(val_dataloader)
@@ -207,7 +207,7 @@ def train_val(model, device, train_dataloader, val_dataloader, epochs, lr, save_
         validation_losses['color'].append(average_epoch_val_color_loss)
         times.append((time.time() - epoch_start_time) - sub_model_time)
         print(f"Validation Loss: {average_epoch_val_loss}", flush=True)
-        print(f"Time: {sum(times)}", flush=True)
+        print(f"Main Model Time: {sum(times)}", flush=True)
 
         epochs_no_improve += 1
 
@@ -216,7 +216,7 @@ def train_val(model, device, train_dataloader, val_dataloader, epochs, lr, save_
             best_val_loss = average_epoch_val_loss
             best_val_color_loss = average_epoch_val_color_loss
             best_val_semantics_loss = average_epoch_val_semantics_loss
-            print(f"New best {model_type} model saved with validation loss: {best_val_loss}")
+            print(f"New best {model_type} model saved with validation loss: {best_val_loss}", flash=True)
 
         if (epoch + 1) % cfg.SAVE_INTERVAL == 0:
             torch.save({
@@ -236,7 +236,7 @@ def train_val(model, device, train_dataloader, val_dataloader, epochs, lr, save_
             total_time = sum(times)
 
             print(f"Early stop at epoch {epoch + 1} for {model_type} model. Val loss did not improve for {cfg.EARLY_STOP_EPOCHS} consecutive epochs)")
-            print(f"Average time per epoch: {total_time / epochs}")
+            print(f"Main model training time: {total_time}")
             print(f"Best validation loss: {best_val_loss}")
             print(f"Color loss for best loss: {best_val_color_loss}")
             print(f"Semantics loss for best loss: {best_val_semantics_loss}")
@@ -247,12 +247,11 @@ def train_val(model, device, train_dataloader, val_dataloader, epochs, lr, save_
         scheduler.step(average_epoch_val_loss)
 
     total_time = sum(times)
-    print(f"Stopping since {model_type} since all epochs are done)")
-    print(f"Main model training time: {total_time}")
-    print(f"Average time per epoch: {total_time / epochs}")
-    print(f"Best validation loss: {best_val_loss}")
-    print(f"Best color validation loss: {best_val_color_loss}")
-    print(f"Best semantics validation loss: {best_val_semantics_loss}")
+    print(f"Stopping since {model_type} since all epochs are done)", flush=True)
+    print(f"Main model training time: {total_time}", flush=True)
+    print(f"Best validation loss: {best_val_loss}", flush=True)
+    print(f"Best color validation loss: {best_val_color_loss}", flush=True)
+    print(f"Best semantics validation loss: {best_val_semantics_loss}", flush=True)
 
     return model
 
