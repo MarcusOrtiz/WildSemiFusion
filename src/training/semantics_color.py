@@ -231,6 +231,7 @@ def train_val(model, device, train_dataloader, val_dataloader, epochs, lr, save_
                 'validation_losses': validation_losses,
                 'times': times
             }, checkpoint_path)
+            print(f"Checkpoint saved for {model_type} model at epoch {epoch + 1}", flush=True)
 
         if (epochs_no_improve >= cfg.EARLY_STOP_EPOCHS) and (epoch >= 10):
             total_time = sum(times)
