@@ -186,7 +186,7 @@ def train_val(color_model, base_model, color_expert_model, device, train_dataloa
             epochs_no_improve = 0
             best_val_loss = average_epoch_val_loss
             save_best_model(color_model, save_dir)
-            print(f"New best {model_type} model saved with validation loss: {best_val_loss}")
+            print(f"New best {model_type} model saved with validation loss: {best_val_loss}", flush=True)
 
         if (epoch + 1) % cfg.SAVE_INTERVAL == 0:
             torch.save({
@@ -203,9 +203,9 @@ def train_val(color_model, base_model, color_expert_model, device, train_dataloa
         if (epochs_no_improve >= cfg.EARLY_STOP_EPOCHS) and (epoch >= 10):
             total_time = sum(times)
 
-            print(f"Early stop at epoch {epoch + 1} for {model_type} model. Val loss did not improve for {cfg.EARLY_STOP_EPOCHS} consecutive epochs)")
-            print(f"Average time per epoch: {total_time / epochs}")
-            print(f"Best validation loss: {best_val_loss}")
+            print(f"Early stop at epoch {epoch + 1} for {model_type} model. Val loss did not improve for {cfg.EARLY_STOP_EPOCHS} consecutive epochs)", flush=True)
+            print(f"Average time per epoch: {total_time / epochs}", flush=True)
+            print(f"Best validation loss: {best_val_loss}", flush=True)
             break
 
         if torch.cuda.is_available():
@@ -228,7 +228,7 @@ def main():
 
     train_preloaded_data = load_sequential_data(cfg.TRAIN_DIR, cfg.TRAIN_FILES_LIMIT)
     val_preloaded_data = load_sequential_data(cfg.VAL_DIR, cfg.VAL_FILES_LIMIT)
-    print("Successfully loaded preprocessed training and validation data")
+    print("Successfully loaded preprocessed training and validation data", flush=True)
 
     train_dataset = Rellis2DDataset(preloaded_data=train_preloaded_data, num_bins=cfg.NUM_BINS, image_size=cfg.IMAGE_SIZE,
                                     image_noise=cfg.IMAGE_NOISE, image_mask_rate=cfg.IMAGE_MASK_RATE)
@@ -238,7 +238,7 @@ def main():
                                   pin_memory=cfg.PIN_MEMORY, drop_last=True)
     val_dataloader = DataLoader(val_dataset, batch_size=cfg.BATCH_SIZE_COLOR, shuffle=False, num_workers=cfg.NUM_WORKERS,
                                 pin_memory=cfg.PIN_MEMORY, drop_last=True)
-    print(f"Created training dataloader with {len(train_dataset)} files and validation dataloader with {len(val_dataset)} files")
+    print(f"Created training dataloader with {len(train_dataset)} files and validation dataloader with {len(val_dataset)} files", flush=True)
 
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     base_model, color_expert_model = load_sub_models(device, base_dir=cfg.SAVE_DIR_BASE, color_expert_dir=cfg.SAVE_DIR_COLOR_EXPERT)

@@ -235,11 +235,11 @@ def train_val(model, device, train_dataloader, val_dataloader, epochs, lr, save_
         if (epochs_no_improve >= cfg.EARLY_STOP_EPOCHS) and (epoch >= 10):
             total_time = sum(times)
 
-            print(f"Early stop at epoch {epoch + 1} for {model_type} model. Val loss did not improve for {cfg.EARLY_STOP_EPOCHS} consecutive epochs)")
-            print(f"Main model training time: {total_time}")
-            print(f"Best validation loss: {best_val_loss}")
-            print(f"Color loss for best loss: {best_val_color_loss}")
-            print(f"Semantics loss for best loss: {best_val_semantics_loss}")
+            print(f"Early stop at epoch {epoch + 1} for {model_type} model. Val loss did not improve for {cfg.EARLY_STOP_EPOCHS} consecutive epochs)", flush=True)
+            print(f"Main model training time: {total_time}", flush=True)
+            print(f"Best validation loss: {best_val_loss}", flush=True)
+            print(f"Color loss for best loss: {best_val_color_loss}", flush=True)
+            print(f"Semantics loss for best loss: {best_val_semantics_loss}", flush=True)
             break
 
         if torch.cuda.is_available() and not hasattr(model, '_torchdynamo_orig_callable'):
@@ -261,7 +261,7 @@ def main():
 
     train_preloaded_data = load_sequential_data(cfg.TRAIN_DIR, cfg.TRAIN_FILES_LIMIT)
     val_preloaded_data = load_sequential_data(cfg.VAL_DIR, cfg.VAL_FILES_LIMIT)
-    print("Successfully loaded preprocessed training and validation data")
+    print("Successfully loaded preprocessed training and validation data", flush=True)
 
     train_dataset = Rellis2DDataset(preloaded_data=train_preloaded_data, num_bins=cfg.NUM_BINS, image_size=cfg.IMAGE_SIZE,
                                     image_noise=cfg.IMAGE_NOISE, image_mask_rate=cfg.IMAGE_MASK_RATE)
@@ -271,7 +271,7 @@ def main():
                                   pin_memory=cfg.PIN_MEMORY, drop_last=True)
     val_dataloader = DataLoader(val_dataset, batch_size=cfg.BATCH_SIZE_COLOR_SEMANTICS, shuffle=False, num_workers=cfg.NUM_WORKERS,
                                 pin_memory=cfg.PIN_MEMORY, drop_last=True)
-    print(f"Created training dataloader with {len(train_dataset)} files and validation dataloader with {len(val_dataset)} files")
+    print(f"Created training dataloader with {len(train_dataset)} files and validation dataloader with {len(val_dataset)} files", flush=True)
 
     # Train and validate each color model
 
@@ -291,7 +291,7 @@ def main():
         use_checkpoint=not args.scratch
     )
     del trained_simple_model, model_simple
-    print("Training finished for SemanticsColorSimpleModel \n ---------------------")
+    print("Training finished for SemanticsColorSimpleModel \n ---------------------", flush=True)
 
     #if torch.cuda.is_available():
         #torch.cuda.synchronize(device=device)
@@ -308,7 +308,7 @@ def main():
         use_checkpoint=not args.scratch
     )
     del trained_linear_model, model_linear
-    print("Training finished for SemanticsColorLinearModel \n ---------------------")
+    print("Training finished for SemanticsColorLinearModel \n ---------------------", flush=True)
 
     #if torch.cuda.is_available():
         #torch.cuda.synchronize(device=device)
@@ -324,7 +324,7 @@ def main():
         save_dir=cfg.SAVE_DIR_COLOR_SEMANTICS + "_mlp",
         use_checkpoint=not args.scratch
     )
-    print("Training finished for SemanticsColorMLPModel \n ---------------------")
+    print("Training finished for SemanticsColorMLPModel \n ---------------------", flush=True)
 
 
 if __name__ == "__main__":
