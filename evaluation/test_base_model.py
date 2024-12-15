@@ -5,6 +5,8 @@ import numpy as np
 import time
 import argparse
 
+from matplotlib import pyplot as plt
+
 from evaluation.utils import compute_average_metrics, load_model, freeze_model
 from src.data.utils.data_processing import load_sequential_data, rgb_to_gray, rgb_to_lab_continuous, lab_continuous_to_lab_discretized, lab_discretized_to_rgb
 from src.models.base import BaseModel
@@ -32,7 +34,7 @@ def test_base_model(model, device, test_preloaded_data):
 
             batch_size = 1
 
-            locations = normalized_locations_tensor.repeat(batch_size, 1, 1)
+            locations = normalized_locations_tensor.unsqueeze(0).expand(batch_size, -1, -1)
             lab_image_tensor = torch.tensor(lab_image_discretized.transpose(2, 0, 1), dtype=torch.float32).unsqueeze(0).to(device)  # Shape: (3, H, W)
             gray_image_tensor = torch.tensor(gray_image[np.newaxis, ...], dtype=torch.float32).unsqueeze(0).to(device)  # Shape: (1, H, W)
 
@@ -46,14 +48,33 @@ def test_base_model(model, device, test_preloaded_data):
             assert preds_color.dtype == torch.float32, "Color logits are not class probabilities"
 
             # Reshape preds color and create rgb numpy to compare against original rgb
-            preds_color = preds_color.view(batch_size, cfg.IMAGE_SIZE[0], cfg.IMAGE_SIZE[1], 3, cfg.NUM_BINS)
+            print(f"Preds Color Shape: {preds_color.shape}")
+
+            preds_color = preds_color.view(cfg.IMAGE_SIZE[0], cfg.IMAGE_SIZE[1], 3, cfg.NUM_BINS)
+            print(f"Preds Color Reshaped Shape: {preds_color.shape}")
             preds_color = torch.argmax(preds_color, dim=-1)  # Shape: (batchsize, H, W, 3)
+            print(f"Preds Color Argmax Shape: {preds_color.shape}")
+            print(f"Preds Color Permuted Shape: {preds_color.shape}")
             preds_color_np = preds_color.cpu().numpy()
-            preds_color_rgb_np = lab_discretized_to_rgb(preds_color_np[0], cfg.NUM_BINS, void_bin=True)
+            print(f"Preds Color NP Shape: {preds_color_np.shape}")
+            print(f"Max preds color: {np.max(preds_color_np)}")
+            print(f"Max preds color: {np.min(preds_color_np)}")
+            preds_color_rgb_np = lab_discretized_to_rgb(preds_color_np, cfg.NUM_BINS, void_bin=True)
+            print(f"Preds Color RGB Shape: {preds_color_rgb_np.shape}")
+            print(f"Max preds color rgb: {np.max(preds_color_rgb_np)}")
+            print(f"Max preds color rgb: {np.min(preds_color_rgb_np)}")
+            print(f"Preds COlor RGB: {preds_color_rgb_np}")
 
             # Convert gt rgb_image to float32, not using ints, it is relative
             gt_rgb_image = rgb_image.astype(np.float32)
             gt_rgb_image = gt_rgb_image / 255.0
+
+            fig, axs = plt.subplots(1, 2, figsize=(10, 5))
+            axs[0].imshow(gt_rgb_image)
+            axs[0].set_title('Ground Truth Color')
+            axs[1].imshow(preds_color_rgb_np)
+            axs[1].set_title('Predicted Color')
+            plt.show()
 
             # flatten the semantics
             gt_semantics = gt_semantics.flatten()

@@ -198,7 +198,7 @@ def train_val(model, device, train_dataloader, val_dataloader, epochs, lr, save_
 def main():
     populate_random_seeds(cfg.SEED)
 
-    model = BaseModel(cfg.NUM_BINS, cfg.CLASSES)
+    model = BaseModel(cfg.NUM_BINS-1, cfg.CLASSES)
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model = model_to_device(model, device)
     model = compile_model(model)
