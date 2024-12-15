@@ -200,7 +200,7 @@ def train_val(color_model, base_model, color_expert_model, device, train_dataloa
                 'times': times
             }, checkpoint_path)
 
-        if (epochs_no_improve >= cfg.EARLY_STOP_EPOCHS) and (epoch >= 50):
+        if (epochs_no_improve >= cfg.EARLY_STOP_EPOCHS) and (epoch >= 10):
             total_time = sum(times)
 
             print(f"Early stop at epoch {epoch + 1} for {model_type} model. Val loss did not improve for {cfg.EARLY_STOP_EPOCHS} consecutive epochs)")

@@ -89,7 +89,6 @@ def train_val(model, device, train_dataloader, val_dataloader, epochs, lr, save_
                 loss_semantics = cfg.WEIGHT_SEMANTICS * criterion_ce_semantics(preds_semantics, gt_semantics.long().view(-1))
                 del preds_semantics, gt_semantics
 
-                gt_color = gt_color.permute(0, 3, 1, 2).contiguous()
                 preds_color_logits = preds_color_logits.view(-1, cfg.NUM_BINS)
                 gt_color = gt_color.view(-1)
                 loss_color = cfg.WEIGHT_COLOR * criterion_ce_color(preds_color_logits, gt_color)
@@ -139,7 +138,6 @@ def train_val(model, device, train_dataloader, val_dataloader, epochs, lr, save_
                     loss_semantics_val = cfg.WEIGHT_SEMANTICS * criterion_ce_semantics(preds_semantics, gt_semantics.long().view(-1))
                     del preds_semantics, gt_semantics
 
-                    gt_color = gt_color.permute(0, 3, 1, 2).contiguous()
                     preds_color_logits = preds_color_logits.view(-1, cfg.NUM_BINS)
                     gt_color = gt_color.view(-1)
                     loss_color_val = cfg.WEIGHT_COLOR * criterion_ce_color(preds_color_logits, gt_color)
@@ -198,7 +196,7 @@ def train_val(model, device, train_dataloader, val_dataloader, epochs, lr, save_
 def main():
     populate_random_seeds(cfg.SEED)
 
-    model = BaseModel(cfg.NUM_BINS-1, cfg.CLASSES)
+    model = BaseModel(cfg.NUM_BINS, cfg.CLASSES)
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     model = model_to_device(model, device)
     model = compile_model(model)
