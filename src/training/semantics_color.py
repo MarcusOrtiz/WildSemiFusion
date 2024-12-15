@@ -232,7 +232,7 @@ def train_val(model, device, train_dataloader, val_dataloader, epochs, lr, save_
                 'times': times
             }, checkpoint_path)
 
-        if (epochs_no_improve >= cfg.EARLY_STOP_EPOCHS) and (epoch >= 10):
+        if (epochs_no_improve >= cfg.EARLY_STOP_EPOCHS) and (epoch >= 50):
             total_time = sum(times)
 
             print(f"Early stop at epoch {epoch + 1} for {model_type} model. Val loss did not improve for {cfg.EARLY_STOP_EPOCHS} consecutive epochs)")
