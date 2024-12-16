@@ -308,7 +308,7 @@ if __name__ == "__main__":
     parser.add_argument('--config', type=str, default='src.local_config',
                         help='Path to the configuration module (src.local_config | src.aws_config)')
     parser.add_argument('--scratch', action='store_true', help='If not specified and checkpoint is stored, it will be used')
-    parser.add_argument('--model', type=str, default='all', help='Model type (simple | linear | mlp), if not specified, all models will be trained')
+    parser.add_argument('--model', type=str, default='all', help='Model type (simple | linear | mlp | all), if not specified, all models will be trained')
     args = parser.parse_args()
     cfg = importlib.import_module(args.config)
 
