@@ -7,7 +7,7 @@ def main():
         training_scripts = [
             # "python -m src.training.base --config " + 'src.base_config' + " --scratch 2>&1 | tee ../outputs/base_fixed_loss.txt",
             # "python -m src.training.color_expert --config " + 'src.color_expert_config' + " --scratch 2>&1 | tee ../outputs/color_expert_fixed_loss.txt",
-            "python -m src.training.color --scratch --config " + args.config + " --model " + args.color_model_type + " 2>&1 | tee utputs/color_fixed_indent.txt",
+            "python -m src.training.color --scratch --config " + args.config + " --model " + args.color_model_type + " 2>&1 | tee outputs/color_fixed_indent.txt",
             "python -m src.training.semantics_color --scratch --config " + args.config + " --model " + args.semantics_color_model_type + " 2>&1 | tee outputs/semantics_color_fixed_indent.txt"
         ]
     else:
