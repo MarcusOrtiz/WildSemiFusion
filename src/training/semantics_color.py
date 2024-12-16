@@ -77,7 +77,7 @@ def train_val(model, device, train_dataloader, val_dataloader, epochs, lr, save_
     model = compile_model(model)
 
     optimizer = torch.optim.Adam([
-        {'params': model.parameters(), 'lr': lr, 'weight_decay': 1e-4}, ], lr=lr)
+        {'params': model.parameters(), 'lr': lr, 'weight_decay': 1e-3}, ], lr=lr)
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'min', factor=cfg.LR_DECAY_FACTOR, patience=cfg.PATIENCE)
     scaler = GradScaler()
 
