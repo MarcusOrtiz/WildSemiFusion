@@ -138,7 +138,7 @@ def train_val(color_model, base_model, color_expert_model, device, train_dataloa
         training_losses['color'].append(average_epoch_train_loss)
 
         print(f"Epoch {epoch + 1}/{epochs} for {model_type} model)", flush=True)
-        print(f"Training Loss Simple: {average_epoch_train_loss}", flush=True)
+        print(f"Training Loss for {model_type}: {average_epoch_train_loss}", flush=True)
 
         if torch.cuda.is_available() and not hasattr(color_model, '_torchdynamo_orig_callable'):
             torch.cuda.empty_cache()
@@ -177,7 +177,7 @@ def train_val(color_model, base_model, color_expert_model, device, train_dataloa
         validation_losses['total'].append(average_epoch_val_loss)
         validation_losses['color'].append(average_epoch_val_loss)
         times.append((time.time() - epoch_start_time) - sub_model_time)
-        print(f"Validation Loss Simple: {average_epoch_val_loss}", flush=True)
+        print(f"Validation Loss for {model_type}: {average_epoch_val_loss}", flush=True)
         print(f"Time: {sum(times)}", flush=True)
 
         epochs_no_improve += 1
