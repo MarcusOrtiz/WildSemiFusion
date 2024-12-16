@@ -21,6 +21,7 @@ class ColorModelLinear(nn.Module):
     def forward(self, preds_semantics_base, preds_color_base, preds_color_expert):
         preds_color_combined = torch.cat([preds_color_base, preds_color_expert], dim=-1)  # (N, C, 2*num_bins)
         samples, channels, _ = preds_color_combined.shape
+        preds_color_combined = preds_color_combined.view(samples * channels, -1)
         preds_color_combined = self.color_fusion_fc1(preds_color_combined)
         preds_color_combined = preds_color_combined.view(samples, channels, -1)
         return preds_semantics_base, preds_color_combined
