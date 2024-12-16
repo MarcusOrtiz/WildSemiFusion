@@ -32,8 +32,10 @@ class ColorModelMLP(nn.Module):
         super(ColorModelMLP, self).__init__()
         self.color_fusion_fc1 = nn.Linear(num_bins * 2, num_bins)
         self.bn1 = nn.BatchNorm1d(num_bins)
+        self.color_fusion_drop1 = nn.Dropout(0.1)
         self.color_fusion_fc2 = nn.Linear(num_bins, num_bins)
         self.bn2 = nn.BatchNorm1d(num_bins)
+        self.color_fusion_drop2 = nn.Dropout(0.2)
         self.color_fusion_fc3 = nn.Linear(num_bins, num_bins)
 
         self.relu = nn.ReLU()
@@ -44,7 +46,9 @@ class ColorModelMLP(nn.Module):
         samples, channels, _ = preds_color_combined.shape
         preds_color_combined = preds_color_combined.view(samples * channels, -1)
         preds_color_combined = self.relu(self.bn1(self.color_fusion_fc1(preds_color_combined)))
+        preds_color_combined = self.color_fusion_drop1(preds_color_combined)
         preds_color_combined = self.relu(self.bn2(self.color_fusion_fc2(preds_color_combined)))
+        preds_color_combined = self.color_fusion_drop2(preds_color_combined)
         preds_color_combined = self.color_fusion_fc3(preds_color_combined)
         preds_color_combined = preds_color_combined.view(samples, channels, -1)
         return preds_semantics_base, preds_color_combined

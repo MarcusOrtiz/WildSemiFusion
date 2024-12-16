@@ -287,7 +287,7 @@ def main():
         device=device,
         train_dataloader=train_dataloader,
         val_dataloader=val_dataloader,
-        epochs=cfg.EPOCHS,
+        epochs=min(10, cfg.EPOCHS),
         lr=cfg.LR,
         save_dir=cfg.SAVE_DIR_COLOR_SEMANTICS + "_simple",
         use_checkpoint=not args.scratch
@@ -304,7 +304,7 @@ def main():
         device=device,
         train_dataloader=train_dataloader,
         val_dataloader=val_dataloader,
-        epochs=cfg.EPOCHS,
+        epochs=min(15, cfg.EPOCHS),
         lr=cfg.LR,
         save_dir=cfg.SAVE_DIR_COLOR_SEMANTICS + "_linear",
         use_checkpoint=not args.scratch
