@@ -280,53 +280,59 @@ def main():
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
    #if torch.cuda.is_available():
        # torch.cuda.synchronize(device=device)
-    model_simple = SemanticsColorModelSimple(cfg.NUM_BINS, cfg.CLASSES)
-    model_simple = model_to_device(model_simple, device)
-    trained_simple_model = train_val(
-        model=model_simple,
-        device=device,
-        train_dataloader=train_dataloader,
-        val_dataloader=val_dataloader,
-        epochs=min(10, cfg.EPOCHS),
-        lr=cfg.LR,
-        save_dir=cfg.SAVE_DIR_COLOR_SEMANTICS + "_simple",
-        use_checkpoint=not args.scratch
-    )
-    del trained_simple_model, model_simple
-    print("Training finished for SemanticsColorSimpleModel \n ---------------------", flush=True)
+    if args.model == 'simple' or args.model == 'all':
+        print("Training SemanticsColor Simple Model", flush=True)
+        model_simple = SemanticsColorModelSimple(cfg.NUM_BINS, cfg.CLASSES)
+        model_simple = model_to_device(model_simple, device)
+        trained_simple_model = train_val(
+            model=model_simple,
+            device=device,
+            train_dataloader=train_dataloader,
+            val_dataloader=val_dataloader,
+            epochs=min(10, cfg.EPOCHS),
+            lr=cfg.LR,
+            save_dir=cfg.SAVE_DIR_COLOR_SEMANTICS + "_simple",
+            use_checkpoint=not args.scratch
+        )
+        del trained_simple_model, model_simple
+        print("Training finished for SemanticsColorSimpleModel \n ---------------------", flush=True)
 
     #if torch.cuda.is_available():
         #torch.cuda.synchronize(device=device)
-    model_linear = SemanticsColorModelLinear(cfg.NUM_BINS, cfg.CLASSES)
-    model_linear = model_to_device(model_linear, device)
-    trained_linear_model = train_val(
-        model=model_linear,
-        device=device,
-        train_dataloader=train_dataloader,
-        val_dataloader=val_dataloader,
-        epochs=min(15, cfg.EPOCHS),
-        lr=cfg.LR,
-        save_dir=cfg.SAVE_DIR_COLOR_SEMANTICS + "_linear",
-        use_checkpoint=not args.scratch
-    )
-    del trained_linear_model, model_linear
-    print("Training finished for SemanticsColorLinearModel \n ---------------------", flush=True)
+    if args.model == 'linear' or args.model == 'all':
+        print("Training SemanticsColor Linear Model", flush=True)
+        model_linear = SemanticsColorModelLinear(cfg.NUM_BINS, cfg.CLASSES)
+        model_linear = model_to_device(model_linear, device)
+        trained_linear_model = train_val(
+            model=model_linear,
+            device=device,
+            train_dataloader=train_dataloader,
+            val_dataloader=val_dataloader,
+            epochs=min(15, cfg.EPOCHS),
+            lr=cfg.LR,
+            save_dir=cfg.SAVE_DIR_COLOR_SEMANTICS + "_linear",
+            use_checkpoint=not args.scratch
+        )
+        del trained_linear_model, model_linear
+        print("Training finished for SemanticsColorLinearModel \n ---------------------", flush=True)
 
     #if torch.cuda.is_available():
         #torch.cuda.synchronize(device=device)
-    model_mlp = SemanticsColorModelMLP(cfg.NUM_BINS, cfg.CLASSES)
-    model_mlp = model_to_device(model_mlp, device)
-    trained_mlp_model = train_val(
-        model=model_mlp,
-        device=device,
-        train_dataloader=train_dataloader,
-        val_dataloader=val_dataloader,
-        epochs=cfg.EPOCHS,
-        lr=cfg.LR,
-        save_dir=cfg.SAVE_DIR_COLOR_SEMANTICS + "_mlp",
-        use_checkpoint=not args.scratch
-    )
-    print("Training finished for SemanticsColorMLPModel \n ---------------------", flush=True)
+    if args.model == 'mlp' or args.model == 'all':
+        print("Training SemanticsColor MLP Model", flush=True)
+        model_mlp = SemanticsColorModelMLP(cfg.NUM_BINS, cfg.CLASSES)
+        model_mlp = model_to_device(model_mlp, device)
+        trained_mlp_model = train_val(
+            model=model_mlp,
+            device=device,
+            train_dataloader=train_dataloader,
+            val_dataloader=val_dataloader,
+            epochs=cfg.EPOCHS,
+            lr=cfg.LR,
+            save_dir=cfg.SAVE_DIR_COLOR_SEMANTICS + "_mlp",
+            use_checkpoint=not args.scratch
+        )
+        print("Training finished for SemanticsColorMLPModel \n ---------------------", flush=True)
 
 
 if __name__ == "__main__":
@@ -334,6 +340,8 @@ if __name__ == "__main__":
     parser.add_argument('--config', type=str, default='src.local_config',
                         help='Path to the configuration module (src.local_config | src.aws_config)')
     parser.add_argument('--scratch', action='store_true', help='If not specified and checkpoint is stored, it will be used')
+    parser.add_argument('--model', type=str, default='all', help='Model type (simple | linear | mlp), if not specified, all models will be trained')
+
     args = parser.parse_args()
     cfg = importlib.import_module(args.config)
 

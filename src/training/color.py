@@ -246,55 +246,61 @@ def main():
     freeze_sub_models(base_model=base_model, color_expert_model=color_expert_model)
     base_model, color_expert_model = script_sub_models(base_model=base_model, color_expert_model=color_expert_model)
 
-    color_model_simple = ColorModelSimple(num_bins=cfg.NUM_BINS)
-    color_model_simple = model_to_device(color_model_simple, device)
-    trained_color_model_simple = train_val(
-        color_model=color_model_simple,
-        base_model=base_model,
-        color_expert_model=color_expert_model,
-        device=device,
-        train_dataloader=train_dataloader,
-        val_dataloader=val_dataloader,
-        epochs=min(5, cfg.EPOCHS),
-        lr=cfg.LR,
-        save_dir=cfg.SAVE_DIR_COLOR + "_simple",
-        use_checkpoint=not args.scratch
-    )
-    print("Training finished for Simple Color Model \n ---------------------", flush=True)
-    del color_model_simple, trained_color_model_simple
+    if args.model == 'simple' or args.model == 'all':
+        print("Training Simple Color Model", flush=True)
+        color_model_simple = ColorModelSimple(num_bins=cfg.NUM_BINS)
+        color_model_simple = model_to_device(color_model_simple, device)
+        trained_color_model_simple = train_val(
+            color_model=color_model_simple,
+            base_model=base_model,
+            color_expert_model=color_expert_model,
+            device=device,
+            train_dataloader=train_dataloader,
+            val_dataloader=val_dataloader,
+            epochs=min(5, cfg.EPOCHS),
+            lr=cfg.LR,
+            save_dir=cfg.SAVE_DIR_COLOR + "_simple",
+            use_checkpoint=not args.scratch
+        )
+        print("Training finished for Simple Color Model \n ---------------------", flush=True)
+        del color_model_simple, trained_color_model_simple
 
-    color_model_linear = ColorModelLinear(num_bins=cfg.NUM_BINS)
-    color_model_linear = model_to_device(color_model_linear, device)
-    trained_color_model_linear = train_val(
-        color_model=color_model_linear,
-        base_model=base_model,
-        color_expert_model=color_expert_model,
-        device=device,
-        train_dataloader=train_dataloader,
-        val_dataloader=val_dataloader,
-        epochs=min(10, cfg.EPOCHS),
-        lr=cfg.LR,
-        save_dir=cfg.SAVE_DIR_COLOR + "_linear",
-        use_checkpoint=not args.scratch
-    )
-    print("Training finished for Linear Color Model \n ---------------------", flush=True)
-    del color_model_linear, trained_color_model_linear
+    if args.model == 'linear' or args.model == 'all':
+        print("Training Linear Color Model", flush=True)
+        color_model_linear = ColorModelLinear(num_bins=cfg.NUM_BINS)
+        color_model_linear = model_to_device(color_model_linear, device)
+        trained_color_model_linear = train_val(
+            color_model=color_model_linear,
+            base_model=base_model,
+            color_expert_model=color_expert_model,
+            device=device,
+            train_dataloader=train_dataloader,
+            val_dataloader=val_dataloader,
+            epochs=min(10, cfg.EPOCHS),
+            lr=cfg.LR,
+            save_dir=cfg.SAVE_DIR_COLOR + "_linear",
+            use_checkpoint=not args.scratch
+        )
+        print("Training finished for Linear Color Model \n ---------------------", flush=True)
+        del color_model_linear, trained_color_model_linear
 
-    color_model_mlp = ColorModelMLP(num_bins=cfg.NUM_BINS)
-    color_model_mlp = model_to_device(color_model_mlp, device)
-    trained_color_model_mlp = train_val(
-        color_model=color_model_mlp,
-        base_model=base_model,
-        color_expert_model=color_expert_model,
-        device=device,
-        train_dataloader=train_dataloader,
-        val_dataloader=val_dataloader,
-        epochs=cfg.EPOCHS,
-        lr=cfg.LR,
-        save_dir=cfg.SAVE_DIR_COLOR + "_mlp",
-        use_checkpoint=not args.scratch
-    )
-    print("Training finished for MLP Color Model \n ---------------------", flush=True)
+    if args.model == 'mlp' or args.model == 'all':
+        print("Training MLP Color Model", flush=True)
+        color_model_mlp = ColorModelMLP(num_bins=cfg.NUM_BINS)
+        color_model_mlp = model_to_device(color_model_mlp, device)
+        trained_color_model_mlp = train_val(
+            color_model=color_model_mlp,
+            base_model=base_model,
+            color_expert_model=color_expert_model,
+            device=device,
+            train_dataloader=train_dataloader,
+            val_dataloader=val_dataloader,
+            epochs=cfg.EPOCHS,
+            lr=cfg.LR,
+            save_dir=cfg.SAVE_DIR_COLOR + "_mlp",
+            use_checkpoint=not args.scratch
+        )
+        print("Training finished for MLP Color Model \n ---------------------", flush=True)
 
 
 if __name__ == "__main__":
@@ -302,6 +308,7 @@ if __name__ == "__main__":
     parser.add_argument('--config', type=str, default='src.local_config',
                         help='Path to the configuration module (src.local_config | src.aws_config)')
     parser.add_argument('--scratch', action='store_true', help='If not specified and checkpoint is stored, it will be used')
+    parser.add_argument('--model', type=str, default='all', help='Model type (simple | linear | mlp), if not specified, all models will be trained')
     args = parser.parse_args()
     cfg = importlib.import_module(args.config)
 
