@@ -77,7 +77,7 @@ def train_val(model, device, train_dataloader, val_dataloader, epochs, lr, save_
     model = compile_model(model)
 
     optimizer = torch.optim.Adam([
-        {'params': model.parameters(), 'lr': lr, 'weight_decay': 1e-3}, ], lr=lr)
+        {'params': model.parameters(), 'lr': lr, 'weight_decay': 1e-5}, ], lr=lr)
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'min', factor=cfg.LR_DECAY_FACTOR, patience=cfg.PATIENCE)
     scaler = GradScaler()
 
@@ -308,7 +308,7 @@ def main():
             device=device,
             train_dataloader=train_dataloader,
             val_dataloader=val_dataloader,
-            epochs=min(15, cfg.EPOCHS),
+            epochs=min(20, cfg.EPOCHS),
             lr=cfg.LR,
             save_dir=cfg.SAVE_DIR_COLOR_SEMANTICS + "_linear",
             use_checkpoint=not args.scratch

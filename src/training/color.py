@@ -67,7 +67,7 @@ def train_val(color_model, base_model, color_expert_model, device, train_dataloa
     color_model = compile_model(color_model)
 
     optimizer = torch.optim.Adam([
-        {'params': color_model.parameters(), 'lr': lr, 'weight_decay': 1e-2}, ], lr=lr)
+        {'params': color_model.parameters(), 'lr': lr, 'weight_decay': 1e-5}, ], lr=lr)
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'min', factor=cfg.LR_DECAY_FACTOR, patience=cfg.PATIENCE)
     scaler = GradScaler()
 
@@ -257,7 +257,7 @@ def main():
             device=device,
             train_dataloader=train_dataloader,
             val_dataloader=val_dataloader,
-            epochs=min(5, cfg.EPOCHS),
+            epochs=min(10, cfg.EPOCHS),
             lr=cfg.LR,
             save_dir=cfg.SAVE_DIR_COLOR + "_simple",
             use_checkpoint=not args.scratch
@@ -276,7 +276,7 @@ def main():
             device=device,
             train_dataloader=train_dataloader,
             val_dataloader=val_dataloader,
-            epochs=min(10, cfg.EPOCHS),
+            epochs=min(20, cfg.EPOCHS),
             lr=cfg.LR,
             save_dir=cfg.SAVE_DIR_COLOR + "_linear",
             use_checkpoint=not args.scratch
