@@ -67,7 +67,7 @@ def train_val(color_model, base_model, color_expert_model, device, train_dataloa
     color_model = compile_model(color_model)
 
     optimizer = torch.optim.Adam([
-        {'params': color_model.parameters(), 'lr': lr, 'weight_decay': 1e-3}, ], lr=lr)
+        {'params': color_model.parameters(), 'lr': lr, 'weight_decay': 1e-4}, ], lr=lr)
     scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'min', factor=cfg.LR_DECAY_FACTOR, patience=cfg.PATIENCE)
     scaler = GradScaler()
 
