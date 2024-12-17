@@ -1,0 +1,743 @@
+WildFusion initialized successfully, moved to cuda, compiled, and scripted
+Successfully loaded preprocessed training and validation data
+Created training dataloader with 3302 files and validation dataloader with 983 files
+Epoch 1/150
+Training Loss: 8.414531258703436
+Validation Loss: 8.079458522796632
+Total Time: 88.95685482025146
+New best model saved with validation loss: 8.079458522796632
+Epoch 2/150
+Training Loss: 7.446652222605585
+Validation Loss: 7.492656636238098
+Total Time: 161.52919673919678
+New best model saved with validation loss: 7.492656636238098
+Plots saved to /home/ubuntu/WildSemiFusion/src/../saved_models_test/base
+Epoch 3/150
+Training Loss: 6.926149183106654
+Validation Loss: 7.272821219762166
+Total Time: 234.70926332473755
+New best model saved with validation loss: 7.272821219762166
+Epoch 4/150
+Training Loss: 6.602454833614016
+Validation Loss: 7.061255963643392
+Total Time: 307.57072019577026
+New best model saved with validation loss: 7.061255963643392
+Epoch 5/150
+Training Loss: 6.397896965730538
+Validation Loss: 6.949988961219788
+Total Time: 381.23008251190186
+New best model saved with validation loss: 6.949988961219788
+Plots saved to /home/ubuntu/WildSemiFusion/src/../saved_models_test/base
+Epoch 6/150
+Training Loss: 6.245991257787908
+Validation Loss: 6.763803370793661
+Total Time: 454.8230893611908
+New best model saved with validation loss: 6.763803370793661
+Epoch 7/150
+Training Loss: 6.127218723297119
+Validation Loss: 6.581364488601684
+Total Time: 528.4596583843231
+New best model saved with validation loss: 6.581364488601684
+Epoch 8/150
+Training Loss: 6.030525577878489
+Validation Loss: 6.485625529289246
+Total Time: 602.1192383766174
+New best model saved with validation loss: 6.485625529289246
+Plots saved to /home/ubuntu/WildSemiFusion/src/../saved_models_test/base
+Epoch 9/150
+Training Loss: 5.945195258242412
+Validation Loss: 6.519325812657674
+Total Time: 675.9430692195892
+Epoch 10/150
+Training Loss: 5.875698969202134
+Validation Loss: 6.466347408294678
+Total Time: 749.6340193748474
+New best model saved with validation loss: 6.466347408294678
+Epoch 11/150
+Training Loss: 5.815882127261856
+Validation Loss: 6.272180302937826
+Total Time: 822.8598086833954
+New best model saved with validation loss: 6.272180302937826
+Plots saved to /home/ubuntu/WildSemiFusion/src/../saved_models_test/base
+Epoch 12/150
+Training Loss: 5.758115087898032
+Validation Loss: 6.244064172108968
+Total Time: 895.753705739975
+New best model saved with validation loss: 6.244064172108968
+Epoch 13/150
+Training Loss: 5.7017005300058905
+Validation Loss: 6.247359164555868
+Total Time: 969.2292673587799
+Epoch 14/150
+Training Loss: 5.656165808149912
+Validation Loss: 6.15885587533315
+Total Time: 1042.7717354297638
+New best model saved with validation loss: 6.15885587533315
+Plots saved to /home/ubuntu/WildSemiFusion/src/../saved_models_test/base
+Epoch 15/150
+Training Loss: 5.609793371367223
+Validation Loss: 6.1351486047108965
+Total Time: 1115.5013892650604
+New best model saved with validation loss: 6.1351486047108965
+Epoch 16/150
+Training Loss: 5.56536654129769
+Validation Loss: 6.066171320279439
+Total Time: 1188.2875502109528
+New best model saved with validation loss: 6.066171320279439
+Epoch 17/150
+Training Loss: 5.52188204330148
+Validation Loss: 6.095734802881877
+Total Time: 1262.0563523769379
+Plots saved to /home/ubuntu/WildSemiFusion/src/../saved_models_test/base
+Epoch 18/150
+Training Loss: 5.479412851981746
+Validation Loss: 6.037251011530558
+Total Time: 1335.4254534244537
+New best model saved with validation loss: 6.037251011530558
+Epoch 19/150
+Training Loss: 5.437319894438809
+Validation Loss: 6.005488236745198
+Total Time: 1408.8582038879395
+New best model saved with validation loss: 6.005488236745198
+Epoch 20/150
+Training Loss: 5.4038363984487585
+Validation Loss: 6.019820197423299
+Total Time: 1482.364159822464
+Plots saved to /home/ubuntu/WildSemiFusion/src/../saved_models_test/base
+Epoch 21/150
+Training Loss: 5.3648323503512785
+Validation Loss: 5.897528576850891
+Total Time: 1555.4196860790253
+New best model saved with validation loss: 5.897528576850891
+Epoch 22/150
+Training Loss: 5.329815549757874
+Validation Loss: 5.943021949132284
+Total Time: 1628.5509598255157
+Epoch 23/150
+Training Loss: 5.296550810915752
+Validation Loss: 5.885029395421346
+Total Time: 1702.5502302646637
+New best model saved with validation loss: 5.885029395421346
+Plots saved to /home/ubuntu/WildSemiFusion/src/../saved_models_test/base
+Epoch 24/150
+Training Loss: 5.261288749361501
+Validation Loss: 5.8428468942642215
+Total Time: 1775.8177733421326
+New best model saved with validation loss: 5.8428468942642215
+Epoch 25/150
+Training Loss: 5.227408376712243
+Validation Loss: 5.813027429580688
+Total Time: 1849.6377205848694
+New best model saved with validation loss: 5.813027429580688
+Epoch 26/150
+Training Loss: 5.197697264476887
+Validation Loss: 5.813232338428497
+Total Time: 1922.51340842247
+Plots saved to /home/ubuntu/WildSemiFusion/src/../saved_models_test/base
+Epoch 27/150
+Training Loss: 5.164707165319943
+Validation Loss: 5.811959457397461
+Total Time: 1996.1170678138733
+New best model saved with validation loss: 5.811959457397461
+Epoch 28/150
+Training Loss: 5.134558844334871
+Validation Loss: 5.735332802931468
+Total Time: 2069.5069875717163
+New best model saved with validation loss: 5.735332802931468
+Epoch 29/150
+Training Loss: 5.105141996179969
+Validation Loss: 5.692148538430532
+Total Time: 2143.2615416049957
+New best model saved with validation loss: 5.692148538430532
+Plots saved to /home/ubuntu/WildSemiFusion/src/../saved_models_test/base
+Epoch 30/150
+Training Loss: 5.075885462529451
+Validation Loss: 5.721284385522207
+Total Time: 2216.3065571784973
+Epoch 31/150
+Training Loss: 5.049813011317577
+Validation Loss: 5.681810450553894
+Total Time: 2288.9519629478455
+New best model saved with validation loss: 5.681810450553894
+Epoch 32/150
+Training Loss: 5.020287448920093
+Validation Loss: 5.625383269786835
+Total Time: 2362.5494956970215
+New best model saved with validation loss: 5.625383269786835
+Plots saved to /home/ubuntu/WildSemiFusion/src/../saved_models_test/base
+Epoch 33/150
+Training Loss: 4.9962124685639315
+Validation Loss: 5.69002460638682
+Total Time: 2436.097237586975
+Epoch 34/150
+Training Loss: 4.969742404604421
+Validation Loss: 5.56482085386912
+Total Time: 2509.55184173584
+New best model saved with validation loss: 5.56482085386912
+Epoch 35/150
+Training Loss: 4.939410265209605
+Validation Loss: 5.532789997259775
+Total Time: 2582.6861021518707
+New best model saved with validation loss: 5.532789997259775
+Plots saved to /home/ubuntu/WildSemiFusion/src/../saved_models_test/base
+Epoch 36/150
+Training Loss: 4.914853290446754
+Validation Loss: 5.540678385893504
+Total Time: 2656.1310844421387
+Epoch 37/150
+Training Loss: 4.891461145530626
+Validation Loss: 5.591177634398142
+Total Time: 2728.959244251251
+Epoch 38/150
+Training Loss: 4.864851849750408
+Validation Loss: 5.502673943837483
+Total Time: 2802.0883877277374
+New best model saved with validation loss: 5.502673943837483
+Plots saved to /home/ubuntu/WildSemiFusion/src/../saved_models_test/base
+Epoch 39/150
+Training Loss: 4.843371687583553
+Validation Loss: 5.488395202159881
+Total Time: 2875.7724788188934
+New best model saved with validation loss: 5.488395202159881
+Epoch 40/150
+Training Loss: 4.819806228563624
+Validation Loss: 5.45637495915095
+Total Time: 2948.98606801033
+New best model saved with validation loss: 5.45637495915095
+Epoch 41/150
+Training Loss: 4.797769606692119
+Validation Loss: 5.42227221330007
+Total Time: 3022.502869129181
+New best model saved with validation loss: 5.42227221330007
+Plots saved to /home/ubuntu/WildSemiFusion/src/../saved_models_test/base
+Epoch 42/150
+Training Loss: 4.772722165561417
+Validation Loss: 5.467336372534434
+Total Time: 3095.576761484146
+Epoch 43/150
+Training Loss: 4.753042707165468
+Validation Loss: 5.367711126804352
+Total Time: 3168.91055727005
+New best model saved with validation loss: 5.367711126804352
+Epoch 44/150
+Training Loss: 4.729386792599576
+Validation Loss: 5.357294102509816
+Total Time: 3242.0424375534058
+New best model saved with validation loss: 5.357294102509816
+Plots saved to /home/ubuntu/WildSemiFusion/src/../saved_models_test/base
+Epoch 45/150
+Training Loss: 4.708868123952625
+Validation Loss: 5.355759572982788
+Total Time: 3315.01020359993
+New best model saved with validation loss: 5.355759572982788
+Epoch 46/150
+Training Loss: 4.687760362347353
+Validation Loss: 5.3273434718449915
+Total Time: 3388.5808458328247
+New best model saved with validation loss: 5.3273434718449915
+Epoch 47/150
+Training Loss: 4.6683991302564305
+Validation Loss: 5.371359252929688
+Total Time: 3462.4693286418915
+Plots saved to /home/ubuntu/WildSemiFusion/src/../saved_models_test/base
+Epoch 48/150
+Training Loss: 4.646167801421823
+Validation Loss: 5.284103846549987
+Total Time: 3536.1463537216187
+New best model saved with validation loss: 5.284103846549987
+Epoch 49/150
+Training Loss: 4.627687903283869
+Validation Loss: 5.265960256258647
+Total Time: 3609.485042333603
+New best model saved with validation loss: 5.265960256258647
+Epoch 50/150
+Training Loss: 4.6076803994410245
+Validation Loss: 5.2691416382789615
+Total Time: 3683.117596387863
+Plots saved to /home/ubuntu/WildSemiFusion/src/../saved_models_test/base
+Epoch 51/150
+Training Loss: 4.5886149313843365
+Validation Loss: 5.2401971340179445
+Total Time: 3755.9943239688873
+New best model saved with validation loss: 5.2401971340179445
+Epoch 52/150
+Training Loss: 4.570877376111966
+Validation Loss: 5.232790410518646
+Total Time: 3829.470301389694
+New best model saved with validation loss: 5.232790410518646
+Epoch 53/150
+Training Loss: 4.554812357263658
+Validation Loss: 5.1858462452888485
+Total Time: 3902.559918165207
+New best model saved with validation loss: 5.1858462452888485
+Plots saved to /home/ubuntu/WildSemiFusion/src/../saved_models_test/base
+Epoch 54/150
+Training Loss: 4.535408445932333
+Validation Loss: 5.175610947608948
+Total Time: 3975.820664167404
+New best model saved with validation loss: 5.175610947608948
+Epoch 55/150
+Training Loss: 4.51623463399202
+Validation Loss: 5.210997633139292
+Total Time: 4049.305030822754
+Epoch 56/150
+Training Loss: 4.498181144010673
+Validation Loss: 5.163298753897349
+Total Time: 4121.922265291214
+New best model saved with validation loss: 5.163298753897349
+Plots saved to /home/ubuntu/WildSemiFusion/src/../saved_models_test/base
+Epoch 57/150
+Training Loss: 4.480255909336424
+Validation Loss: 5.174927421410879
+Total Time: 4195.664568185806
+Epoch 58/150
+Training Loss: 4.464307470229065
+Validation Loss: 5.12374959786733
+Total Time: 4268.658707618713
+New best model saved with validation loss: 5.12374959786733
+Epoch 59/150
+Training Loss: 4.450158832142654
+Validation Loss: 5.107203304767609
+Total Time: 4342.029910087585
+New best model saved with validation loss: 5.107203304767609
+Plots saved to /home/ubuntu/WildSemiFusion/src/../saved_models_test/base
+Epoch 60/150
+Training Loss: 4.432153160132251
+Validation Loss: 5.108184854189555
+Total Time: 4414.801579475403
+Epoch 61/150
+Training Loss: 4.4153339145253
+Validation Loss: 5.053876038392385
+Total Time: 4488.190224647522
+New best model saved with validation loss: 5.053876038392385
+Epoch 62/150
+Training Loss: 4.399495851646349
+Validation Loss: 5.034532682100932
+Total Time: 4561.7395632267
+New best model saved with validation loss: 5.034532682100932
+Plots saved to /home/ubuntu/WildSemiFusion/src/../saved_models_test/base
+Epoch 63/150
+Training Loss: 4.3849284857222175
+Validation Loss: 5.050639609495799
+Total Time: 4635.249927282333
+Epoch 64/150
+Training Loss: 4.371727110112755
+Validation Loss: 5.002728160222372
+Total Time: 4708.8260769844055
+New best model saved with validation loss: 5.002728160222372
+Epoch 65/150
+Training Loss: 4.355861024949157
+Validation Loss: 5.018794333934784
+Total Time: 4782.174351930618
+Plots saved to /home/ubuntu/WildSemiFusion/src/../saved_models_test/base
+Epoch 66/150
+Training Loss: 4.340805623137835
+Validation Loss: 4.981269991397857
+Total Time: 4855.371415138245
+New best model saved with validation loss: 4.981269991397857
+Epoch 67/150
+Training Loss: 4.325780252808506
+Validation Loss: 4.982188602288564
+Total Time: 4928.727646827698
+Epoch 68/150
+Training Loss: 4.312327801602558
+Validation Loss: 4.959739518165589
+Total Time: 5002.464044094086
+New best model saved with validation loss: 4.959739518165589
+Plots saved to /home/ubuntu/WildSemiFusion/src/../saved_models_test/base
+Epoch 69/150
+Training Loss: 4.299160434204397
+Validation Loss: 4.935028970241547
+Total Time: 5075.919160366058
+New best model saved with validation loss: 4.935028970241547
+Epoch 70/150
+Training Loss: 4.282763832981146
+Validation Loss: 4.914799177646637
+Total Time: 5149.44583272934
+New best model saved with validation loss: 4.914799177646637
+Epoch 71/150
+Training Loss: 4.268727705316636
+Validation Loss: 4.9412473917007445
+Total Time: 5222.474639177322
+Plots saved to /home/ubuntu/WildSemiFusion/src/../saved_models_test/base
+Epoch 72/150
+Training Loss: 4.257396369304471
+Validation Loss: 4.9119090358416235
+Total Time: 5296.100818157196
+New best model saved with validation loss: 4.9119090358416235
+Epoch 73/150
+Training Loss: 4.242927264241339
+Validation Loss: 4.876800465583801
+Total Time: 5369.737021923065
+New best model saved with validation loss: 4.876800465583801
+Epoch 74/150
+Training Loss: 4.231422452093328
+Validation Loss: 4.882696123917897
+Total Time: 5442.896650791168
+Plots saved to /home/ubuntu/WildSemiFusion/src/../saved_models_test/base
+Epoch 75/150
+Training Loss: 4.219310130887819
+Validation Loss: 4.889402703444163
+Total Time: 5516.017549991608
+Epoch 76/150
+Training Loss: 4.208175728621992
+Validation Loss: 4.831934479872386
+Total Time: 5589.609890699387
+New best model saved with validation loss: 4.831934479872386
+Epoch 77/150
+Training Loss: 4.194487937445779
+Validation Loss: 4.875442564487457
+Total Time: 5662.623977661133
+Plots saved to /home/ubuntu/WildSemiFusion/src/../saved_models_test/base
+Epoch 78/150
+Training Loss: 4.18137415635933
+Validation Loss: 4.813095831871033
+Total Time: 5736.507462263107
+New best model saved with validation loss: 4.813095831871033
+Epoch 79/150
+Training Loss: 4.17048207995961
+Validation Loss: 4.80763471921285
+Total Time: 5810.194684505463
+New best model saved with validation loss: 4.80763471921285
+Epoch 80/150
+Training Loss: 4.161208166659457
+Validation Loss: 4.804564559459687
+Total Time: 5883.389986991882
+New best model saved with validation loss: 4.804564559459687
+Plots saved to /home/ubuntu/WildSemiFusion/src/../saved_models_test/base
+Epoch 81/150
+Training Loss: 4.146045272790112
+Validation Loss: 4.79996984799703
+Total Time: 5956.298051118851
+New best model saved with validation loss: 4.79996984799703
+Epoch 82/150
+Training Loss: 4.135582673896864
+Validation Loss: 4.752655267715454
+Total Time: 6029.94296002388
+New best model saved with validation loss: 4.752655267715454
+Epoch 83/150
+Training Loss: 4.125683469679749
+Validation Loss: 4.783623294035594
+Total Time: 6103.351585149765
+Plots saved to /home/ubuntu/WildSemiFusion/src/../saved_models_test/base
+Epoch 84/150
+Training Loss: 4.115121103027492
+Validation Loss: 4.774887343247731
+Total Time: 6176.994350194931
+Epoch 85/150
+Training Loss: 4.102670475117211
+Validation Loss: 4.7538963516553245
+Total Time: 6251.124132871628
+Epoch 86/150
+Training Loss: 4.091608216461626
+Validation Loss: 4.734254950284958
+Total Time: 6324.331031799316
+New best model saved with validation loss: 4.734254950284958
+Plots saved to /home/ubuntu/WildSemiFusion/src/../saved_models_test/base
+Epoch 87/150
+Training Loss: 4.083487193561295
+Validation Loss: 4.721370995044708
+Total Time: 6398.696895122528
+New best model saved with validation loss: 4.721370995044708
+Epoch 88/150
+Training Loss: 4.070656991699367
+Validation Loss: 4.693321780363719
+Total Time: 6472.638288259506
+New best model saved with validation loss: 4.693321780363719
+Epoch 89/150
+Training Loss: 4.064329633434999
+Validation Loss: 4.719432135423024
+Total Time: 6547.132363080978
+Plots saved to /home/ubuntu/WildSemiFusion/src/../saved_models_test/base
+Epoch 90/150
+Training Loss: 4.051965079261262
+Validation Loss: 4.691072042783102
+Total Time: 6620.819051980972
+New best model saved with validation loss: 4.691072042783102
+Epoch 91/150
+Training Loss: 4.043629954162153
+Validation Loss: 4.671545541286468
+Total Time: 6694.391128063202
+New best model saved with validation loss: 4.671545541286468
+Epoch 92/150
+Training Loss: 4.033957437404151
+Validation Loss: 4.686398388942083
+Total Time: 6768.007228851318
+Plots saved to /home/ubuntu/WildSemiFusion/src/../saved_models_test/base
+Epoch 93/150
+Training Loss: 4.023047838396239
+Validation Loss: 4.658766879638036
+Total Time: 6841.646528244019
+New best model saved with validation loss: 4.658766879638036
+Epoch 94/150
+Training Loss: 4.014794611236424
+Validation Loss: 4.698812810579936
+Total Time: 6915.158913850784
+Epoch 95/150
+Training Loss: 4.00571537480771
+Validation Loss: 4.669528092940649
+Total Time: 6988.196443796158
+Plots saved to /home/ubuntu/WildSemiFusion/src/../saved_models_test/base
+Epoch 96/150
+Training Loss: 3.9966201411867606
+Validation Loss: 4.6568340301513675
+Total Time: 7061.877993106842
+New best model saved with validation loss: 4.6568340301513675
+Epoch 97/150
+Training Loss: 3.9858297422094253
+Validation Loss: 4.624221539497375
+Total Time: 7135.64194726944
+New best model saved with validation loss: 4.624221539497375
+Epoch 98/150
+Training Loss: 3.9815281733725834
+Validation Loss: 4.635628028710683
+Total Time: 7209.220113039017
+Plots saved to /home/ubuntu/WildSemiFusion/src/../saved_models_test/base
+Epoch 99/150
+Training Loss: 3.971694043539103
+Validation Loss: 4.614130163192749
+Total Time: 7282.38236284256
+New best model saved with validation loss: 4.614130163192749
+Epoch 100/150
+Training Loss: 3.962960183041767
+Validation Loss: 4.614569238821665
+Total Time: 7355.6572942733765
+Epoch 101/150
+Training Loss: 3.95223174743282
+Validation Loss: 4.622705827156703
+Total Time: 7429.379407644272
+Plots saved to /home/ubuntu/WildSemiFusion/src/../saved_models_test/base
+Epoch 102/150
+Training Loss: 3.947138348829399
+Validation Loss: 4.594801640510559
+Total Time: 7502.643114328384
+New best model saved with validation loss: 4.594801640510559
+Epoch 103/150
+Training Loss: 3.9375776503849957
+Validation Loss: 4.5860934098561605
+Total Time: 7576.080768108368
+New best model saved with validation loss: 4.5860934098561605
+Epoch 104/150
+Training Loss: 3.930828261143953
+Validation Loss: 4.585600286722183
+Total Time: 7649.332453250885
+New best model saved with validation loss: 4.585600286722183
+Plots saved to /home/ubuntu/WildSemiFusion/src/../saved_models_test/base
+Epoch 105/150
+Training Loss: 3.9233966498699004
+Validation Loss: 4.5474603513876595
+Total Time: 7722.316874265671
+New best model saved with validation loss: 4.5474603513876595
+Epoch 106/150
+Training Loss: 3.9159130008475294
+Validation Loss: 4.536124746004741
+Total Time: 7796.029234170914
+New best model saved with validation loss: 4.536124746004741
+Epoch 107/150
+Training Loss: 3.9078541843636523
+Validation Loss: 4.566976481676102
+Total Time: 7869.456528902054
+Plots saved to /home/ubuntu/WildSemiFusion/src/../saved_models_test/base
+Epoch 108/150
+Training Loss: 3.899632972420998
+Validation Loss: 4.537580001354217
+Total Time: 7942.957905054092
+Epoch 109/150
+Training Loss: 3.893464833787344
+Validation Loss: 4.546287095546722
+Total Time: 8015.742024898529
+Epoch 110/150
+Training Loss: 3.886829008176489
+Validation Loss: 4.5237411518891655
+Total Time: 8088.852733850479
+New best model saved with validation loss: 4.5237411518891655
+Plots saved to /home/ubuntu/WildSemiFusion/src/../saved_models_test/base
+Epoch 111/150
+Training Loss: 3.8803601496427964
+Validation Loss: 4.534542346000672
+Total Time: 8161.736321210861
+Epoch 112/150
+Training Loss: 3.8726587712186054
+Validation Loss: 4.521368465820948
+Total Time: 8234.852008581161
+New best model saved with validation loss: 4.521368465820948
+Epoch 113/150
+Training Loss: 3.866427328980085
+Validation Loss: 4.510884493589401
+Total Time: 8308.37404537201
+New best model saved with validation loss: 4.510884493589401
+Plots saved to /home/ubuntu/WildSemiFusion/src/../saved_models_test/base
+Epoch 114/150
+Training Loss: 3.8604957710192043
+Validation Loss: 4.503991407155991
+Total Time: 8381.712614536285
+New best model saved with validation loss: 4.503991407155991
+Epoch 115/150
+Training Loss: 3.851553148436315
+Validation Loss: 4.504535080989202
+Total Time: 8454.869137525558
+Epoch 116/150
+Training Loss: 3.847197937733919
+Validation Loss: 4.507206050554911
+Total Time: 8528.35769200325
+Plots saved to /home/ubuntu/WildSemiFusion/src/../saved_models_test/base
+Epoch 117/150
+Training Loss: 3.8402227313773145
+Validation Loss: 4.49088566104571
+Total Time: 8601.857882022858
+New best model saved with validation loss: 4.49088566104571
+Epoch 118/150
+Training Loss: 3.833826072007707
+Validation Loss: 4.511267230908076
+Total Time: 8675.53009390831
+Epoch 119/150
+Training Loss: 3.8292738696903856
+Validation Loss: 4.483929359912873
+Total Time: 8748.654655218124
+New best model saved with validation loss: 4.483929359912873
+Plots saved to /home/ubuntu/WildSemiFusion/src/../saved_models_test/base
+Epoch 120/150
+Training Loss: 3.8200566398287283
+Validation Loss: 4.477698045969009
+Total Time: 8822.129863262177
+New best model saved with validation loss: 4.477698045969009
+Epoch 121/150
+Training Loss: 3.8162739323180856
+Validation Loss: 4.487523903449376
+Total Time: 8895.597969055176
+Epoch 122/150
+Training Loss: 3.809795175941245
+Validation Loss: 4.477972998221715
+Total Time: 8969.195101261139
+Plots saved to /home/ubuntu/WildSemiFusion/src/../saved_models_test/base
+Epoch 123/150
+Training Loss: 3.8046540426976474
+Validation Loss: 4.448525645335516
+Total Time: 9042.611719846725
+New best model saved with validation loss: 4.448525645335516
+Epoch 124/150
+Training Loss: 3.8004423669241008
+Validation Loss: 4.452862075964609
+Total Time: 9115.943556547165
+Epoch 125/150
+Training Loss: 3.7943037273814375
+Validation Loss: 4.4557267467180885
+Total Time: 9188.719621658325
+Plots saved to /home/ubuntu/WildSemiFusion/src/../saved_models_test/base
+Epoch 126/150
+Training Loss: 3.7885415345719715
+Validation Loss: 4.449151402711868
+Total Time: 9261.926854133606
+Epoch 127/150
+Training Loss: 3.7803001588988074
+Validation Loss: 4.452455401420593
+Total Time: 9335.32676243782
+Epoch 128/150
+Training Loss: 3.779022221426362
+Validation Loss: 4.44288254181544
+Total Time: 9408.630635976791
+New best model saved with validation loss: 4.44288254181544
+Plots saved to /home/ubuntu/WildSemiFusion/src/../saved_models_test/base
+Epoch 129/150
+Training Loss: 3.773533531763021
+Validation Loss: 4.4454776247342425
+Total Time: 9481.176949262619
+Epoch 130/150
+Training Loss: 3.7670736798962343
+Validation Loss: 4.418716955184936
+Total Time: 9554.856461286545
+New best model saved with validation loss: 4.418716955184936
+Epoch 131/150
+Training Loss: 3.7630796941738685
+Validation Loss: 4.440936837593714
+Total Time: 9628.436288118362
+Plots saved to /home/ubuntu/WildSemiFusion/src/../saved_models_test/base
+Epoch 132/150
+Training Loss: 3.759922562293636
+Validation Loss: 4.4241030514240265
+Total Time: 9701.686064958572
+Epoch 133/150
+Training Loss: 3.7540091727543805
+Validation Loss: 4.440766137838364
+Total Time: 9774.749320268631
+Epoch 134/150
+Training Loss: 3.7465178873932476
+Validation Loss: 4.431471139192581
+Total Time: 9848.681716680527
+Plots saved to /home/ubuntu/WildSemiFusion/src/../saved_models_test/base
+Epoch 135/150
+Training Loss: 3.742820003657665
+Validation Loss: 4.412845997015635
+Total Time: 9922.037586450577
+New best model saved with validation loss: 4.412845997015635
+Epoch 136/150
+Training Loss: 3.7372016791001106
+Validation Loss: 4.396815290053685
+Total Time: 9995.286153316498
+New best model saved with validation loss: 4.396815290053685
+Epoch 137/150
+Training Loss: 3.734838622287639
+Validation Loss: 4.432860145966212
+Total Time: 10068.480169296265
+Plots saved to /home/ubuntu/WildSemiFusion/src/../saved_models_test/base
+Epoch 138/150
+Training Loss: 3.729391859573068
+Validation Loss: 4.419993396600088
+Total Time: 10142.113509178162
+Epoch 139/150
+Training Loss: 3.7260742210647435
+Validation Loss: 4.408501619100571
+Total Time: 10215.766751527786
+Epoch 140/150
+Training Loss: 3.7227276760397605
+Validation Loss: 4.370422867933909
+Total Time: 10289.191629886627
+New best model saved with validation loss: 4.370422867933909
+Plots saved to /home/ubuntu/WildSemiFusion/src/../saved_models_test/base
+Epoch 141/150
+Training Loss: 3.7188717879137947
+Validation Loss: 4.387563230593999
+Total Time: 10362.22134065628
+Epoch 142/150
+Training Loss: 3.714510359810394
+Validation Loss: 4.409527877966563
+Total Time: 10435.665057182312
+Epoch 143/150
+Training Loss: 3.71155541382947
+Validation Loss: 4.400272937615712
+Total Time: 10509.479271650314
+Plots saved to /home/ubuntu/WildSemiFusion/src/../saved_models_test/base
+Epoch 144/150
+Training Loss: 3.706444592151827
+Validation Loss: 4.3890038649241125
+Total Time: 10583.32642698288
+Epoch 145/150
+Training Loss: 3.700710623009691
+Validation Loss: 4.356670391559601
+Total Time: 10656.681577205658
+New best model saved with validation loss: 4.356670391559601
+Epoch 146/150
+Training Loss: 3.699885710929204
+Validation Loss: 4.374475016196569
+Total Time: 10729.745834112167
+Plots saved to /home/ubuntu/WildSemiFusion/src/../saved_models_test/base
+Epoch 147/150
+Training Loss: 3.6910196392281542
+Validation Loss: 4.372882091999054
+Total Time: 10803.096937894821
+Epoch 148/150
+Training Loss: 3.6904225025362183
+Validation Loss: 4.372946898142497
+Total Time: 10876.578526258469
+Epoch 149/150
+Training Loss: 3.6881103492477565
+Validation Loss: 4.381519103050232
+Total Time: 10949.946534872055
+Plots saved to /home/ubuntu/WildSemiFusion/src/../saved_models_test/base
+Epoch 150/150
+Training Loss: 3.683082374554236
+Validation Loss: 4.371743836005529
+Total Time: 11023.108417749405
+Total training time: 3 hours, 3 minutes, 43 seconds
+Training complete for base WildFusion model 
+ ---------------------

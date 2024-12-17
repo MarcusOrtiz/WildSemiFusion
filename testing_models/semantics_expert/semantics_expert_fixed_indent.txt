@@ -1,0 +1,145 @@
+Semantics expert model successfully initialized and moved to cuda
+Successfully loaded preprocessed training and validation data
+Created training and validation dataloaders
+Loading checkpoint from /home/ubuntu/WildSemiFusion/src/../saved_models_test/semantics_expert/checkpoint.pth 
+Epoch 251/300)
+Training Loss: 0.7548127688613593
+Validation Loss: 0.8473363359769185
+Total Time: 9984.626412153244
+Plots saved to /home/ubuntu/WildSemiFusion/src/../saved_models_test/semantics_expert
+Epoch 252/300)
+Training Loss: 0.7524582381341972
+Validation Loss: 0.8390732447306315
+Total Time: 10024.764230012894
+New best model saved with validation loss: 0.8390732447306315
+Epoch 253/300)
+Training Loss: 0.7509786474938486
+Validation Loss: 0.8401017228762309
+Total Time: 10065.127562046051
+Plots saved to /home/ubuntu/WildSemiFusion/src/../saved_models_test/semantics_expert
+Epoch 254/300)
+Training Loss: 0.7471036163030886
+Validation Loss: 0.8345650355021159
+Total Time: 10104.948467254639
+New best model saved with validation loss: 0.8345650355021159
+Epoch 255/300)
+Training Loss: 0.7441791167446211
+Validation Loss: 0.8372994661331177
+Total Time: 10144.70058131218
+Plots saved to /home/ubuntu/WildSemiFusion/src/../saved_models_test/semantics_expert
+Epoch 256/300)
+Training Loss: 0.7430188492232678
+Validation Loss: 0.8343790531158447
+Total Time: 10184.430804491043
+New best model saved with validation loss: 0.8343790531158447
+Epoch 257/300)
+Training Loss: 0.741411923193464
+Validation Loss: 0.8220941146214803
+Total Time: 10223.911747217178
+New best model saved with validation loss: 0.8220941146214803
+Plots saved to /home/ubuntu/WildSemiFusion/src/../saved_models_test/semantics_expert
+Epoch 258/300)
+Training Loss: 0.7373207117996964
+Validation Loss: 0.8315298438072205
+Total Time: 10263.626253128052
+Epoch 259/300)
+Training Loss: 0.7366737185740003
+Validation Loss: 0.8341804424921672
+Total Time: 10302.799989461899
+Plots saved to /home/ubuntu/WildSemiFusion/src/../saved_models_test/semantics_expert
+Epoch 260/300)
+Training Loss: 0.733966234852286
+Validation Loss: 0.8270598928133647
+Total Time: 10342.217734575272
+Epoch 261/300)
+Training Loss: 0.7319783404761669
+Validation Loss: 0.8340016047159831
+Total Time: 10381.79598069191
+Plots saved to /home/ubuntu/WildSemiFusion/src/../saved_models_test/semantics_expert
+Epoch 262/300)
+Training Loss: 0.7293492754300436
+Validation Loss: 0.8234318852424621
+Total Time: 10422.043137073517
+Epoch 263/300)
+Training Loss: 0.7276566379210528
+Validation Loss: 0.8141956249872844
+Total Time: 10461.96047949791
+New best model saved with validation loss: 0.8141956249872844
+Plots saved to /home/ubuntu/WildSemiFusion/src/../saved_models_test/semantics_expert
+Epoch 264/300)
+Training Loss: 0.7261374230478325
+Validation Loss: 0.8208520968755086
+Total Time: 10501.20081114769
+Epoch 265/300)
+Training Loss: 0.7257833200342515
+Validation Loss: 0.8248436371485393
+Total Time: 10541.013803005219
+Plots saved to /home/ubuntu/WildSemiFusion/src/../saved_models_test/semantics_expert
+Epoch 266/300)
+Training Loss: 0.7242143750190735
+Validation Loss: 0.8175602992375691
+Total Time: 10580.716900587082
+Epoch 267/300)
+Training Loss: 0.7227676826364854
+Validation Loss: 0.8213499228159586
+Total Time: 10620.556766033173
+Plots saved to /home/ubuntu/WildSemiFusion/src/../saved_models_test/semantics_expert
+Epoch 268/300)
+Training Loss: 0.7217588658426323
+Validation Loss: 0.8221185127894084
+Total Time: 10660.06329703331
+Epoch 269/300)
+Training Loss: 0.719513035288044
+Validation Loss: 0.8131183743476867
+Total Time: 10699.70160984993
+New best model saved with validation loss: 0.8131183743476867
+Plots saved to /home/ubuntu/WildSemiFusion/src/../saved_models_test/semantics_expert
+Epoch 270/300)
+Training Loss: 0.7199637223692501
+Validation Loss: 0.8170553922653199
+Total Time: 10739.871839284897
+Epoch 271/300)
+Training Loss: 0.7182909355444067
+Validation Loss: 0.8209863622983297
+Total Time: 10779.62225484848
+Plots saved to /home/ubuntu/WildSemiFusion/src/../saved_models_test/semantics_expert
+Epoch 272/300)
+Training Loss: 0.7170343621104371
+Validation Loss: 0.8171233495076498
+Total Time: 10819.422798156738
+Epoch 273/300)
+Training Loss: 0.7177195642508712
+Validation Loss: 0.8176316817601522
+Total Time: 10859.457688570023
+Plots saved to /home/ubuntu/WildSemiFusion/src/../saved_models_test/semantics_expert
+Epoch 274/300)
+Training Loss: 0.7169384781052085
+Validation Loss: 0.8139472881952922
+Total Time: 10898.999159097672
+Epoch 275/300)
+Training Loss: 0.714740468006508
+Validation Loss: 0.8150919556617737
+Total Time: 10938.335798740387
+Plots saved to /home/ubuntu/WildSemiFusion/src/../saved_models_test/semantics_expert
+Epoch 276/300)
+Training Loss: 0.7142742615120083
+Validation Loss: 0.8193915565808614
+Total Time: 10977.407388687134
+Epoch 277/300)
+Training Loss: 0.7140356021768907
+Validation Loss: 0.8156514803568522
+Total Time: 11016.899709939957
+Plots saved to /home/ubuntu/WildSemiFusion/src/../saved_models_test/semantics_expert
+Epoch 278/300)
+Training Loss: 0.7132911039333717
+Validation Loss: 0.8165551900863648
+Total Time: 11056.760792732239
+Epoch 279/300)
+Training Loss: 0.7122458114343531
+Validation Loss: 0.8136564254760742
+Total Time: 11095.94272851944
+Early stop at epoch 279. Validation loss did not improve for 10 consecutive epochs.
+Model saved at early stopping point with validation loss: 0.8131183743476867
+Total training time: 3 hours, 4 minutes, 56 seconds
+Training complete for semantics expert model 
+ ---------------------

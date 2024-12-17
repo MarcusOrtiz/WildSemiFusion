@@ -1,0 +1,65 @@
+Color expert model successfully initialized and moved to cuda
+Successfully loaded preprocessed training and validation data
+Created training dataloader with 3302 files and validation dataloader with 983 files
+Epoch 1/40
+Training Loss: 3.501445359396703
+Validation Loss: 3.579178767126115
+Total Time: 114.54600954055786
+New best model saved with validation loss: 3.579178767126115
+Plots saved to /home/ubuntu/WildSemiFusion/src/../saved_models_test/color_expert
+Epoch 2/40
+Training Loss: 3.2130474697038967
+Validation Loss: 3.5612155140423383
+Total Time: 223.2864546775818
+New best model saved with validation loss: 3.5612155140423383
+Epoch 3/40
+Training Loss: 3.151508209774795
+Validation Loss: 3.58033399112889
+Total Time: 332.6605923175812
+Plots saved to /home/ubuntu/WildSemiFusion/src/../saved_models_test/color_expert
+Epoch 4/40
+Training Loss: 3.117535889727398
+Validation Loss: 3.4900403179106165
+Total Time: 441.94479537010193
+New best model saved with validation loss: 3.4900403179106165
+Epoch 5/40
+Training Loss: 3.0914786220754236
+Validation Loss: 3.5020883122428517
+Total Time: 551.7018229961395
+Plots saved to /home/ubuntu/WildSemiFusion/src/../saved_models_test/color_expert
+Epoch 6/40
+Training Loss: 3.0772327323561735
+Validation Loss: 3.557436067549909
+Total Time: 662.2895519733429
+Epoch 7/40
+Training Loss: 3.058189728885021
+Validation Loss: 3.584492808482686
+Total Time: 770.6289687156677
+Plots saved to /home/ubuntu/WildSemiFusion/src/../saved_models_test/color_expert
+Epoch 8/40
+Training Loss: 3.053470293295036
+Validation Loss: 3.609409207203349
+Total Time: 880.781790971756
+Epoch 9/40
+Training Loss: 3.011845948626694
+Validation Loss: 3.5180036787126885
+Total Time: 991.4774732589722
+Plots saved to /home/ubuntu/WildSemiFusion/src/../saved_models_test/color_expert
+Epoch 10/40
+Training Loss: 3.0035674699301858
+Validation Loss: 3.5623139905147867
+Total Time: 1101.5542788505554
+Epoch 11/40
+Training Loss: 3.0014013630672567
+Validation Loss: 3.5257063498262498
+Total Time: 1211.44069480896
+Plots saved to /home/ubuntu/WildSemiFusion/src/../saved_models_test/color_expert
+Epoch 12/40
+Training Loss: 2.9953801030094183
+Validation Loss: 3.505666166055398
+Total Time: 1319.742318868637
+Early stopping triggered at epoch 12. Validatio loss did not improve for 8 consecutive epochs.
+Model saved at early stopping point with validation loss: 3.4900403179106165
+Total training time: 0 hours, 21 minutes, 60 seconds
+Training complete for color expert model 
+ ---------------------
