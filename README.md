@@ -5,6 +5,12 @@ converted the 3D model to a 2D model that predicts color and semantics based off
 images from the Rellis-3D dataset. Note, the codebase began as a fork of the 
 WildFusion repository, so many files have similar structures.
 
+### Environment
+make sure to create a source on conda environment and install the requirements
+```bash
+pip install -r requirements.txt
+```
+
 
 ## Downloads (Required)
 ### Data Download
